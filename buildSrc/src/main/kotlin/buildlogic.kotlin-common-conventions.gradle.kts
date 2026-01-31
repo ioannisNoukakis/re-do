@@ -18,6 +18,8 @@ dependencies {
         implementation("org.apache.commons:commons-text:1.13.0")
     }
 
+    implementation("io.arrow-kt:arrow-core:2.2.1.1")
+
     // Use JUnit Jupiter for testing.
     testImplementation("org.junit.jupiter:junit-jupiter:5.12.1")
 

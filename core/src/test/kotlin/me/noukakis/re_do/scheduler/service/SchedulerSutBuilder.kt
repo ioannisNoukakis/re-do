@@ -1,26 +1,56 @@
 package me.noukakis.re_do.scheduler.service
 
+import arrow.core.Either
+import arrow.core.left
+import arrow.core.right
+import me.noukakis.re_do.scheduler.adapter.InMemoryPersistenceAdapter
 import me.noukakis.re_do.scheduler.adapter.SpyMessagingAdapter
-import me.noukakis.re_do.scheduler.model.TEGArtefactDefinition
-import me.noukakis.re_do.scheduler.model.TEGMessage
-import me.noukakis.re_do.scheduler.model.TEGTask
+import me.noukakis.re_do.scheduler.adapter.StubUuidAdapter
+import me.noukakis.re_do.scheduler.model.*
 import org.junit.jupiter.api.Assertions.assertEquals
+
+const val TEST_TEG_ID = "test-teg-id"
 
 class SchedulerSutBuilder {
     val messagingAdapter = SpyMessagingAdapter()
+    val persistenceAdapter = InMemoryPersistenceAdapter()
+    val uuidAdapter = StubUuidAdapter(TEST_TEG_ID)
     var sut: TEGScheduler? = null
+
+    lateinit var scheduleResult: Either<TegSchedulingError, Unit>
 
     fun whenSubmittingTheTeg(vararg tasks: TEGTask) {
         if (sut == null) {
-            sut = TEGScheduler(messagingAdapter)
+            sut = TEGScheduler(messagingAdapter, persistenceAdapter, uuidAdapter)
         }
-        sut!!.scheduleTeg(ScheduleTEGCommand(tasks.toList()))
+        scheduleResult = sut!!.scheduleTeg(ScheduleTEGCommand(tasks.toList()))
     }
 
     fun thenTheScheduledTasksAre(vararg expectedTegMessage: TEGMessage) {
         assertEquals(
             expectedTegMessage.toList(),
             messagingAdapter.sentMessages,
+        )
+    }
+
+    fun thenTheDependencyMapIsSavedCorrectly(expectedPersistenceState: Map<String, Map<TEGDependencyKey, TEGArtefact?>>) {
+        assertEquals(
+            expectedPersistenceState,
+            persistenceAdapter.state,
+        )
+    }
+
+    fun thenTheResultIsAnError(emptyTegNotAllowed: TegSchedulingError) {
+        assertEquals(
+            emptyTegNotAllowed.left(),
+            scheduleResult,
+        )
+    }
+
+    fun thenTheResultIsASuccess() {
+        assertEquals(
+            Unit.right(),
+            scheduleResult,
         )
     }
 }
