@@ -125,3 +125,23 @@ class RunTaskTEGMessageBuilder(
         )
     }
 }
+
+val TEST_ARTEFACT_TYPE = TEGArtefactType.STRING_VALUE
+
+class TEGArtefactDefBuilder(
+    private val name: String,
+) {
+    private var type: TEGArtefactType = TEST_ARTEFACT_TYPE
+
+    fun withType(type: TEGArtefactType): TEGArtefactDefBuilder {
+        this.type = type
+        return this
+    }
+
+    fun build(): TEGArtefactDefinition {
+        return TEGArtefactDefinition(
+            name = this.name,
+            type = this.type,
+        )
+    }
+}

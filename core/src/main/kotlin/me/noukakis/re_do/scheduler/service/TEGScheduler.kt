@@ -2,9 +2,8 @@ package me.noukakis.re_do.scheduler.service
 
 import arrow.core.Either
 import arrow.core.left
+import arrow.core.raise.either
 import arrow.core.right
-import me.noukakis.re_do.scheduler.model.TEGArtefact
-import me.noukakis.re_do.scheduler.model.TEGDependencyKey
 import me.noukakis.re_do.scheduler.model.TEGEvent
 import me.noukakis.re_do.scheduler.model.TEGMessageIn
 import me.noukakis.re_do.scheduler.model.TEGMessageOut
@@ -29,10 +28,17 @@ class TEGScheduler(
     private val persistencePort: PersistencePort,
     private val uuidPort: UUIDPort,
 ) {
-    fun scheduleTeg(command: ScheduleTEGCommand): Either<TegSchedulingError, Unit> {
-        if (command.tasks.isEmpty()) {
-            return TegSchedulingError.EmptyTegNotAllowed.left()
-        }
+    fun scheduleTeg(command: ScheduleTEGCommand): Either<TegSchedulingError, Unit> = either {
+        validateNotEmpty(command).bind()
+        validateAllTaskHaveUniqueNames(command).bind()
+        validateAllTaskProducedArtefactsHaveUniqueNames(command).bind()
+        validateAllTaskInputExist(command).bind()
+        validateAllProducedArtefactsAreConsumed(command).bind()
+        val startingTasks = command.tasks.filter { it.inputs.isEmpty() }
+        validateAtLeastOneStartingTask(startingTasks).bind()
+        validateNoCyclicDependencies(command, startingTasks).bind()
+
+        // Schedule tasks with no inputs
         command.tasks
             .filter { it.inputs.isEmpty() }
             .forEach { messagingPort.send(it.toRunTaskMessageNoArtefacts()) }
@@ -43,6 +49,98 @@ class TEGScheduler(
             ) + if (it.inputs.isEmpty()) listOf(TEGEvent.Scheduled(it.name)) else emptyList()
         })
         return Unit.right()
+    }
+
+    private fun validateNotEmpty(command: ScheduleTEGCommand): Either<TegSchedulingError, Unit> {
+        if (command.tasks.isEmpty()) {
+            return TegSchedulingError.EmptyTegNotAllowed.left()
+        }
+        return Unit.right()
+    }
+
+    private fun validateAllTaskHaveUniqueNames(
+        command: ScheduleTEGCommand
+    ): Either<TegSchedulingError, Unit> {
+        val seenNames = mutableSetOf<String>()
+        for (task in command.tasks) {
+            if (seenNames.contains(task.name)) {
+                return TegSchedulingError.TasksHaveTheSameName(task.name).left()
+            }
+            seenNames.add(task.name)
+        }
+        return Unit.right()
+    }
+
+    private fun validateAllTaskProducedArtefactsHaveUniqueNames(
+        command: ScheduleTEGCommand
+    ): Either<TegSchedulingError, Unit> {
+        val seenArtefactNames = mutableSetOf<String>()
+        for (task in command.tasks) {
+            for (output in task.outputs) {
+                if (seenArtefactNames.contains(output.name)) {
+                    return TegSchedulingError.TasksProduceSameArtefactName(
+                        taskNames = command.tasks.filter { t -> t.outputs.any { it.name == output.name } }.map { it.name },
+                        artefactName = output.name
+                    ).left()
+                }
+                seenArtefactNames.add(output.name)
+            }
+        }
+        return Unit.right()
+    }
+
+    private fun validateAtLeastOneStartingTask(
+        startingTasks: List<TEGTask>
+    ): Either<TegSchedulingError, Unit> {
+        if (startingTasks.isEmpty()) {
+            return TegSchedulingError.NoStartingTaskFound.left()
+        }
+        return Unit.right()
+    }
+
+    private fun validateNoCyclicDependencies(
+        command: ScheduleTEGCommand,
+        startingTasks: List<TEGTask>
+    ): Either<TegSchedulingError, Unit> = either {
+        for (task in startingTasks) {
+            val visited = mutableListOf<String>()
+            visit(task, command.tasks, visited).bind()
+        }
+    }
+
+    private fun validateAllTaskInputExist(
+        command: ScheduleTEGCommand
+    ): Either<TegSchedulingError, Unit> {
+        val producedArtefactNames = command.tasks.flatMap { it.outputs }.map { it.name }.toSet()
+        for (task in command.tasks) {
+            for (input in task.inputs) {
+                if (!producedArtefactNames.contains(input.name)) {
+                    return TegSchedulingError.MissingArtefactProducer(
+                        taskName = task.name,
+                        artefactName = input.name
+                    ).left()
+                }
+            }
+        }
+        return Unit.right()
+    }
+
+    private fun validateAllProducedArtefactsAreConsumed(
+        command: ScheduleTEGCommand
+    ): Either<TegSchedulingError, Unit> {
+        val consumedArtefactNames = command.tasks.flatMap { it.inputs }.map { it.name }.toSet()
+        for (task in command.tasks) {
+            for (output in task.outputs) {
+                if (!consumedArtefactNames.contains(output.name)) {
+                    return TegSchedulingError.NotAllProducedArtefactsAreConsumed(
+                        artefactName = output.name,
+                        producingTaskName = task.name
+                    ).left()
+                }
+            }
+        }
+        return Unit.right()
+
     }
 
     fun handleTegUpdate(tegUpdateCommand: TEGUpdateCommand) {
@@ -69,16 +167,49 @@ class TEGScheduler(
         events.filterIsInstance<TEGEvent.Created>()
             .filter { event ->
                 !tasksThatWereAlreadyScheduled.contains(event.task.name)
-                && event.task.inputs.all { input -> completedArtefacts.find { input.name == it.name() } != null }
+                        && event.task.inputs.all { input -> completedArtefacts.find { input.name == it.name() } != null }
             }
             .forEach {
                 messagingPort.send(
                     TEGMessageOut.TEGRunTaskMessage(
-                    taskName = it.task.name,
-                    artefacts = it.task.inputs.map { input ->
-                        completedArtefacts.find { artefact -> artefact.name() == input.name }!!
-                    }
-                ))
+                        taskName = it.task.name,
+                        artefacts = it.task.inputs.map { input ->
+                            completedArtefacts.find { artefact -> artefact.name() == input.name }!!
+                        }
+                    ))
             }
     }
+}
+
+private fun visit(
+    current: TEGTask,
+    allTasks: List<TEGTask>,
+    visited: MutableList<String>
+): Either<TegSchedulingError, Unit> = either {
+    visited.add(current.name)
+    for (output in current.outputs) {
+        val children = allTasks.filter { task -> task.inputs.any { input -> input.name == output.name } }
+        for (child in children) {
+            if (visited.contains(child.name)) {
+                visited.add(child.name)
+                return TegSchedulingError.CyclicDependencyDetected(extractCycle(visited)).left()
+            }
+            visit(child, allTasks, visited).bind()
+        }
+    }
+}
+
+private fun extractCycle(
+    visited: MutableList<String>
+): List<String> {
+    val cycleBoundary = visited.removeLast()
+    val cycle = mutableListOf<String>()
+    cycle.add(cycleBoundary)
+    var current = visited.removeLast()
+    while (cycleBoundary != current) {
+        cycle.add(current)
+        current = visited.removeLast()
+    }
+    cycle.add(cycleBoundary)
+    return cycle.reversed()
 }
