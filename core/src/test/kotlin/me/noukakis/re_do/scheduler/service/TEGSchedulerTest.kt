@@ -33,7 +33,7 @@ class TEGSchedulerTest {
         fun `should schedule tasks without errors`() {
             sut.whenSubmittingTheTeg(
                 TEGTaskBuilder("A")
-                    .withOutputs(TEGArtefactDefinition(taskName = "A", type = TEGArtefactType.STRING_VALUE))
+                    .withOutputs(TEGArtefactDefinition(name = "AOutput", type = TEGArtefactType.STRING_VALUE))
                     .build(),
             )
 
@@ -44,44 +44,140 @@ class TEGSchedulerTest {
         fun `should schedule tasks that can immediately run`() {
             sut.whenSubmittingTheTeg(
                 TEGTaskBuilder("A")
-                    .withOutputs(TEGArtefactDefinition(taskName = "A", type = TEGArtefactType.STRING_VALUE))
+                    .withOutputs(TEGArtefactDefinition(name = "AOutput", type = TEGArtefactType.STRING_VALUE))
                     .build(),
                 TEGTaskBuilder("B")
-                    .withInputs(TEGArtefactDefinition(taskName = "A", type = TEGArtefactType.STRING_VALUE))
+                    .withInputs(TEGArtefactDefinition(name = "AOutput", type = TEGArtefactType.STRING_VALUE))
                     .build()
             )
 
             sut.thenTheScheduledTasksAre(
-                TEGMessage(type = TEGMessageType.RUN_TASK, taskName = "A"),
+                TEGMessageBuilder("A")
+                    .asRunType()
+                    .build(),
             )
         }
 
         @Test
-        fun `should save the dependency map in persistence`() {
+        fun `should save the resulting events in persistence`() {
             sut.whenSubmittingTheTeg(
                 TEGTaskBuilder("A")
-                    .withOutputs(TEGArtefactDefinition(taskName = "A", type = TEGArtefactType.STRING_VALUE))
+                    .withOutputs(TEGArtefactDefinition(name = "AOutput", type = TEGArtefactType.STRING_VALUE))
                     .build(),
                 TEGTaskBuilder("B")
-                    .withInputs(TEGArtefactDefinition(taskName = "A", type = TEGArtefactType.STRING_VALUE))
+                    .withInputs(TEGArtefactDefinition(name = "AOutput", type = TEGArtefactType.STRING_VALUE))
                     .build(),
             )
 
-            sut.thenTheDependencyMapIsSavedCorrectly(
+            sut.thenThePersistedEventsShouldBe(
                 mapOf(
-                    TEST_TEG_ID to
-                            mapOf(
-                                TEGDependencyKey(
-                                    "A",
-                                    listOf()
-                                ) to null,
-                                TEGDependencyKey(
-                                    "B",
-                                    listOf(TEGArtefactDefinition(taskName = "A", type = TEGArtefactType.STRING_VALUE))
-                                ) to null,
+                    TEST_TEG_ID to listOf(
+                        TEGEvent.Created(
+                            TEGTaskBuilder("A")
+                                .withOutputs(
+                                    TEGArtefactDefinition(
+                                        name = "AOutput",
+                                        type = TEGArtefactType.STRING_VALUE
+                                    )
+                                )
+                                .build()
+                        ),
+                        TEGEvent.Scheduled(
+                            taskName = "A"
+                        ),
+                        TEGEvent.Created(
+                            TEGTaskBuilder("B")
+                                .withInputs(
+                                    TEGArtefactDefinition(
+                                        name = "AOutput",
+                                        type = TEGArtefactType.STRING_VALUE
+                                    )
+                                )
+                                .build()
+                        ),
+                    )
+                )
+            )
+        }
+
+        // TODO detect cycles in TEG and error out
+        // TODO detect missing artefact producers in TEG and error out
+    }
+
+    @Nested
+    inner class HandleWorkerResultMessage {
+        lateinit var list: List<TEGEvent>
+
+        @BeforeEach
+        fun setup() {
+            list = listOf(
+                TEGEvent.Created(
+                    TEGTaskBuilder("A")
+                        .withOutputs(
+                            TEGArtefactDefinition(
+                                name = "AOutput",
+                                type = TEGArtefactType.STRING_VALUE
                             )
+                        )
+                        .build()
+                ),
+                TEGEvent.Scheduled(
+                    taskName = "A"
+                ),
+                TEGEvent.Created(
+                    TEGTaskBuilder("B")
+                        .withInputs(
+                            TEGArtefactDefinition(
+                                name = "AOutput",
+                                type = TEGArtefactType.STRING_VALUE
+                            )
+                        )
+                        .build()
+                ),
+            )
+            sut.givenTheExistingEvents(mapOf(TEST_TEG_ID to list))
+
+            sut.whenGettingTegUpdate(
+                TEGMessageIn.TEGTaskResultMessage(
+                    taskName = "A",
+                    listOf(
+                        TEGArtefact.TEGArtefactStringValue(name = "AOutput", value = "result of A")
+                    )
+                )
+            )
+        }
+
+        @Test
+        fun `on task completion, dependent tasks should be scheduled`() {
+            sut.thenTheScheduledTasksAre(
+                TEGMessageBuilder("B")
+                    .asRunType()
+                    .withArtefacts(
+                        TEGArtefact.TEGArtefactStringValue(name = "AOutput", value = "result of A")
+                    )
+                    .build()
+            )
+        }
+
+        @Test
+        fun `on task completion the resulting events should be saved in persistence`() {
+            sut.thenThePersistedEventsShouldBe(
+                mapOf(
+                    TEST_TEG_ID to list + listOf(
+                        TEGEvent.Completed(
+                            taskName = "A",
+                            outputArtefacts = listOf(
+                                TEGArtefact.TEGArtefactStringValue(
+                                    name = "AOutput",
+                                    value = "result of A"
+                                )
+                            )
+                        )
+                    )
                 )
             )
         }
     }
+    // TODO: on progress from workers: update persistence
+    // TODO: on failure from workers: reschedule or if at max retries fail TEG
 }

@@ -1,10 +1,15 @@
 package me.noukakis.re_do.scheduler.model
 
-enum class TEGMessageType {
-    RUN_TASK,
+sealed class TEGMessageOut {
+    data class TEGRunTaskMessage(
+        val taskName: String,
+        val artefacts: List<TEGArtefact>,
+    ) : TEGMessageOut()
 }
 
-data class TEGMessage(
-    val type: TEGMessageType,
-    val taskName: String,
-)
+sealed class TEGMessageIn {
+    data class TEGTaskResultMessage(
+        val taskName: String,
+        val outputArtefacts: List<TEGArtefact>,
+    ) : TEGMessageIn()
+}

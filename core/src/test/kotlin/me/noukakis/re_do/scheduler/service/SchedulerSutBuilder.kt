@@ -19,21 +19,33 @@ class SchedulerSutBuilder {
 
     lateinit var scheduleResult: Either<TegSchedulingError, Unit>
 
+    fun givenTheExistingEvents(state: Map<String, List<TEGEvent>>) {
+        persistenceAdapter.state.putAll(state)
+    }
+
     fun whenSubmittingTheTeg(vararg tasks: TEGTask) {
-        if (sut == null) {
-            sut = TEGScheduler(messagingAdapter, persistenceAdapter, uuidAdapter)
-        }
+        createSut()
         scheduleResult = sut!!.scheduleTeg(ScheduleTEGCommand(tasks.toList()))
     }
 
-    fun thenTheScheduledTasksAre(vararg expectedTegMessage: TEGMessage) {
+    fun whenGettingTegUpdate(message: TEGMessageIn) {
+        createSut()
+        sut!!.handleTegUpdate(
+            TEGUpdateCommand(
+                tegId = TEST_TEG_ID,
+                message = message
+            )
+        )
+    }
+
+    fun thenTheScheduledTasksAre(vararg expectedTegMessage: TEGMessageOut) {
         assertEquals(
             expectedTegMessage.toList(),
             messagingAdapter.sentMessages,
         )
     }
 
-    fun thenTheDependencyMapIsSavedCorrectly(expectedPersistenceState: Map<String, Map<TEGDependencyKey, TEGArtefact?>>) {
+    fun thenThePersistedEventsShouldBe(expectedPersistenceState: Map<String, List<TEGEvent>>) {
         assertEquals(
             expectedPersistenceState,
             persistenceAdapter.state,
@@ -52,6 +64,12 @@ class SchedulerSutBuilder {
             Unit.right(),
             scheduleResult,
         )
+    }
+
+    private fun createSut() {
+        if (sut == null) {
+            sut = TEGScheduler(messagingAdapter, persistenceAdapter, uuidAdapter)
+        }
     }
 }
 
@@ -79,6 +97,31 @@ class TEGTaskBuilder(
             name = this.name,
             inputs = this.inputs,
             outputs = this.outputs
+        )
+    }
+}
+
+class TEGMessageBuilder(
+    private val taskName: String
+) {
+    fun asRunType(): RunTaskTEGMessageBuilder {
+        return RunTaskTEGMessageBuilder(taskName)
+    }
+}
+
+class RunTaskTEGMessageBuilder(
+    private val taskName: String,
+    private var artefacts: List<TEGArtefact> = listOf(),
+) {
+    fun withArtefacts(vararg artefacts: TEGArtefact): RunTaskTEGMessageBuilder {
+        this.artefacts = artefacts.toList()
+        return this
+    }
+
+    fun build(): TEGMessageOut.TEGRunTaskMessage {
+        return TEGMessageOut.TEGRunTaskMessage(
+            taskName = this.taskName,
+            artefacts = this.artefacts,
         )
     }
 }

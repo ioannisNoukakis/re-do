@@ -6,6 +6,6 @@ enum class TEGArtefactType {
 }
 
 data class TEGArtefactDefinition(
-    val taskName: String,
+    val name: String,
     val type: TEGArtefactType,
 )

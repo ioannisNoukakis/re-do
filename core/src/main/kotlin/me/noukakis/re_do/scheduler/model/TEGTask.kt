@@ -5,9 +5,9 @@ data class TEGTask(
     val inputs: List<TEGArtefactDefinition>,
     val outputs: List<TEGArtefactDefinition>
 ) {
-    fun toRunTaskMessage() = TEGMessage(
-        type = TEGMessageType.RUN_TASK,
-        taskName = name
+    fun toRunTaskMessageNoArtefacts() = TEGMessageOut.TEGRunTaskMessage(
+        taskName = name,
+        artefacts = emptyList(),
     )
 
     fun toDependencyKey() = TEGDependencyKey(
