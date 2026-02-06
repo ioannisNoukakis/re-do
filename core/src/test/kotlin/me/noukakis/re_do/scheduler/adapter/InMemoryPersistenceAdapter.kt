@@ -25,7 +25,7 @@ class InMemoryPersistenceAdapter : PersistencePort {
         return when (filter) {
             TegEventFilter.All -> events
             TegEventFilter.StateEvent -> events.filter {
-                it is TEGEvent.Created || it is TEGEvent.Completed || it is TEGEvent.Scheduled
+                !(it is TEGEvent.Log || it is TEGEvent.Progress)
             }
         }
     }

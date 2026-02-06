@@ -27,6 +27,7 @@ class TEGScheduler(
     private val messagingPort: MessagingPort,
     private val persistencePort: PersistencePort,
     private val uuidPort: UUIDPort,
+    private val maxFailuresBeforeGivingUp: Int
 ) {
     fun scheduleTeg(command: ScheduleTEGCommand): Either<TegSchedulingError, Unit> = either {
         validateNotEmpty(command).bind()
@@ -143,19 +144,15 @@ class TEGScheduler(
 
     }
 
-    fun handleTegUpdate(tegUpdateCommand: TEGUpdateCommand) {
+    fun handleTegUpdate(tegUpdateCommand: TEGUpdateCommand): Either<TegSchedulingError, Unit> = either {
         // Stage 1 - Retrieve existing events and add the new event
         val events = persistencePort.getEventsForTeg(tegUpdateCommand.tegId, TegEventFilter.StateEvent).toMutableList()
         when (val msg = tegUpdateCommand.message) {
-            is TEGMessageIn.TEGTaskResultMessage -> {
-                val completedEvent = TEGEvent.Completed(
-                    taskName = msg.taskName,
-                    outputArtefacts = tegUpdateCommand.message.outputArtefacts,
-                )
-                events.add(completedEvent)
-                persistencePort.saveEvents(tegUpdateCommand.tegId, listOf(completedEvent))
-            }
-        }
+            is TEGMessageIn.TEGTaskResultMessage -> handleResultMsg(msg, events, tegUpdateCommand)
+            is TEGMessageIn.TEGTaskFailedMessage -> handleFailedMessage(msg, events, tegUpdateCommand)
+            is TEGMessageIn.TEGTaskProgressMessage -> handleProgressMessage(msg, events, tegUpdateCommand)
+            is TEGMessageIn.TEGTaskLogMessage -> handleLogMessage(msg, events, tegUpdateCommand)
+        }.bind()
 
         // Stage 2 - Determine which tasks can be scheduled. Which is that all its inputs are satisfied
         // An input is satisfied if there is an artefact in the completed events that matches the dependency key
@@ -178,6 +175,82 @@ class TEGScheduler(
                         }
                     ))
             }
+        return Unit.right()
+    }
+
+    private fun handleResultMsg(
+        msg: TEGMessageIn.TEGTaskResultMessage,
+        events: MutableList<TEGEvent>,
+        tegUpdateCommand: TEGUpdateCommand
+    ): Either<TegSchedulingError, Unit> {
+        val completedEvent = TEGEvent.Completed(
+            taskName = msg.taskName,
+            outputArtefacts = msg.outputArtefacts,
+        )
+        events.add(completedEvent)
+        persistencePort.saveEvents(tegUpdateCommand.tegId, listOf(completedEvent))
+        return Unit.right()
+    }
+
+    private fun handleFailedMessage(
+        msg: TEGMessageIn.TEGTaskFailedMessage,
+        events: MutableList<TEGEvent>,
+        tegUpdateCommand: TEGUpdateCommand
+    ): Either<TegSchedulingError, Unit> {
+        val failedEvent = TEGEvent.Failed(
+            taskName = msg.taskName,
+            reason = msg.reason,
+        )
+        events.add(failedEvent)
+
+        // Count failures for this task
+        val failureCount = events.filterIsInstance<TEGEvent.Failed>()
+            .count { it.taskName == msg.taskName }
+
+        if (failureCount >= maxFailuresBeforeGivingUp) {
+            // Max retries exceeded - persist failure and return error
+            persistencePort.saveEvents(tegUpdateCommand.tegId, listOf(failedEvent))
+            return TegSchedulingError.MaxRetriesExceeded(msg.taskName).left()
+        }
+
+        // Reschedule the task
+        val scheduledEvent = TEGEvent.Scheduled(taskName = msg.taskName)
+        persistencePort.saveEvents(tegUpdateCommand.tegId, listOf(failedEvent, scheduledEvent))
+        messagingPort.send(
+            TEGMessageOut.TEGRunTaskMessage(
+                taskName = msg.taskName,
+                artefacts = emptyList(),
+            )
+        )
+        return Unit.right()
+    }
+
+    private fun handleProgressMessage(
+        msg: TEGMessageIn.TEGTaskProgressMessage,
+        events: MutableList<TEGEvent>,
+        tegUpdateCommand: TEGUpdateCommand
+    ): Either<TegSchedulingError, Unit> {
+        val progressEvent = TEGEvent.Progress(
+            taskName = msg.taskName,
+            progress = msg.progress,
+        )
+        events.add(progressEvent)
+        persistencePort.saveEvents(tegUpdateCommand.tegId, listOf(progressEvent))
+        return Unit.right()
+    }
+
+    private fun handleLogMessage(
+        msg: TEGMessageIn.TEGTaskLogMessage,
+        events: MutableList<TEGEvent>,
+        tegUpdateCommand: TEGUpdateCommand
+    ): Either<TegSchedulingError, Unit> {
+        val logEvent = TEGEvent.Log(
+            taskName = msg.taskName,
+            log = msg.log,
+        )
+        events.add(logEvent)
+        persistencePort.saveEvents(tegUpdateCommand.tegId, listOf(logEvent))
+        return Unit.right()
     }
 }
 
