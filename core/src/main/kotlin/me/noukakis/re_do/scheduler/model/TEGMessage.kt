@@ -12,4 +12,19 @@ sealed class TEGMessageIn {
         val taskName: String,
         val outputArtefacts: List<TEGArtefact>,
     ) : TEGMessageIn()
+
+    data class TEGTaskFailedMessage(
+        val taskName: String,
+        val reason: String,
+    ) : TEGMessageIn()
+
+    data class TEGTaskProgressMessage(
+        val taskName: String,
+        val progress: Int,
+    ) : TEGMessageIn()
+
+    data class TEGTaskLogMessage(
+        val taskName: String,
+        val log: String,
+    ) : TEGMessageIn()
 }

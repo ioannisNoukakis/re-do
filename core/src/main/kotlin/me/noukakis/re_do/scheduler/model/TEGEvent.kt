@@ -13,4 +13,19 @@ sealed interface TEGEvent {
         val taskName: String,
         val outputArtefacts: List<TEGArtefact>,
     ) : TEGEvent
+
+    data class Failed(
+        val taskName: String,
+        val reason: String,
+    ) : TEGEvent
+
+    data class Progress(
+        val taskName: String,
+        val progress: Int,
+    ) : TEGEvent
+
+    data class Log(
+        val taskName: String,
+        val log: String,
+    ) : TEGEvent
 }

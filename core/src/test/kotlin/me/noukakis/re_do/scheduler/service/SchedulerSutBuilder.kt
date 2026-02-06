@@ -18,6 +18,7 @@ class SchedulerSutBuilder {
     var sut: TEGScheduler? = null
 
     lateinit var scheduleResult: Either<TegSchedulingError, Unit>
+    lateinit var updateResult: Either<TegSchedulingError, Unit>
 
     fun givenTheExistingEvents(state: Map<String, List<TEGEvent>>) {
         persistenceAdapter.state.putAll(state)
@@ -30,7 +31,7 @@ class SchedulerSutBuilder {
 
     fun whenGettingTegUpdate(message: TEGMessageIn) {
         createSut()
-        sut!!.handleTegUpdate(
+        updateResult = sut!!.handleTegUpdate(
             TEGUpdateCommand(
                 tegId = TEST_TEG_ID,
                 message = message
@@ -66,9 +67,16 @@ class SchedulerSutBuilder {
         )
     }
 
+    fun thenTheUpdateResultIsAnError(expectedError: TegSchedulingError) {
+        assertEquals(
+            expectedError.left(),
+            updateResult,
+        )
+    }
+
     private fun createSut() {
         if (sut == null) {
-            sut = TEGScheduler(messagingAdapter, persistenceAdapter, uuidAdapter)
+            sut = TEGScheduler(messagingAdapter, persistenceAdapter, uuidAdapter, 3)
         }
     }
 }
@@ -132,11 +140,6 @@ class TEGArtefactDefBuilder(
     private val name: String,
 ) {
     private var type: TEGArtefactType = TEST_ARTEFACT_TYPE
-
-    fun withType(type: TEGArtefactType): TEGArtefactDefBuilder {
-        this.type = type
-        return this
-    }
 
     fun build(): TEGArtefactDefinition {
         return TEGArtefactDefinition(

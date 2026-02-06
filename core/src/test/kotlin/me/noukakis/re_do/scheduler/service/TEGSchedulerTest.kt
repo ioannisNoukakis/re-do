@@ -359,11 +359,11 @@ class TEGSchedulerTest {
 
     @Nested
     inner class HandleWorkerResultMessage {
-        lateinit var list: List<TEGEvent>
+        lateinit var baseEvents: List<TEGEvent>
 
         @BeforeEach
         fun setup() {
-            list = listOf(
+            baseEvents = listOf(
                 TEGEvent.Created(
                     TEGTaskBuilder("A")
                         .withOutputs(
@@ -388,7 +388,7 @@ class TEGSchedulerTest {
                         .build()
                 ),
             )
-            sut.givenTheExistingEvents(mapOf(TEST_TEG_ID to list))
+            sut.givenTheExistingEvents(mapOf(TEST_TEG_ID to baseEvents))
 
             sut.whenGettingTegUpdate(
                 TEGMessageIn.TEGTaskResultMessage(
@@ -416,7 +416,7 @@ class TEGSchedulerTest {
         fun `on task completion the resulting events should be saved in persistence`() {
             sut.thenThePersistedEventsShouldBe(
                 mapOf(
-                    TEST_TEG_ID to list + listOf(
+                    TEST_TEG_ID to baseEvents + listOf(
                         TEGEvent.Completed(
                             taskName = "A",
                             outputArtefacts = listOf(
@@ -431,6 +431,200 @@ class TEGSchedulerTest {
             )
         }
     }
-    // TODO: on progress from workers: update persistence
-    // TODO: on failure from workers: reschedule or if at max retries fail TEG
+
+    @Nested
+    inner class HandleWorkerFailureMessage {
+        lateinit var baseEvents: List<TEGEvent>
+
+        @BeforeEach
+        fun setup() {
+            baseEvents = listOf(
+                TEGEvent.Created(
+                    TEGTaskBuilder("A")
+                        .withOutputs(
+                            TEGArtefactDefinition(
+                                name = "AOutput",
+                                type = TEGArtefactType.STRING_VALUE
+                            )
+                        )
+                        .build()
+                ),
+                TEGEvent.Scheduled(
+                    taskName = "A"
+                ),
+                TEGEvent.Created(
+                    TEGTaskBuilder("B")
+                        .withInputs(
+                            TEGArtefactDefinition(
+                                name = "AOutput",
+                                type = TEGArtefactType.STRING_VALUE
+                            )
+                        )
+                        .build()
+                ),
+            )
+        }
+
+        @Test
+        fun `on task failure, the task should be rescheduled`() {
+            sut.givenTheExistingEvents(mapOf(TEST_TEG_ID to baseEvents))
+
+            sut.whenGettingTegUpdate(
+                TEGMessageIn.TEGTaskFailedMessage(
+                    taskName = "A",
+                    reason = "Worker crashed"
+                )
+            )
+
+            sut.thenTheScheduledTasksAre(
+                TEGMessageBuilder("A")
+                    .asRunType()
+                    .build()
+            )
+        }
+
+        @Test
+        fun `on task failure, the failure event and reschedule event should be persisted`() {
+            sut.givenTheExistingEvents(mapOf(TEST_TEG_ID to baseEvents))
+
+            sut.whenGettingTegUpdate(
+                TEGMessageIn.TEGTaskFailedMessage(
+                    taskName = "A",
+                    reason = "Worker crashed"
+                )
+            )
+
+            sut.thenThePersistedEventsShouldBe(
+                mapOf(
+                    TEST_TEG_ID to baseEvents + listOf(
+                        TEGEvent.Failed(
+                            taskName = "A",
+                            reason = "Worker crashed"
+                        ),
+                        TEGEvent.Scheduled(
+                            taskName = "A"
+                        )
+                    )
+                )
+            )
+        }
+
+        @Test
+        fun `on third failure for the same task, should abort and return max retries exceeded error`() {
+            val eventsWithTwoFailures = baseEvents + listOf(
+                TEGEvent.Failed(taskName = "A", reason = "First failure"),
+                TEGEvent.Scheduled(taskName = "A"),
+                TEGEvent.Failed(taskName = "A", reason = "Second failure"),
+                TEGEvent.Scheduled(taskName = "A"),
+            )
+            sut.givenTheExistingEvents(mapOf(TEST_TEG_ID to eventsWithTwoFailures))
+
+            sut.whenGettingTegUpdate(
+                TEGMessageIn.TEGTaskFailedMessage(
+                    taskName = "A",
+                    reason = "Third failure"
+                )
+            )
+
+            sut.thenTheUpdateResultIsAnError(
+                TegSchedulingError.MaxRetriesExceeded(taskName = "A")
+            )
+        }
+
+        @Test
+        fun `on third failure, the task should not be rescheduled`() {
+            val eventsWithTwoFailures = baseEvents + listOf(
+                TEGEvent.Failed(taskName = "A", reason = "First failure"),
+                TEGEvent.Scheduled(taskName = "A"),
+                TEGEvent.Failed(taskName = "A", reason = "Second failure"),
+                TEGEvent.Scheduled(taskName = "A"),
+            )
+            sut.givenTheExistingEvents(mapOf(TEST_TEG_ID to eventsWithTwoFailures))
+
+            sut.whenGettingTegUpdate(
+                TEGMessageIn.TEGTaskFailedMessage(
+                    taskName = "A",
+                    reason = "Third failure"
+                )
+            )
+
+            sut.thenTheScheduledTasksAre()
+        }
+
+        @Test
+        fun `on third failure, the failure event should be persisted but no reschedule event`() {
+            val eventsWithTwoFailures = baseEvents + listOf(
+                TEGEvent.Failed(taskName = "A", reason = "First failure"),
+                TEGEvent.Scheduled(taskName = "A"),
+                TEGEvent.Failed(taskName = "A", reason = "Second failure"),
+                TEGEvent.Scheduled(taskName = "A"),
+            )
+            sut.givenTheExistingEvents(mapOf(TEST_TEG_ID to eventsWithTwoFailures))
+
+            sut.whenGettingTegUpdate(
+                TEGMessageIn.TEGTaskFailedMessage(
+                    taskName = "A",
+                    reason = "Third failure"
+                )
+            )
+
+            sut.thenThePersistedEventsShouldBe(
+                mapOf(
+                    TEST_TEG_ID to eventsWithTwoFailures + listOf(
+                        TEGEvent.Failed(
+                            taskName = "A",
+                            reason = "Third failure"
+                        )
+                    )
+                )
+            )
+        }
+    }
+
+    @Nested
+    inner class HandleOtherMessages {
+        @Test
+        fun `on progress message, this event should be persisted`() {
+            sut.whenGettingTegUpdate(
+                TEGMessageIn.TEGTaskProgressMessage(
+                    taskName = "A",
+                    progress = 50
+                )
+            )
+
+            sut.thenThePersistedEventsShouldBe(
+                mapOf(
+                    TEST_TEG_ID to listOf(
+                        TEGEvent.Progress(
+                            taskName = "A",
+                            progress = 50
+                        )
+                    )
+                )
+            )
+        }
+
+        @Test
+        fun `on log message, this event should be persisted`() {
+            sut.whenGettingTegUpdate(
+                TEGMessageIn.TEGTaskLogMessage(
+                    taskName = "A",
+                    log = "This is a log message"
+                )
+            )
+
+            sut.thenThePersistedEventsShouldBe(
+                mapOf(
+                    TEST_TEG_ID to listOf(
+                        TEGEvent.Log(
+                            taskName = "A",
+                            log = "This is a log message"
+                        )
+                    )
+                )
+            )
+        }
+    }
+
+    // TODO timeouts?
 }

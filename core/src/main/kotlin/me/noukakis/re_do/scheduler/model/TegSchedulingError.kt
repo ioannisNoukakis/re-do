@@ -17,4 +17,7 @@ sealed interface TegSchedulingError {
         val artefactName: String,
         val producingTaskName: String,
     ) : TegSchedulingError
+    data class MaxRetriesExceeded(
+        val taskName: String,
+    ) : TegSchedulingError
 }
