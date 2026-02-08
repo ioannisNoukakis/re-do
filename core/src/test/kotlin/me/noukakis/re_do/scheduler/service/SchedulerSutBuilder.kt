@@ -5,9 +5,12 @@ import arrow.core.left
 import arrow.core.right
 import me.noukakis.re_do.scheduler.adapter.InMemoryPersistenceAdapter
 import me.noukakis.re_do.scheduler.adapter.SpyMessagingAdapter
+import me.noukakis.re_do.scheduler.adapter.StubNowAdapter
 import me.noukakis.re_do.scheduler.adapter.StubUuidAdapter
 import me.noukakis.re_do.scheduler.model.*
 import org.junit.jupiter.api.Assertions.assertEquals
+import java.time.Duration
+import java.time.Instant
 
 const val TEST_TEG_ID = "test-teg-id"
 
@@ -15,13 +18,19 @@ class SchedulerSutBuilder {
     val messagingAdapter = SpyMessagingAdapter()
     val persistenceAdapter = InMemoryPersistenceAdapter()
     val uuidAdapter = StubUuidAdapter(TEST_TEG_ID)
+    val nowAdapter = StubNowAdapter()
     var sut: TEGScheduler? = null
 
     lateinit var scheduleResult: Either<TegSchedulingError, Unit>
-    lateinit var updateResult: Either<TegSchedulingError, Unit>
+    lateinit var updateResult: Either<TegUpdateError, Unit>
+    lateinit var timeoutCheckResult: Either<TegTimeoutCheckError, Unit>
 
     fun givenTheExistingEvents(state: Map<String, List<TEGEvent>>) {
         persistenceAdapter.state.putAll(state)
+    }
+
+    fun givenTheDatesToReturn(vararg timestamps: Instant) {
+        nowAdapter.toReturn = timestamps.toMutableList()
     }
 
     fun whenSubmittingTheTeg(vararg tasks: TEGTask) {
@@ -37,6 +46,11 @@ class SchedulerSutBuilder {
                 message = message
             )
         )
+    }
+
+    fun whenTheTimeoutCheckerRuns() {
+        createSut()
+        timeoutCheckResult = sut!!.runTimeoutCheck()
     }
 
     fun thenTheScheduledTasksAre(vararg expectedTegMessage: TEGMessageOut) {
@@ -67,28 +81,57 @@ class SchedulerSutBuilder {
         )
     }
 
-    fun thenTheUpdateResultIsAnError(expectedError: TegSchedulingError) {
+    fun thenTheUpdateResultIsAnError(expectedError: TegUpdateError) {
         assertEquals(
             expectedError.left(),
             updateResult,
         )
     }
 
+    fun thenTheUpdateResultIsASuccess() {
+        assertEquals(
+            Unit.right(),
+            updateResult,
+        )
+    }
+
+    fun thenTheTimeoutCheckResultIsAnError(expectedError: TegTimeoutCheckError) {
+        assertEquals(
+            expectedError.left(),
+            timeoutCheckResult,
+        )
+    }
+
+    fun thenTheTimeoutCheckResultIsASuccess() {
+        assertEquals(
+            Unit.right(),
+            timeoutCheckResult,
+        )
+    }
+
     private fun createSut() {
         if (sut == null) {
-            sut = TEGScheduler(messagingAdapter, persistenceAdapter, uuidAdapter, 3)
+            sut = TEGScheduler(
+                messagingAdapter,
+                persistenceAdapter,
+                uuidAdapter,
+                nowAdapter,
+                3
+            )
         }
     }
 }
 
 val TEG_TASK_INPUTS = listOf<TEGArtefactDefinition>()
 val TEG_TASK_OUTPUTS = listOf<TEGArtefactDefinition>()
+val TEG_TASK_TIMEOUT = Duration.ofDays(100)
 
 class TEGTaskBuilder(
     private val name: String
 ) {
     private var inputs: List<TEGArtefactDefinition> = TEG_TASK_INPUTS
     private var outputs: List<TEGArtefactDefinition> = TEG_TASK_OUTPUTS
+    private var timeout: Duration = TEG_TASK_TIMEOUT
 
     fun withOutputs(vararg tegArtefactDefinition: TEGArtefactDefinition): TEGTaskBuilder {
         this.outputs = tegArtefactDefinition.toList()
@@ -100,11 +143,17 @@ class TEGTaskBuilder(
         return this
     }
 
+    fun withTimeout(timeout: Duration): TEGTaskBuilder {
+        this.timeout = timeout
+        return this
+    }
+
     fun build(): TEGTask {
         return TEGTask(
             name = this.name,
             inputs = this.inputs,
-            outputs = this.outputs
+            outputs = this.outputs,
+            timeout = this.timeout,
         )
     }
 }
