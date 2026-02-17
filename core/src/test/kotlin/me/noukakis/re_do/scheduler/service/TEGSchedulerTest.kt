@@ -1,7 +1,6 @@
 package me.noukakis.re_do.scheduler.service
 
 import me.noukakis.re_do.scheduler.model.*
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -71,6 +70,7 @@ class TEGSchedulerTest {
             sut.whenSubmittingTheTeg(
                 TEGTaskBuilder("A")
                     .withOutputs(TEGArtefactDefBuilder("AOutput").build())
+                    .withArguments("arg1", "arg2")
                     .build(),
                 TEGTaskBuilder("B")
                     .withInputs(TEGArtefactDefBuilder("AOutput").build())
@@ -80,6 +80,7 @@ class TEGSchedulerTest {
             sut.thenTheScheduledTasksAre(
                 TEGMessageBuilder("A")
                     .asRunType()
+                    .withArguments("arg1", "arg2")
                     .build(),
             )
         }
@@ -98,6 +99,7 @@ class TEGSchedulerTest {
             sut.thenThePersistedEventsShouldBe(
                 mapOf(
                     TEST_TEG_ID to listOf(
+                        TEGEvent.SubmitterIdentity(IDENTITY, NOW_0),
                         TEGEvent.Created(
                             TEGTaskBuilder("A")
                                 .withOutputs(
@@ -309,6 +311,7 @@ class TEGSchedulerTest {
             sut.thenThePersistedEventsShouldBe(
                 mapOf(
                     TEST_TEG_ID to listOf(
+                        TEGEvent.SubmitterIdentity(IDENTITY, NOW_0),
                         TEGEvent.Created(
                             TEGTaskBuilder("A")
                                 .withOutputs(TEGArtefactDefBuilder("AOutput").build())

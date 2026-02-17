@@ -1,8 +1,14 @@
 package me.noukakis.re_do.scheduler.model
 
+import me.noukakis.re_do.common.model.Identity
 import java.time.Instant
 
 sealed interface TEGEvent {
+    data class SubmitterIdentity(
+        val identity: Identity,
+        val timestamp: Instant,
+    ) : TEGEvent
+
     data class Created(
         val task: TEGTask,
         val timestamp: Instant,

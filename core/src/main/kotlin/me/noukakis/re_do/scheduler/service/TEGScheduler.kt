@@ -4,6 +4,7 @@ import arrow.core.Either
 import arrow.core.left
 import arrow.core.raise.either
 import arrow.core.right
+import me.noukakis.re_do.common.model.Identity
 import me.noukakis.re_do.scheduler.model.TEGEvent
 import me.noukakis.re_do.scheduler.model.TEGMessageIn
 import me.noukakis.re_do.scheduler.model.TEGMessageOut
@@ -19,7 +20,8 @@ import me.noukakis.re_do.scheduler.port.UUIDPort
 import java.time.Instant
 
 data class ScheduleTEGCommand(
-    val tasks: List<TEGTask>
+    val identity: Identity,
+    val tasks: List<TEGTask>,
 )
 
 data class TEGUpdateCommand(
@@ -34,7 +36,7 @@ class TEGScheduler(
     private val nowPort: NowPort,
     private val maxFailuresBeforeGivingUp: Int
 ) {
-    fun scheduleTeg(command: ScheduleTEGCommand): Either<TegSchedulingError, Unit> = either {
+    fun scheduleTeg(command: ScheduleTEGCommand): Either<TegSchedulingError, String> = either {
         val now = nowPort.now()
         validateNotEmpty(command).bind()
         validateAllTaskHaveUniqueNames(command).bind()
@@ -49,12 +51,12 @@ class TEGScheduler(
             .filter { it.inputs.isEmpty() }
             .forEach { messagingPort.send(it.toRunTaskMessageNoArtefacts()) }
         val tegId = uuidPort.generateUUID()
-        persistencePort.saveEvents(tegId, command.tasks.flatMap {
+        persistencePort.saveEvents(tegId, listOf(TEGEvent.SubmitterIdentity(command.identity, now)) + command.tasks.flatMap {
             listOf(
                 TEGEvent.Created(it, now)
             ) + if (it.inputs.isEmpty()) listOf(TEGEvent.Scheduled(it.name, now)) else emptyList()
         })
-        return Unit.right()
+        return tegId.right()
     }
 
     private fun validateNotEmpty(command: ScheduleTEGCommand): Either<TegSchedulingError, Unit> {
@@ -199,6 +201,7 @@ class TEGScheduler(
                 messagingPort.send(
                     TEGMessageOut.TEGRunTaskMessage(
                         taskName = it.task.name,
+                        arguments = it.task.arguments,
                         artefacts = it.task.inputs.map { input ->
                             completedArtefacts.find { artefact -> artefact.name() == input.name }!!
                         }
@@ -255,6 +258,7 @@ class TEGScheduler(
             messagingPort.send(
                 TEGMessageOut.TEGRunTaskMessage(
                     taskName = failedEvent.taskName,
+                    arguments = events.filterIsInstance<TEGEvent.Created>().find { it.task.name == failedEvent.taskName }!!.task.arguments,
                     artefacts = emptyList(),
                 )
             )

@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: Scheduler Primary Spring Adapter
+
+app:
+  service:
+    scheduler:
+      max-failures-before-giving-up: 3
+      messaging:
+        mode: "in-memory"
+      persistence:
+        mode: "in-memory"
