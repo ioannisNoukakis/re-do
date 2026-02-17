@@ -11,4 +11,4 @@ plugins {
 }
 
 rootProject.name = "re-do"
-include("app", "core")
+include("scheduler_adapter_primary_spring", "core")

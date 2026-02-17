@@ -4,6 +4,7 @@ sealed class TEGMessageOut {
     data class TEGRunTaskMessage(
         val taskName: String,
         val artefacts: List<TEGArtefact>,
+        val arguments: List<String>,
     ) : TEGMessageOut()
 }
 

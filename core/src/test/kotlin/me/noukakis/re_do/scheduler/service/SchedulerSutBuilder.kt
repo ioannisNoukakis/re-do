@@ -3,7 +3,8 @@ package me.noukakis.re_do.scheduler.service
 import arrow.core.Either
 import arrow.core.left
 import arrow.core.right
-import me.noukakis.re_do.scheduler.adapter.InMemoryPersistenceAdapter
+import me.noukakis.re_do.adapters.scheduler.InMemoryPersistenceAdapter
+import me.noukakis.re_do.common.model.Identity
 import me.noukakis.re_do.scheduler.adapter.SpyMessagingAdapter
 import me.noukakis.re_do.scheduler.adapter.StubNowAdapter
 import me.noukakis.re_do.scheduler.adapter.StubUuidAdapter
@@ -11,6 +12,12 @@ import me.noukakis.re_do.scheduler.model.*
 import org.junit.jupiter.api.Assertions.assertEquals
 import java.time.Duration
 import java.time.Instant
+
+val IDENTITY = Identity(
+    id = "user-123",
+    source = "test",
+    displayName = "Test User",
+)
 
 const val TEST_TEG_ID = "test-teg-id"
 
@@ -21,7 +28,7 @@ class SchedulerSutBuilder {
     val nowAdapter = StubNowAdapter()
     var sut: TEGScheduler? = null
 
-    lateinit var scheduleResult: Either<TegSchedulingError, Unit>
+    lateinit var scheduleResult: Either<TegSchedulingError, String>
     lateinit var updateResult: Either<TegUpdateError, Unit>
     lateinit var timeoutCheckResult: Either<TegTimeoutCheckError, Unit>
 
@@ -35,7 +42,7 @@ class SchedulerSutBuilder {
 
     fun whenSubmittingTheTeg(vararg tasks: TEGTask) {
         createSut()
-        scheduleResult = sut!!.scheduleTeg(ScheduleTEGCommand(tasks.toList()))
+        scheduleResult = sut!!.scheduleTeg(ScheduleTEGCommand(IDENTITY, tasks.toList()))
     }
 
     fun whenGettingTegUpdate(message: TEGMessageIn) {
@@ -76,7 +83,7 @@ class SchedulerSutBuilder {
 
     fun thenTheResultIsASuccess() {
         assertEquals(
-            Unit.right(),
+            TEST_TEG_ID.right(),
             scheduleResult,
         )
     }
@@ -124,6 +131,7 @@ class SchedulerSutBuilder {
 
 val TEG_TASK_INPUTS = listOf<TEGArtefactDefinition>()
 val TEG_TASK_OUTPUTS = listOf<TEGArtefactDefinition>()
+val TEG_TASK_ARGUMENTS = listOf<String>()
 val TEG_TASK_TIMEOUT = Duration.ofDays(100)
 
 class TEGTaskBuilder(
@@ -131,6 +139,7 @@ class TEGTaskBuilder(
 ) {
     private var inputs: List<TEGArtefactDefinition> = TEG_TASK_INPUTS
     private var outputs: List<TEGArtefactDefinition> = TEG_TASK_OUTPUTS
+    private var arguments: List<String> = TEG_TASK_ARGUMENTS
     private var timeout: Duration = TEG_TASK_TIMEOUT
 
     fun withOutputs(vararg tegArtefactDefinition: TEGArtefactDefinition): TEGTaskBuilder {
@@ -140,6 +149,11 @@ class TEGTaskBuilder(
 
     fun withInputs(vararg tegArtefactDefinition: TEGArtefactDefinition): TEGTaskBuilder {
         this.inputs = tegArtefactDefinition.toList()
+        return this
+    }
+
+    fun withArguments(vararg arguments: String): TEGTaskBuilder {
+        this.arguments = arguments.toList()
         return this
     }
 
@@ -153,6 +167,7 @@ class TEGTaskBuilder(
             name = this.name,
             inputs = this.inputs,
             outputs = this.outputs,
+            arguments = this.arguments,
             timeout = this.timeout,
         )
     }
@@ -169,9 +184,15 @@ class TEGMessageBuilder(
 class RunTaskTEGMessageBuilder(
     private val taskName: String,
     private var artefacts: List<TEGArtefact> = listOf(),
+    private var arguments: List<String> = listOf(),
 ) {
     fun withArtefacts(vararg artefacts: TEGArtefact): RunTaskTEGMessageBuilder {
         this.artefacts = artefacts.toList()
+        return this
+    }
+
+    fun withArguments(vararg arguments: String): RunTaskTEGMessageBuilder {
+        this.arguments = arguments.toList()
         return this
     }
 
@@ -179,6 +200,7 @@ class RunTaskTEGMessageBuilder(
         return TEGMessageOut.TEGRunTaskMessage(
             taskName = this.taskName,
             artefacts = this.artefacts,
+            arguments = this.arguments,
         )
     }
 }

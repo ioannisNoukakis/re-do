@@ -1,4 +1,4 @@
-package me.noukakis.re_do.scheduler.adapter
+package me.noukakis.re_do.adapters.scheduler
 
 import me.noukakis.re_do.scheduler.model.TEGEvent
 import me.noukakis.re_do.scheduler.port.PersistencePort
