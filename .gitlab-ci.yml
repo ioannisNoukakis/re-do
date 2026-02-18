@@ -1,0 +1,36 @@
+stages:
+  - test
+  - notify
+
+gitleaks_scan:
+  stage: test
+  image: zricethezav/gitleaks:v8.30.0
+  script:
+    - gitleaks detect --verbose --source . --no-git --report-format json --report-path gitleaks-report.json
+  artifacts:
+    reports:
+      secret_detection: gitleaks-report.json
+    paths:
+      - gitleaks-report.json
+    when: always
+    expire_in: 1 week
+
+gradle_test:
+  stage: test
+  image: gradle:9.3.1-noble
+  script:
+    - gradle test
+
+slack_alert_failure:
+  stage: notify
+  image: curlimages/curl:8.18.0
+  script:
+    - export SECRET_COUNT=$(cat gitleaks-report.json | grep -o '"Description":' | wc -l || echo "0")
+    - |
+      curl -X POST "${GOTIFY_NOTIFICATION_URL}" \
+        -F "title=🚨 *SECURITY ALERT: SECRETS DETECTED!* 🚨" \
+        -F "message=Project: ${CI_PROJECT_NAME}\nBranch: ${CI_COMMIT_REF_NAME}\nSecrets Found: ${SECRET_COUNT}\nCommit: ${CI_COMMIT_SHORT_SHA}\nAuthor: ${GITLAB_USER_NAME}\nPipeline: ${CI_PIPELINE_URL}" \
+        -F "priority=10"
+  dependencies:
+    - gitleaks_scan
+  when: on_failure
