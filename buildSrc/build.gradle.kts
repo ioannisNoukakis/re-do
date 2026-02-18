@@ -14,4 +14,5 @@ repositories {
 
 dependencies {
     implementation(libs.kotlin.gradle.plugin)
+    implementation(libs.gradle.test.logger.plugin)
 }

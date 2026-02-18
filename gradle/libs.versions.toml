@@ -3,6 +3,9 @@
 
 [versions]
 kotlin-gradle-plugin = "2.3.10"
+test-logger-version = "4.0.0"
+
 
 [libraries]
 kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin-gradle-plugin" }
+gradle-test-logger-plugin = { module = "com.adarshr:gradle-test-logger-plugin", version.ref = "test-logger-version" }
