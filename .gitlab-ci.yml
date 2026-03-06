@@ -1,27 +1,25 @@
 stages:
-  - test
+  - security
   - notify
+  - test
 
 gitleaks_scan:
-  stage: test
+  stage: security
   image: zricethezav/gitleaks:v8.30.0
+  variables:
+    GIT_DEPTH: 0
   script:
-    - gitleaks detect --verbose --source . --no-git --report-format json --report-path gitleaks-report.json
+    - gitleaks detect --verbose --source . --report-format json --report-path gitleaks-report.json
   artifacts:
     reports:
+      # GitLab can parse this for security dashboard
       secret_detection: gitleaks-report.json
     paths:
       - gitleaks-report.json
     when: always
     expire_in: 1 week
 
-gradle_test:
-  stage: test
-  image: gradle:9.3.1-noble
-  script:
-    - gradle test
-
-slack_alert_failure:
+notify_alert_failure:
   stage: notify
   image: curlimages/curl:8.18.0
   script:
@@ -34,3 +32,9 @@ slack_alert_failure:
   dependencies:
     - gitleaks_scan
   when: on_failure
+
+gradle_test:
+  stage: test
+  image: gradle:9.3.1-noble
+  script:
+    - gradle test

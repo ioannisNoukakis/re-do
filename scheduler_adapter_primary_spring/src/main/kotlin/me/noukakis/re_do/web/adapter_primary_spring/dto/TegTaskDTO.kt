@@ -7,8 +7,9 @@ import jakarta.validation.constraints.Positive
 import me.noukakis.re_do.scheduler.model.TEGArtefactDefinition
 import me.noukakis.re_do.scheduler.model.TEGArtefactType
 import me.noukakis.re_do.common.model.TEGTask
-import java.time.Duration
 import java.time.temporal.ChronoUnit
+import kotlin.time.Duration
+import kotlin.time.toKotlinDuration
 
 data class TegTaskDTO(
     @field:NotBlank(message = "Task name must not be blank")
@@ -84,7 +85,7 @@ data class DurationDTO(
             TemporalUnitDTO.HOURS -> ChronoUnit.HOURS
             TemporalUnitDTO.DAYS -> ChronoUnit.DAYS
         }
-        return Duration.of(amount!!, chronoUnit)
+        return java.time.Duration.of(amount!!, chronoUnit).toKotlinDuration()
     }
 }
 
