@@ -1,11 +1,13 @@
 package me.noukakis.re_do.runner
 
+import kotlinx.coroutines.test.runTest
 import me.noukakis.re_do.common.model.TEGMessageIn
 import me.noukakis.re_do.common.model.TEGMessageOut
 import me.noukakis.re_do.scheduler.model.TaskRunnerError
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import kotlin.time.Duration
 
 class TaskRunnerTest {
     private lateinit var sut: TaskRunnerSutBuilder
@@ -26,19 +28,20 @@ class TaskRunnerTest {
                     implementationName = TEST_TASK_IMPL_NAME,
                     artefacts = emptyList(),
                     arguments = listOf("arg1", "arg2"),
+                    timeout = Duration.INFINITE,
                 )
             )
         }
 
         @Test
-        fun `should not fail`() {
+        fun `should not fail`() = runTest {
             sut.whenTheTaskIsRun()
 
             sut.thenTheTaskShouldCompleteSuccessfully()
         }
 
         @Test
-        fun `should emit the completed event`() {
+        fun `should emit the completed event`() = runTest {
             sut.whenTheTaskIsRun()
 
             sut.thenTheEventsShouldBeEmitted(
@@ -60,12 +63,13 @@ class TaskRunnerTest {
                     implementationName = TEST_TASK_IMPL_NAME,
                     artefacts = emptyList(),
                     arguments = emptyList(),
+                    timeout = Duration.INFINITE,
                 )
             )
         }
 
         @Test
-        fun `should fail`() {
+        fun `should fail`() = runTest {
             sut.whenTheTaskIsRun()
 
             sut.thenTheTaskShouldFailWith(
@@ -74,7 +78,7 @@ class TaskRunnerTest {
         }
 
         @Test
-        fun `should not emit any events`() {
+        fun `should not emit any events`() = runTest {
             sut.whenTheTaskIsRun()
 
             sut.thenTheEventsShouldBeEmitted(
@@ -97,12 +101,13 @@ class TaskRunnerTest {
                     implementationName = TEST_TASK_IMPL_NAME,
                     artefacts = emptyList(),
                     arguments = emptyList(),
+                    timeout = Duration.INFINITE,
                 )
             )
         }
 
         @Test
-        fun `should fail with task failed error`() {
+        fun `should fail with task failed error`() = runTest {
             sut.whenTheTaskIsRun()
 
             sut.thenTheTaskShouldFailWith(
@@ -111,7 +116,7 @@ class TaskRunnerTest {
         }
 
         @Test
-        fun `should emit a failed event`() {
+        fun `should emit a failed event`() = runTest {
             sut.whenTheTaskIsRun()
 
             sut.thenTheEventsShouldBeEmitted(
@@ -134,12 +139,13 @@ class TaskRunnerTest {
                     implementationName = TEST_TASK_IMPL_NAME,
                     artefacts = emptyList(),
                     arguments = emptyList(),
+                    timeout = Duration.INFINITE,
                 )
             )
         }
 
         @Test
-        fun `should emit progress events`() {
+        fun `should emit progress events`() = runTest {
             sut.whenTheTaskIsRun()
 
             sut.thenTheEventsShouldBeEmitted(
@@ -163,12 +169,13 @@ class TaskRunnerTest {
                     implementationName = TEST_TASK_IMPL_NAME,
                     artefacts = emptyList(),
                     arguments = emptyList(),
+                    timeout = Duration.INFINITE,
                 )
             )
         }
 
         @Test
-        fun `should emit log events`() {
+        fun `should emit log events`() = runTest {
             sut.whenTheTaskIsRun()
 
             sut.thenTheEventsShouldBeEmitted(
@@ -191,12 +198,13 @@ class TaskRunnerTest {
                     implementationName = TEST_TASK_IMPL_NAME,
                     artefacts = emptyList(),
                     arguments = emptyList(),
+                    timeout = Duration.parseOrNull("10s")!!,
                 )
             )
         }
 
         @Test
-        fun `should fail with task timed out error`() {
+        fun `should fail with task timed out error`() = runTest {
             sut.whenTheTaskIsRun()
 
             sut.thenTheTaskShouldFailWith(
@@ -205,7 +213,7 @@ class TaskRunnerTest {
         }
 
         @Test
-        fun `should emit a failed event`() {
+        fun `should emit a failed event`() = runTest {
             sut.whenTheTaskIsRun()
 
             sut.thenTheEventsShouldBeEmitted(

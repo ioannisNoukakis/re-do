@@ -1,6 +1,7 @@
 package me.noukakis.re_do.common.model
 
 import me.noukakis.re_do.scheduler.model.TEGArtefact
+import kotlin.time.Duration
 
 sealed class TEGMessageOut {
     data class TEGRunTaskMessage(
@@ -8,6 +9,7 @@ sealed class TEGMessageOut {
         val implementationName: String,
         val artefacts: List<TEGArtefact>,
         val arguments: List<String>,
+        val timeout: Duration,
     ) : TEGMessageOut()
 }
 

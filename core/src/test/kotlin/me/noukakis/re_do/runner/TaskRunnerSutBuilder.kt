@@ -15,6 +15,7 @@ import me.noukakis.re_do.runner.port.TaskTimedOut
 import me.noukakis.re_do.scheduler.model.TaskRunnerError
 import me.noukakis.re_do.scheduler.model.TEGArtefact
 import org.junit.jupiter.api.Assertions.assertEquals
+import kotlin.time.Duration
 
 const val TEST_TASK_NAME = "TestTask"
 const val TEST_TASK_IMPL_NAME = "TestTaskImpl"
@@ -26,7 +27,7 @@ class ConfigurableRunWithTimeoutAdapter : RunWithTimeoutPort {
         shouldTimeout = true
     }
 
-    override fun <T> run(supplier: () -> T): Either<TaskTimedOut, T> =
+    override suspend fun <T> execute(supplier: suspend () -> T, timeout: Duration): Either<TaskTimedOut, T> =
         if (shouldTimeout) TaskTimedOut.left()
         else supplier().right()
 }
@@ -105,7 +106,7 @@ class TaskRunnerSutBuilder {
         runWithTimeoutAdapter.willTimeout()
     }
 
-    fun whenTheTaskIsRun() {
+    suspend fun whenTheTaskIsRun() {
         result = TaskRunner(messagingAdapter, runWithTimeoutAdapter, implementations).execute(message)
     }
 

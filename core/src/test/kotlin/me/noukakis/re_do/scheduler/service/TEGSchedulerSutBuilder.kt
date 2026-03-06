@@ -13,8 +13,8 @@ import me.noukakis.re_do.scheduler.adapter.StubNowAdapter
 import me.noukakis.re_do.scheduler.adapter.StubUuidAdapter
 import me.noukakis.re_do.scheduler.model.*
 import org.junit.jupiter.api.Assertions.assertEquals
-import java.time.Duration
 import java.time.Instant
+import kotlin.time.Duration
 
 val IDENTITY = Identity(
     id = "user-123",
@@ -136,7 +136,7 @@ const val TEST_TASK_IMPL_NAME = "TestTaskImpl"
 val TEG_TASK_INPUTS = listOf<TEGArtefactDefinition>()
 val TEG_TASK_OUTPUTS = listOf<TEGArtefactDefinition>()
 val TEG_TASK_ARGUMENTS = listOf<String>()
-val TEG_TASK_TIMEOUT = Duration.ofDays(100)
+val TEG_TASK_TIMEOUT = Duration.parseOrNull("100d")!!
 
 class TEGTaskBuilder(
     private val name: String
@@ -197,6 +197,7 @@ class RunTaskTEGMessageBuilder(
     private var implementationName: String = TEST_TASK_IMPL_NAME,
     private var artefacts: List<TEGArtefact> = listOf(),
     private var arguments: List<String> = listOf(),
+    private var timeout: Duration = TEG_TASK_TIMEOUT,
 ) {
     fun withImplementation(implementationName: String): RunTaskTEGMessageBuilder {
         this.implementationName = implementationName
@@ -213,12 +214,18 @@ class RunTaskTEGMessageBuilder(
         return this
     }
 
+    fun withTimeout(timeout: Duration): RunTaskTEGMessageBuilder {
+        this.timeout = timeout
+        return this
+    }
+
     fun build(): TEGMessageOut.TEGRunTaskMessage {
         return TEGMessageOut.TEGRunTaskMessage(
             taskName = this.taskName,
             implementationName = this.implementationName,
             artefacts = this.artefacts,
             arguments = this.arguments,
+            timeout = this.timeout,
         )
     }
 }

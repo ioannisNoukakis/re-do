@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import kotlin.time.Duration
 
 class InMemoryMessagingAdapterTest {
     private lateinit var adapter: InMemoryMessagingAdapter
@@ -27,6 +28,7 @@ class InMemoryMessagingAdapterTest {
                 implementationName = "task1Impl",
                 artefacts = emptyList(),
                 arguments = emptyList(),
+                timeout = Duration.INFINITE,
             )
 
             adapter.send(message)
@@ -41,6 +43,7 @@ class InMemoryMessagingAdapterTest {
                 implementationName = "task1Impl",
                 artefacts = emptyList(),
                 arguments = emptyList(),
+                timeout = Duration.INFINITE,
             )
             val message2 = TEGMessageOut.TEGRunTaskMessage(
                 taskName = "task2",
@@ -49,6 +52,7 @@ class InMemoryMessagingAdapterTest {
                     TEGArtefact.TEGArtefactStringValue("input", "value")
                 ),
                 arguments = listOf("arg1", "arg2"),
+                timeout = Duration.INFINITE,
             )
 
             adapter.send(message1)
@@ -67,6 +71,7 @@ class InMemoryMessagingAdapterTest {
                 implementationName = "task1Impl",
                 artefacts = emptyList(),
                 arguments = emptyList(),
+                timeout = Duration.INFINITE,
             )
             adapter.send(message)
 
@@ -85,6 +90,7 @@ class InMemoryMessagingAdapterTest {
                 implementationName = "task1Impl",
                 artefacts = emptyList(),
                 arguments = emptyList(),
+                timeout = Duration.INFINITE,
             )
             adapter.send(message)
 
@@ -175,7 +181,8 @@ class InMemoryMessagingAdapterTest {
                     taskName = "task1",
                     implementationName = "task1Impl",
                     artefacts = emptyList(),
-                    arguments = emptyList()
+                    arguments = emptyList(),
+                    timeout = Duration.INFINITE,
                 )
             )
             adapter.send(
@@ -183,7 +190,8 @@ class InMemoryMessagingAdapterTest {
                     taskName = "task2",
                     implementationName = "task2Impl",
                     artefacts = emptyList(),
-                    arguments = emptyList()
+                    arguments = emptyList(),
+                    timeout = Duration.INFINITE,
                 )
             )
 
@@ -208,7 +216,8 @@ class InMemoryMessagingAdapterTest {
                 taskName = "task1",
                 implementationName = "task1Impl",
                 artefacts = emptyList(),
-                arguments = emptyList()
+                arguments = emptyList(),
+                timeout = Duration.INFINITE,
             ))
             adapter.receive(TEGMessageIn.TEGTaskResultMessage("task1", emptyList()))
 

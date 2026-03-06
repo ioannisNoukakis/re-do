@@ -9,9 +9,9 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
-import java.time.Duration
 import java.time.Instant
 import java.util.stream.Stream
+import kotlin.time.Duration
 
 val NOW_0: Instant = Instant.ofEpochMilli(0)
 val NOW_1: Instant = Instant.ofEpochMilli(1)
@@ -1094,7 +1094,7 @@ class TEGSchedulerTest {
     }
 
     @Nested
-    inner class HandleWorkerFailureMessage {
+    inner class HandleWorkerFailureMessageNoParent {
         lateinit var baseEvents: List<TEGEvent>
 
         @BeforeEach
@@ -1113,17 +1113,6 @@ class TEGSchedulerTest {
                 ),
                 TEGEvent.Scheduled(
                     taskName = "A",
-                    NOW_0,
-                ),
-                TEGEvent.Created(
-                    TEGTaskBuilder("B")
-                        .withInputs(
-                            TEGArtefactDefinition(
-                                name = "AOutput",
-                                type = TEGArtefactType.STRING_VALUE
-                            )
-                        )
-                        .build(),
                     NOW_0,
                 ),
             )
@@ -1255,36 +1244,6 @@ class TEGSchedulerTest {
         }
 
         @Test
-        fun `on failure of a task with no dependents, no new tasks should be scheduled`() {
-            val eventsForTaskWithNoDependents = listOf(
-                TEGEvent.Created(
-                    TEGTaskBuilder("A")
-                        .build(),
-                    NOW_0,
-                ),
-                TEGEvent.Scheduled(
-                    taskName = "A",
-                    NOW_0,
-                ),
-            )
-            sut.givenTheExistingEvents(mapOf(TEST_TEG_ID to eventsForTaskWithNoDependents))
-
-            sut.whenGettingTegUpdate(
-                TEGMessageIn.TEGTaskFailedMessage(
-                    taskName = "A",
-                    reason = "Worker crashed"
-                )
-            )
-
-            sut.thenTheUpdateResultIsASuccess()
-            sut.thenTheScheduledTasksAre(
-                TEGMessageBuilder("A")
-                    .asRunType()
-                    .build()
-            )
-        }
-
-        @Test
         fun `on failure for an already completed task, the event should be saved but no rescheduling`() {
             val eventsWithCompletedTask = baseEvents + listOf(
                 TEGEvent.Completed(
@@ -1293,8 +1252,7 @@ class TEGSchedulerTest {
                     outputArtefacts = listOf(
                         TEGArtefact.TEGArtefactStringValue(name = "AOutput", value = "result of A")
                     )
-                ),
-                TEGEvent.Scheduled(taskName = "B", timestamp = NOW_1),
+                )
             )
             sut.givenTheExistingEvents(mapOf(TEST_TEG_ID to eventsWithCompletedTask))
 
@@ -1333,7 +1291,6 @@ class TEGSchedulerTest {
                     timestamp = NOW_3,
                     outputArtefacts = listOf()
                 ),
-                TEGEvent.Scheduled(taskName = "B", timestamp = NOW_3),
             )
             sut.givenTheExistingEvents(mapOf(TEST_TEG_ID to eventsWithTwoFailures))
 
@@ -1356,6 +1313,75 @@ class TEGSchedulerTest {
                         ),
                     )
                 )
+            )
+        }
+    }
+
+    @Nested
+    inner class HandleWorkerFailureMessageWithParent {
+        lateinit var baseEvents: List<TEGEvent>
+
+        @BeforeEach
+        fun setup() {
+            baseEvents = listOf(
+                TEGEvent.Created(
+                    TEGTaskBuilder("A")
+                        .withOutputs(
+                            TEGArtefactDefinition(
+                                name = "AOutput",
+                                type = TEGArtefactType.STRING_VALUE
+                            )
+                        )
+                        .build(),
+                    NOW_0,
+                ),
+                TEGEvent.Scheduled(
+                    taskName = "A",
+                    NOW_0,
+                ),
+                TEGEvent.Completed(
+                    taskName = "A",
+                    timestamp = NOW_1,
+                    outputArtefacts = listOf(
+                        TEGArtefact.TEGArtefactStringValue(name = "AOutput", value = "result of A")
+                    )
+                ),
+                TEGEvent.Created(
+                    TEGTaskBuilder("B")
+                        .withArguments("arg1", "arg2")
+                        .withInputs(
+                            TEGArtefactDefinition(
+                                name = "AOutput",
+                                type = TEGArtefactType.STRING_VALUE
+                            )
+                        )
+                        .build(),
+                    NOW_0,
+                ),
+            )
+            sut.givenTheDatesToReturn(NOW_3)
+        }
+
+        @Test
+        fun `on task failure, the task should be rescheduled`() {
+            sut.givenTheExistingEvents(mapOf(TEST_TEG_ID to baseEvents))
+
+            sut.whenGettingTegUpdate(
+                TEGMessageIn.TEGTaskFailedMessage(
+                    taskName = "B",
+                    reason = "Worker crashed"
+                )
+            )
+
+            sut.thenTheUpdateResultIsASuccess()
+            sut.thenTheScheduledTasksAre(
+                TEGMessageBuilder("B")
+                    .asRunType()
+                    .withArguments("arg1", "arg2")
+                    .withArtefacts(
+                        TEGArtefact.TEGArtefactStringValue(name = "AOutput", value = "result of A")
+                    )
+                    .build()
             )
         }
     }
@@ -1427,7 +1453,7 @@ class TEGSchedulerTest {
                                 type = TEGArtefactType.STRING_VALUE
                             )
                         )
-                        .withTimeout(Duration.ofMillis(5))
+                        .withTimeout(Duration.parse("5ms"))
                         .build(),
                     timestamp = NOW_0,
                 ),
@@ -1452,7 +1478,7 @@ class TEGSchedulerTest {
                         TEGEvent.Failed(
                             taskName = "A",
                             timestamp = NOW_6,
-                            reason = "Task timed out after PT0.005S (started at 1970-01-01T00:00:00Z)",
+                            reason = "Task timed out after 5ms (started at 1970-01-01T00:00:00Z)",
                         ),
                         TEGEvent.Scheduled(
                             taskName = "A",
@@ -1474,6 +1500,7 @@ class TEGSchedulerTest {
             sut.thenTheScheduledTasksAre(
                 TEGMessageBuilder("A")
                     .asRunType()
+                    .withTimeout(Duration.parse("5ms"))
                     .build()
             )
         }
@@ -1484,7 +1511,7 @@ class TEGSchedulerTest {
                 TEGEvent.Created(
                     TEGTaskBuilder("A")
                         .withOutputs(TEGArtefactDefBuilder("AOutput").build())
-                        .withTimeout(Duration.ofMillis(5))
+                        .withTimeout(Duration.parse("5ms"))
                         .build(),
                     timestamp = NOW_0,
                 ),
@@ -1492,7 +1519,7 @@ class TEGSchedulerTest {
                 TEGEvent.Created(
                     TEGTaskBuilder("B")
                         .withOutputs(TEGArtefactDefBuilder("BOutput").build())
-                        .withTimeout(Duration.ofMillis(5))
+                        .withTimeout(Duration.parse("5ms"))
                         .build(),
                     timestamp = NOW_0,
                 ),
@@ -1503,7 +1530,7 @@ class TEGSchedulerTest {
                             TEGArtefactDefBuilder("AOutput").build(),
                             TEGArtefactDefBuilder("BOutput").build(),
                         )
-                        .withTimeout(Duration.ofMillis(5))
+                        .withTimeout(Duration.parse("5ms"))
                         .build(),
                     timestamp = NOW_0,
                 ),
@@ -1518,9 +1545,11 @@ class TEGSchedulerTest {
             sut.thenTheScheduledTasksAre(
                 TEGMessageBuilder("A")
                     .asRunType()
+                    .withTimeout(Duration.parse("5ms"))
                     .build(),
                 TEGMessageBuilder("B")
                     .asRunType()
+                    .withTimeout(Duration.parse("5ms"))
                     .build(),
             )
             sut.thenThePersistedEventsShouldBe(
@@ -1529,13 +1558,13 @@ class TEGSchedulerTest {
                         TEGEvent.Failed(
                             taskName = "A",
                             timestamp = NOW_6,
-                            reason = "Task timed out after PT0.005S (started at 1970-01-01T00:00:00Z)",
+                            reason = "Task timed out after 5ms (started at 1970-01-01T00:00:00Z)",
                         ),
                         TEGEvent.Scheduled(taskName = "A", timestamp = NOW_6),
                         TEGEvent.Failed(
                             taskName = "B",
                             timestamp = NOW_6,
-                            reason = "Task timed out after PT0.005S (started at 1970-01-01T00:00:00Z)",
+                            reason = "Task timed out after 5ms (started at 1970-01-01T00:00:00Z)",
                         ),
                         TEGEvent.Scheduled(taskName = "B", timestamp = NOW_6),
                     )
@@ -1560,7 +1589,7 @@ class TEGSchedulerTest {
             val eventsWithTwoTimeoutFailures = listOf(
                 TEGEvent.Created(
                     TEGTaskBuilder("A")
-                        .withTimeout(Duration.ofMillis(5))
+                        .withTimeout(Duration.parse("5ms"))
                         .build(),
                     timestamp = NOW_0,
                 ),
@@ -1568,13 +1597,13 @@ class TEGSchedulerTest {
                 TEGEvent.Failed(
                     taskName = "A",
                     timestamp = NOW_6,
-                    reason = "Task timed out after PT0.005S (started at 1970-01-01T00:00:00Z)",
+                    reason = "Task timed out after 5ms (started at 1970-01-01T00:00:00Z)",
                 ),
                 TEGEvent.Scheduled(taskName = "A", timestamp = NOW_6),
                 TEGEvent.Failed(
                     taskName = "A",
                     timestamp = NOW_12,
-                    reason = "Task timed out after PT0.005S (started at 1970-01-01T00:00:00.006Z)",
+                    reason = "Task timed out after 5ms (started at 1970-01-01T00:00:00.006Z)",
                 ),
                 TEGEvent.Scheduled(taskName = "A", timestamp = NOW_12),
             )
@@ -1591,7 +1620,7 @@ class TEGSchedulerTest {
                         TEGEvent.Failed(
                             taskName = "A",
                             timestamp = Instant.ofEpochMilli(18),
-                            reason = "Task timed out after PT0.005S (started at 1970-01-01T00:00:00.012Z)",
+                            reason = "Task timed out after 5ms (started at 1970-01-01T00:00:00.012Z)",
                         ),
                         TEGEvent.TEGFailed(
                             timestamp = Instant.ofEpochMilli(18),
@@ -1615,7 +1644,7 @@ class TEGSchedulerTest {
             val baseEvents = listOf(
                 TEGEvent.Created(
                     TEGTaskBuilder("A")
-                        .withTimeout(Duration.ofMillis(5))
+                        .withTimeout(Duration.parse("5ms"))
                         .build(),
                     timestamp = NOW_0,
                 ),
@@ -1646,7 +1675,7 @@ class TEGSchedulerTest {
             val baseEvents = listOf(
                 TEGEvent.Created(
                     TEGTaskBuilder("A")
-                        .withTimeout(Duration.ofMillis(5))
+                        .withTimeout(Duration.parse("5ms"))
                         .build(),
                     timestamp = NOW_0,
                 ),

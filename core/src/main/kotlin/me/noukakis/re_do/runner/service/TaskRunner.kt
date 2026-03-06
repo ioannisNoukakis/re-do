@@ -14,11 +14,11 @@ class TaskRunner(
     private val runWithTimeoutPort: RunWithTimeoutPort,
     private val implementations: Map<String, TaskImplementationPort> = emptyMap(),
 ) {
-    fun execute(message: TEGMessageOut): Either<TaskRunnerError, Unit> = when (message) {
+    suspend fun execute(message: TEGMessageOut): Either<TaskRunnerError, Unit> = when (message) {
         is TEGMessageOut.TEGRunTaskMessage -> runTask(message)
     }
 
-    private fun runTask(message: TEGMessageOut.TEGRunTaskMessage): Either<TaskRunnerError, Unit> = either {
+    private suspend fun runTask(message: TEGMessageOut.TEGRunTaskMessage): Either<TaskRunnerError, Unit> = either {
         val impl = implementations[message.implementationName]
             ?: return handleMissingImplementation(message)
 
@@ -42,7 +42,10 @@ class TaskRunner(
             }
         }
 
-        val implResult = runWithTimeoutPort.run { impl.run(message.artefacts, message.arguments, context) }
+        val implResult = runWithTimeoutPort.execute(
+            supplier = { impl.run(message.artefacts, message.arguments, context) },
+            timeout = message.timeout
+        )
             .fold(
                 ifLeft = {
                     messagingPort.send(

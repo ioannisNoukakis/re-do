@@ -2,7 +2,7 @@ package me.noukakis.re_do.common.model
 
 import me.noukakis.re_do.scheduler.model.TEGArtefactDefinition
 import me.noukakis.re_do.scheduler.model.TEGDependencyKey
-import java.time.Duration
+import kotlin.time.Duration
 
 data class TEGTask(
     val name: String,
@@ -17,6 +17,7 @@ data class TEGTask(
         implementationName = implementationName,
         artefacts = emptyList(),
         arguments = arguments,
+        timeout = timeout,
     )
 
     fun toDependencyKey() = TEGDependencyKey(
