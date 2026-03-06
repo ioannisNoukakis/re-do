@@ -6,9 +6,9 @@ import arrow.core.raise.either
 import arrow.core.right
 import me.noukakis.re_do.common.model.Identity
 import me.noukakis.re_do.scheduler.model.TEGEvent
-import me.noukakis.re_do.scheduler.model.TEGMessageIn
-import me.noukakis.re_do.scheduler.model.TEGMessageOut
-import me.noukakis.re_do.scheduler.model.TEGTask
+import me.noukakis.re_do.common.model.TEGMessageIn
+import me.noukakis.re_do.common.model.TEGMessageOut
+import me.noukakis.re_do.common.model.TEGTask
 import me.noukakis.re_do.scheduler.model.TegSchedulingError
 import me.noukakis.re_do.scheduler.model.TegTimeoutCheckError
 import me.noukakis.re_do.scheduler.model.TegUpdateError
@@ -201,6 +201,7 @@ class TEGScheduler(
                 messagingPort.send(
                     TEGMessageOut.TEGRunTaskMessage(
                         taskName = it.task.name,
+                        implementationName = it.task.implementationName,
                         arguments = it.task.arguments,
                         artefacts = it.task.inputs.map { input ->
                             completedArtefacts.find { artefact -> artefact.name() == input.name }!!
@@ -255,10 +256,12 @@ class TEGScheduler(
         val scheduledEvent = TEGEvent.Scheduled(taskName = failedEvent.taskName, timestamp = now)
         persistencePort.saveEvents(tegId, listOf(failedEvent) + if (!isThereAnEarlierSuccessfulCompletion) listOf(scheduledEvent) else emptyList())
         if (!isThereAnEarlierSuccessfulCompletion) {
+            val offendingTask = events.filterIsInstance<TEGEvent.Created>().find { it.task.name == failedEvent.taskName }!!.task
             messagingPort.send(
                 TEGMessageOut.TEGRunTaskMessage(
-                    taskName = failedEvent.taskName,
-                    arguments = events.filterIsInstance<TEGEvent.Created>().find { it.task.name == failedEvent.taskName }!!.task.arguments,
+                    taskName = offendingTask.name,
+                    implementationName = offendingTask.implementationName,
+                    arguments = offendingTask.arguments,
                     artefacts = emptyList(),
                 )
             )

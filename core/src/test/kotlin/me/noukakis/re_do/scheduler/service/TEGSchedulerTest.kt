@@ -1,5 +1,7 @@
 package me.noukakis.re_do.scheduler.service
 
+import me.noukakis.re_do.common.model.TEGMessageIn
+import me.noukakis.re_do.common.model.TEGTask
 import me.noukakis.re_do.scheduler.model.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
@@ -21,11 +23,11 @@ val NOW_6: Instant = Instant.ofEpochMilli(6)
 val NOW_12: Instant = Instant.ofEpochMilli(12)
 
 class TEGSchedulerTest {
-    private lateinit var sut: SchedulerSutBuilder
+    private lateinit var sut: TEGSchedulerSutBuilder
 
     @BeforeEach
     fun setup() {
-        sut = SchedulerSutBuilder()
+        sut = TEGSchedulerSutBuilder()
     }
 
     @Nested
@@ -36,6 +38,7 @@ class TEGSchedulerTest {
         // Mismatched artefact types between producer and consumer
         // Receiving messages for non-existent TEG ID
         // Receiving messages for a TEG that's already marked as NoMoreTasksToSchedule or TEGFailed
+        // Tasks with missing implementations (if we want to validate that at scheduling time and not at worker level)
         @BeforeEach
         fun setup() {
             sut.givenTheDatesToReturn(NOW_0)
@@ -69,6 +72,7 @@ class TEGSchedulerTest {
         fun `should schedule tasks that can immediately run`() {
             sut.whenSubmittingTheTeg(
                 TEGTaskBuilder("A")
+                    .withImplementation("ImplA")
                     .withOutputs(TEGArtefactDefBuilder("AOutput").build())
                     .withArguments("arg1", "arg2")
                     .build(),
@@ -80,6 +84,7 @@ class TEGSchedulerTest {
             sut.thenTheScheduledTasksAre(
                 TEGMessageBuilder("A")
                     .asRunType()
+                    .withImplementation("ImplA")
                     .withArguments("arg1", "arg2")
                     .build(),
             )

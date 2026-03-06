@@ -1,8 +1,11 @@
-package me.noukakis.re_do.scheduler.model
+package me.noukakis.re_do.common.model
+
+import me.noukakis.re_do.scheduler.model.TEGArtefact
 
 sealed class TEGMessageOut {
     data class TEGRunTaskMessage(
         val taskName: String,
+        val implementationName: String,
         val artefacts: List<TEGArtefact>,
         val arguments: List<String>,
     ) : TEGMessageOut()

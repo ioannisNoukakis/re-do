@@ -1,6 +1,6 @@
 package me.noukakis.re_do.web.adapter_primary_spring.configuration
 
-import me.noukakis.re_do.adapters.scheduler.InMemoryMessagingAdapter
+import me.noukakis.re_do.adapters.common.InMemoryMessagingAdapter
 import me.noukakis.re_do.adapters.scheduler.InMemoryPersistenceAdapter
 import me.noukakis.re_do.adapters.scheduler.StdLibNowAdapter
 import me.noukakis.re_do.adapters.scheduler.StdLibUuidAdapter

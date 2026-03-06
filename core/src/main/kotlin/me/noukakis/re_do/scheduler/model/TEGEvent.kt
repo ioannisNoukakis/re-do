@@ -1,6 +1,7 @@
 package me.noukakis.re_do.scheduler.model
 
 import me.noukakis.re_do.common.model.Identity
+import me.noukakis.re_do.common.model.TEGTask
 import java.time.Instant
 
 sealed interface TEGEvent {

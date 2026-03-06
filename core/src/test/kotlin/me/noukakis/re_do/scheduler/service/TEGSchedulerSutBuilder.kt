@@ -3,9 +3,12 @@ package me.noukakis.re_do.scheduler.service
 import arrow.core.Either
 import arrow.core.left
 import arrow.core.right
+import me.noukakis.re_do.adapters.common.InMemoryMessagingAdapter
 import me.noukakis.re_do.adapters.scheduler.InMemoryPersistenceAdapter
 import me.noukakis.re_do.common.model.Identity
-import me.noukakis.re_do.scheduler.adapter.SpyMessagingAdapter
+import me.noukakis.re_do.common.model.TEGMessageIn
+import me.noukakis.re_do.common.model.TEGMessageOut
+import me.noukakis.re_do.common.model.TEGTask
 import me.noukakis.re_do.scheduler.adapter.StubNowAdapter
 import me.noukakis.re_do.scheduler.adapter.StubUuidAdapter
 import me.noukakis.re_do.scheduler.model.*
@@ -21,8 +24,8 @@ val IDENTITY = Identity(
 
 const val TEST_TEG_ID = "test-teg-id"
 
-class SchedulerSutBuilder {
-    val messagingAdapter = SpyMessagingAdapter()
+class TEGSchedulerSutBuilder {
+    val messagingAdapter = InMemoryMessagingAdapter()
     val persistenceAdapter = InMemoryPersistenceAdapter()
     val uuidAdapter = StubUuidAdapter(TEST_TEG_ID)
     val nowAdapter = StubNowAdapter()
@@ -63,7 +66,7 @@ class SchedulerSutBuilder {
     fun thenTheScheduledTasksAre(vararg expectedTegMessage: TEGMessageOut) {
         assertEquals(
             expectedTegMessage.toList(),
-            messagingAdapter.sentMessages,
+            messagingAdapter.outgoingMessages,
         )
     }
 
@@ -129,6 +132,7 @@ class SchedulerSutBuilder {
     }
 }
 
+const val TEST_TASK_IMPL_NAME = "TestTaskImpl"
 val TEG_TASK_INPUTS = listOf<TEGArtefactDefinition>()
 val TEG_TASK_OUTPUTS = listOf<TEGArtefactDefinition>()
 val TEG_TASK_ARGUMENTS = listOf<String>()
@@ -137,10 +141,16 @@ val TEG_TASK_TIMEOUT = Duration.ofDays(100)
 class TEGTaskBuilder(
     private val name: String
 ) {
+    private var implementationName: String = TEST_TASK_IMPL_NAME
     private var inputs: List<TEGArtefactDefinition> = TEG_TASK_INPUTS
     private var outputs: List<TEGArtefactDefinition> = TEG_TASK_OUTPUTS
     private var arguments: List<String> = TEG_TASK_ARGUMENTS
     private var timeout: Duration = TEG_TASK_TIMEOUT
+
+    fun withImplementation(implementationName: String): TEGTaskBuilder {
+        this.implementationName = implementationName
+        return this
+    }
 
     fun withOutputs(vararg tegArtefactDefinition: TEGArtefactDefinition): TEGTaskBuilder {
         this.outputs = tegArtefactDefinition.toList()
@@ -165,6 +175,7 @@ class TEGTaskBuilder(
     fun build(): TEGTask {
         return TEGTask(
             name = this.name,
+            implementationName = this.implementationName,
             inputs = this.inputs,
             outputs = this.outputs,
             arguments = this.arguments,
@@ -183,9 +194,15 @@ class TEGMessageBuilder(
 
 class RunTaskTEGMessageBuilder(
     private val taskName: String,
+    private var implementationName: String = TEST_TASK_IMPL_NAME,
     private var artefacts: List<TEGArtefact> = listOf(),
     private var arguments: List<String> = listOf(),
 ) {
+    fun withImplementation(implementationName: String): RunTaskTEGMessageBuilder {
+        this.implementationName = implementationName
+        return this
+    }
+
     fun withArtefacts(vararg artefacts: TEGArtefact): RunTaskTEGMessageBuilder {
         this.artefacts = artefacts.toList()
         return this
@@ -199,6 +216,7 @@ class RunTaskTEGMessageBuilder(
     fun build(): TEGMessageOut.TEGRunTaskMessage {
         return TEGMessageOut.TEGRunTaskMessage(
             taskName = this.taskName,
+            implementationName = this.implementationName,
             artefacts = this.artefacts,
             arguments = this.arguments,
         )
