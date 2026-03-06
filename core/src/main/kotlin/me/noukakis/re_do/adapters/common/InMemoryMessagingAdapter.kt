@@ -1,10 +1,10 @@
-package me.noukakis.re_do.adapters.scheduler
+package me.noukakis.re_do.adapters.common
 
-import me.noukakis.re_do.scheduler.model.TEGMessageIn
-import me.noukakis.re_do.scheduler.model.TEGMessageOut
+import me.noukakis.re_do.common.model.TEGMessageIn
+import me.noukakis.re_do.common.model.TEGMessageOut
 import me.noukakis.re_do.scheduler.port.MessagingPort
 
-class InMemoryMessagingAdapter : MessagingPort {
+class InMemoryMessagingAdapter : MessagingPort, me.noukakis.re_do.runner.port.MessagingPort {
     private val _outgoingMessages = mutableListOf<TEGMessageOut>()
     private val _incomingMessages = mutableListOf<TEGMessageIn>()
     private val outgoingCallbacks = mutableListOf<(TEGMessageOut) -> Unit>()
@@ -46,5 +46,6 @@ class InMemoryMessagingAdapter : MessagingPort {
         clearOutgoingMessages()
         clearIncomingMessages()
     }
-}
 
+    override fun send(message: TEGMessageIn) = receive(message)
+}

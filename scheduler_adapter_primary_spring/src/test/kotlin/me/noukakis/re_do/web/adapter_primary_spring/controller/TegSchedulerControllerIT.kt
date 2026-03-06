@@ -158,6 +158,36 @@ class TegSchedulerControllerTest {
     }
 
     @Test
+    fun `should return bad request when task implementation name is blank`() {
+        val request = ScheduleTegRequest(
+            requestingIdentity = IDENTITY,
+            tasks = listOf(tegTaskDTO { implementationName = "" })
+        )
+
+        restClient.post()
+            .uri("/api/v1/teg/schedule")
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(request)
+            .exchange()
+            .expectStatus().isBadRequest
+    }
+
+    @Test
+    fun `should return bad request when task implementation name is null`() {
+        val request = ScheduleTegRequest(
+            requestingIdentity = IDENTITY,
+            tasks = listOf(tegTaskDTO { implementationName = null })
+        )
+
+        restClient.post()
+            .uri("/api/v1/teg/schedule")
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(request)
+            .exchange()
+            .expectStatus().isBadRequest
+    }
+
+    @Test
     fun `should return bad request when timeout is null`() {
         val request = ScheduleTegRequest(
             requestingIdentity = IDENTITY,
@@ -486,12 +516,14 @@ class TegSchedulerControllerTest {
 
 class TegTaskDTOBuilder {
     var name: String? = "default-task"
+    var implementationName: String? = "default-implementation"
     var inputs: List<TegArtefactDefinitionDTO>? = emptyList()
     var outputs: List<TegArtefactDefinitionDTO>? = emptyList()
     var arguments: List<String>? = emptyList()
     var timeout: DurationDTO? = DurationDTO(amount = 30, temporalUnit = TemporalUnitDTO.SECONDS)
 
     fun name(name: String?) = apply { this.name = name }
+    fun implementationName(implementationName: String?) = apply { this.implementationName = implementationName }
     fun inputs(inputs: List<TegArtefactDefinitionDTO>?) = apply { this.inputs = inputs }
     fun outputs(outputs: List<TegArtefactDefinitionDTO>?) = apply { this.outputs = outputs }
     fun arguments(arguments: List<String>?) = apply { this.arguments = arguments }
@@ -499,6 +531,7 @@ class TegTaskDTOBuilder {
 
     fun build() = TegTaskDTO(
         name = name,
+        implementationName = implementationName,
         inputs = inputs,
         outputs = outputs,
         arguments = arguments,

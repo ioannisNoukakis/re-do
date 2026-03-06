@@ -1,9 +1,12 @@
-package me.noukakis.re_do.scheduler.model
+package me.noukakis.re_do.common.model
 
+import me.noukakis.re_do.scheduler.model.TEGArtefactDefinition
+import me.noukakis.re_do.scheduler.model.TEGDependencyKey
 import java.time.Duration
 
 data class TEGTask(
     val name: String,
+    val implementationName: String,
     val inputs: List<TEGArtefactDefinition>,
     val outputs: List<TEGArtefactDefinition>,
     val arguments: List<String>,
@@ -11,6 +14,7 @@ data class TEGTask(
 ) {
     fun toRunTaskMessageNoArtefacts() = TEGMessageOut.TEGRunTaskMessage(
         taskName = name,
+        implementationName = implementationName,
         artefacts = emptyList(),
         arguments = arguments,
     )

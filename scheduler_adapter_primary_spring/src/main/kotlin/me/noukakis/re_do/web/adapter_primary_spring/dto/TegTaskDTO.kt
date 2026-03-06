@@ -6,13 +6,16 @@ import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Positive
 import me.noukakis.re_do.scheduler.model.TEGArtefactDefinition
 import me.noukakis.re_do.scheduler.model.TEGArtefactType
-import me.noukakis.re_do.scheduler.model.TEGTask
+import me.noukakis.re_do.common.model.TEGTask
 import java.time.Duration
 import java.time.temporal.ChronoUnit
 
 data class TegTaskDTO(
     @field:NotBlank(message = "Task name must not be blank")
     val name: String?,
+
+    @field:NotBlank(message = "Task implementation name must not be blank")
+    val implementationName: String?,
 
     @field:NotNull(message = "Inputs must not be null")
     @field:Valid
@@ -33,6 +36,7 @@ data class TegTaskDTO(
     fun toDomain(): TEGTask {
         return TEGTask(
             name = name!!,
+            implementationName = implementationName!!,
             inputs = inputs!!.map { it.toDomain() },
             outputs = outputs!!.map { it.toDomain() },
             arguments = arguments!!,

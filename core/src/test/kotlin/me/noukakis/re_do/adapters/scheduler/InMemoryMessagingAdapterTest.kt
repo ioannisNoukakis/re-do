@@ -1,8 +1,9 @@
 package me.noukakis.re_do.adapters.scheduler
 
+import me.noukakis.re_do.adapters.common.InMemoryMessagingAdapter
 import me.noukakis.re_do.scheduler.model.TEGArtefact
-import me.noukakis.re_do.scheduler.model.TEGMessageIn
-import me.noukakis.re_do.scheduler.model.TEGMessageOut
+import me.noukakis.re_do.common.model.TEGMessageIn
+import me.noukakis.re_do.common.model.TEGMessageOut
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -23,6 +24,7 @@ class InMemoryMessagingAdapterTest {
         fun `sent messages are queued`() {
             val message = TEGMessageOut.TEGRunTaskMessage(
                 taskName = "task1",
+                implementationName = "task1Impl",
                 artefacts = emptyList(),
                 arguments = emptyList(),
             )
@@ -36,11 +38,13 @@ class InMemoryMessagingAdapterTest {
         fun `multiple sent messages are queued in order`() {
             val message1 = TEGMessageOut.TEGRunTaskMessage(
                 taskName = "task1",
+                implementationName = "task1Impl",
                 artefacts = emptyList(),
                 arguments = emptyList(),
             )
             val message2 = TEGMessageOut.TEGRunTaskMessage(
                 taskName = "task2",
+                implementationName = "task1Impl",
                 artefacts = listOf(
                     TEGArtefact.TEGArtefactStringValue("input", "value")
                 ),
@@ -60,6 +64,7 @@ class InMemoryMessagingAdapterTest {
 
             val message = TEGMessageOut.TEGRunTaskMessage(
                 taskName = "task1",
+                implementationName = "task1Impl",
                 artefacts = emptyList(),
                 arguments = emptyList(),
             )
@@ -77,6 +82,7 @@ class InMemoryMessagingAdapterTest {
 
             val message = TEGMessageOut.TEGRunTaskMessage(
                 taskName = "task1",
+                implementationName = "task1Impl",
                 artefacts = emptyList(),
                 arguments = emptyList(),
             )
@@ -164,8 +170,22 @@ class InMemoryMessagingAdapterTest {
     inner class ClearingQueues {
         @Test
         fun `clearing outgoing messages empties the queue`() {
-            adapter.send(TEGMessageOut.TEGRunTaskMessage("task1", emptyList(), emptyList()))
-            adapter.send(TEGMessageOut.TEGRunTaskMessage("task2", emptyList(), emptyList()))
+            adapter.send(
+                TEGMessageOut.TEGRunTaskMessage(
+                    taskName = "task1",
+                    implementationName = "task1Impl",
+                    artefacts = emptyList(),
+                    arguments = emptyList()
+                )
+            )
+            adapter.send(
+                TEGMessageOut.TEGRunTaskMessage(
+                    taskName = "task2",
+                    implementationName = "task2Impl",
+                    artefacts = emptyList(),
+                    arguments = emptyList()
+                )
+            )
 
             adapter.clearOutgoingMessages()
 
@@ -184,7 +204,12 @@ class InMemoryMessagingAdapterTest {
 
         @Test
         fun `clearing all messages empties both queues`() {
-            adapter.send(TEGMessageOut.TEGRunTaskMessage("task1", emptyList(), emptyList()))
+            adapter.send(TEGMessageOut.TEGRunTaskMessage(
+                taskName = "task1",
+                implementationName = "task1Impl",
+                artefacts = emptyList(),
+                arguments = emptyList()
+            ))
             adapter.receive(TEGMessageIn.TEGTaskResultMessage("task1", emptyList()))
 
             adapter.clearAll()
