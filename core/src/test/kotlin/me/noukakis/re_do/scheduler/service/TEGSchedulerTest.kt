@@ -12,6 +12,7 @@ import org.junit.jupiter.params.provider.MethodSource
 import java.time.Instant
 import java.util.stream.Stream
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 
 val NOW_0: Instant = Instant.ofEpochMilli(0)
 val NOW_1: Instant = Instant.ofEpochMilli(1)
@@ -1453,7 +1454,7 @@ class TEGSchedulerTest {
                                 type = TEGArtefactType.STRING_VALUE
                             )
                         )
-                        .withTimeout(Duration.parse("5ms"))
+                        .withTimeout(5.milliseconds)
                         .build(),
                     timestamp = NOW_0,
                 ),
@@ -1500,7 +1501,7 @@ class TEGSchedulerTest {
             sut.thenTheScheduledTasksAre(
                 TEGMessageBuilder("A")
                     .asRunType()
-                    .withTimeout(Duration.parse("5ms"))
+                    .withTimeout(5.milliseconds)
                     .build()
             )
         }
@@ -1511,7 +1512,7 @@ class TEGSchedulerTest {
                 TEGEvent.Created(
                     TEGTaskBuilder("A")
                         .withOutputs(TEGArtefactDefBuilder("AOutput").build())
-                        .withTimeout(Duration.parse("5ms"))
+                        .withTimeout(5.milliseconds)
                         .build(),
                     timestamp = NOW_0,
                 ),
@@ -1519,7 +1520,7 @@ class TEGSchedulerTest {
                 TEGEvent.Created(
                     TEGTaskBuilder("B")
                         .withOutputs(TEGArtefactDefBuilder("BOutput").build())
-                        .withTimeout(Duration.parse("5ms"))
+                        .withTimeout(5.milliseconds)
                         .build(),
                     timestamp = NOW_0,
                 ),
@@ -1530,7 +1531,7 @@ class TEGSchedulerTest {
                             TEGArtefactDefBuilder("AOutput").build(),
                             TEGArtefactDefBuilder("BOutput").build(),
                         )
-                        .withTimeout(Duration.parse("5ms"))
+                        .withTimeout(5.milliseconds)
                         .build(),
                     timestamp = NOW_0,
                 ),
@@ -1545,11 +1546,11 @@ class TEGSchedulerTest {
             sut.thenTheScheduledTasksAre(
                 TEGMessageBuilder("A")
                     .asRunType()
-                    .withTimeout(Duration.parse("5ms"))
+                    .withTimeout(5.milliseconds)
                     .build(),
                 TEGMessageBuilder("B")
                     .asRunType()
-                    .withTimeout(Duration.parse("5ms"))
+                    .withTimeout(5.milliseconds)
                     .build(),
             )
             sut.thenThePersistedEventsShouldBe(
@@ -1589,7 +1590,7 @@ class TEGSchedulerTest {
             val eventsWithTwoTimeoutFailures = listOf(
                 TEGEvent.Created(
                     TEGTaskBuilder("A")
-                        .withTimeout(Duration.parse("5ms"))
+                        .withTimeout(5.milliseconds)
                         .build(),
                     timestamp = NOW_0,
                 ),
@@ -1644,7 +1645,7 @@ class TEGSchedulerTest {
             val baseEvents = listOf(
                 TEGEvent.Created(
                     TEGTaskBuilder("A")
-                        .withTimeout(Duration.parse("5ms"))
+                        .withTimeout(5.milliseconds)
                         .build(),
                     timestamp = NOW_0,
                 ),
@@ -1675,7 +1676,7 @@ class TEGSchedulerTest {
             val baseEvents = listOf(
                 TEGEvent.Created(
                     TEGTaskBuilder("A")
-                        .withTimeout(Duration.parse("5ms"))
+                        .withTimeout(5.milliseconds)
                         .build(),
                     timestamp = NOW_0,
                 ),
