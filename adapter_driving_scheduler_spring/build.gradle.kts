@@ -1,0 +1,16 @@
+plugins {
+	id("buildlogic.kotlin-spring-common-conventions")
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation(project(":core"))
+	implementation(project(":adapter_common_spring"))
+	implementation("org.springframework.boot:spring-boot-starter-webmvc")
+	implementation("org.springframework.boot:spring-boot-starter-validation")
+
+	testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
+}

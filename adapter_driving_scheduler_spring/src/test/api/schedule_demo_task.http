@@ -1,0 +1,24 @@
+### @title Get job list no skipping or limiting
+POST {{v1Url}}/teg/schedule
+X-Auth-Principal: "test-user"
+X-Auth-Roles: "admin,other-role"
+Content-Type: application/json
+
+{
+  "tasks": [
+    {
+      "name": "it-should-run",
+      "implementationName": "DemoEchoTask",
+      "inputs": [],
+      "outputs": [],
+      "arguments": [
+        "one",
+        "two"
+      ],
+      "timeout": {
+        "amount": 2,
+        "temporalUnit": "SECONDS"
+      }
+    }
+  ]
+}

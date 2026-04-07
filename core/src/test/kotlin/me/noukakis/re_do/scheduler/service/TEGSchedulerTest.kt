@@ -1186,7 +1186,7 @@ class TEGSchedulerTest {
             )
 
             sut.thenTheUpdateResultIsAnError(
-                TegUpdateError.MaxRetriesExceeded(taskName = "A")
+                TegUpdateError.MaxRetriesExceeded(tegId = TEST_TEG_ID, taskName = "A")
             )
         }
 
@@ -1714,7 +1714,7 @@ class TEGSchedulerTest {
             sut.whenTheTimeoutCheckerRuns()
 
             sut.thenTheTimeoutCheckResultIsAnError(
-                TegTimeoutCheckError.ScheduledEventWithoutCreatedTask(taskName = "A")
+                TegTimeoutCheckError.ScheduledEventWithoutCreatedTask(tegId = TEST_TEG_ID, taskName = "A")
             )
         }
     }

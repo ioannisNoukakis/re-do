@@ -1,0 +1,21 @@
+spring:
+  application:
+    name: runner
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: root
+    password: example
+
+runner:
+  tasks:
+    plugin-folder: "./task_handler_plugins"
+  rabbitmq:
+    # Topic exchange from which this runner receives task messages
+    task-exchange: "teg.tasks"
+    # Exchange and routing key used to send results/progress back to the scheduler
+    reply-exchange: "teg.results"
+    reply-routing-key: "task.result"
+    # Exchange and routing key for unprocessable messages (dead-letter)
+    dead-letter-exchange: "teg.dead-letter"
+    dead-letter-routing-key: "task.dead-letter"

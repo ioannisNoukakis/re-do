@@ -3,8 +3,8 @@ package me.noukakis.re_do.scheduler.service
 import arrow.core.Either
 import arrow.core.left
 import arrow.core.right
-import me.noukakis.re_do.adapters.common.InMemoryMessagingAdapter
-import me.noukakis.re_do.adapters.scheduler.InMemoryPersistenceAdapter
+import me.noukakis.re_do.adapters.driven.common.InMemoryMessagingAdapter
+import me.noukakis.re_do.adapters.driven.scheduler.InMemoryPersistenceAdapter
 import me.noukakis.re_do.common.model.Identity
 import me.noukakis.re_do.common.model.TEGMessageIn
 import me.noukakis.re_do.common.model.TEGMessageOut
@@ -17,9 +17,8 @@ import java.time.Instant
 import kotlin.time.Duration
 
 val IDENTITY = Identity(
-    id = "user-123",
-    source = "test",
-    displayName = "Test User",
+    sub = "user-123",
+    roles = listOf("scheduler-user")
 )
 
 const val TEST_TEG_ID = "test-teg-id"
@@ -65,7 +64,7 @@ class TEGSchedulerSutBuilder {
 
     fun thenTheScheduledTasksAre(vararg expectedTegMessage: TEGMessageOut) {
         assertEquals(
-            expectedTegMessage.toList(),
+            expectedTegMessage.map { TEST_TEG_ID to it }.toList(),
             messagingAdapter.outgoingMessages,
         )
     }

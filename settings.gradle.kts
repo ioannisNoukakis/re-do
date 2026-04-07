@@ -11,4 +11,10 @@ plugins {
 }
 
 rootProject.name = "re-do"
-include("scheduler_adapter_primary_spring", "core")
+include(
+    "core",
+    "task_impl_demo",
+    "adapter_driving_scheduler_spring",
+    "adapter_driving_runner_spring",
+    "adapter_common_spring",
+)
