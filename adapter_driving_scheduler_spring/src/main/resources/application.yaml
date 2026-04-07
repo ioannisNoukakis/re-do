@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: Scheduler Primary Spring Adapter
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: root
+    password: example
+
+
+scheduler:
+  max-failures-before-giving-up: 3
+  messaging: # Either "in-memory" or "rabbitmq"
+    mode: "in-memory"
+  persistence: # Either "in-memory" or "rabbitmq"
+    mode: "in-memory"
+  rabbitmq:
+    task-exchange: "teg.tasks"
+    reply-exchange: "teg.results"
+    reply-queue: "teg.scheduler.updates"           # queue where runners send results back
+    reply-routing-key: "#"                         # catch-all from the results exchange
+    dead-letter-exchange: "teg.scheduler.dead-letter"
+    dead-letter-routing-key: "scheduler.dead-letter"

@@ -14,5 +14,10 @@ repositories {
 
 dependencies {
     implementation(libs.kotlin.gradle.plugin)
+    implementation(libs.org.jetbrains.kotlin.plugin.spring)
+    implementation(libs.org.springframework.boot.gradle.plugin)
+    implementation(libs.io.spring.dependency.management.plugin)
+    implementation(libs.sentry.plugin)
+
     implementation(libs.gradle.test.logger.plugin)
 }

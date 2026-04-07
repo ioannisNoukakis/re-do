@@ -21,15 +21,18 @@ sealed interface TegSchedulingError {
 
 sealed interface TegUpdateError {
     data class MaxRetriesExceeded(
+        val tegId: String,
         val taskName: String,
     ) : TegUpdateError
 }
 
 sealed interface TegTimeoutCheckError {
     data class ScheduledEventWithoutCreatedTask(
+        val tegId: String,
         val taskName: String,
     ) : TegTimeoutCheckError
     data class MaxRetriesExceeded(
+        val tegId: String,
         val taskName: String,
     ) : TegTimeoutCheckError
 }
