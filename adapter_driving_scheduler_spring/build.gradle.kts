@@ -8,7 +8,7 @@ repositories {
 
 dependencies {
 	implementation(project(":core"))
-	implementation(project(":adapter_common_spring"))
+	implementation(project(":adapter_common_rabbitmq_spring"))
 	implementation("org.springframework.boot:spring-boot-starter-webmvc")
 	implementation("org.springframework.boot:spring-boot-starter-validation")
 
