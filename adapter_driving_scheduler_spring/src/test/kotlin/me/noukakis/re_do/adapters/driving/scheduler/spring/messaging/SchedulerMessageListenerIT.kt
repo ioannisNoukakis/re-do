@@ -3,7 +3,7 @@ package me.noukakis.re_do.adapters.driving.scheduler.spring.messaging
 import arrow.core.Either
 import arrow.core.left
 import arrow.core.right
-import me.noukakis.re_do.adapters.common.spring.MessageConverter
+import me.noukakis.re_do.adapters.common.spring.rabbitmq.MessageConverter
 import me.noukakis.re_do.adapters.driving.scheduler.spring.SchedulerMessageListener
 import me.noukakis.re_do.common.model.TEGMessageIn
 import me.noukakis.re_do.scheduler.model.TEGArtefact

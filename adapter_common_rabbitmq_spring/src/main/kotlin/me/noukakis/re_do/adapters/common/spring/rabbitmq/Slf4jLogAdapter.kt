@@ -1,4 +1,4 @@
-package me.noukakis.re_do.adapters.common.spring
+package me.noukakis.re_do.adapters.common.spring.rabbitmq
 
 import me.noukakis.re_do.scheduler.port.LogPort
 import me.noukakis.re_do.scheduler.service.TEGScheduler

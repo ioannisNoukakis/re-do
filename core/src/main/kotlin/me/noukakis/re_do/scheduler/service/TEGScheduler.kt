@@ -165,47 +165,50 @@ class TEGScheduler(
 
     override fun handleTegUpdate(command: TEGUpdateCommand): Either<TegUpdateError, Unit> = either {
         val now = nowPort.now()
-        val events = persistencePort.getEventsForTeg(command.tegId, TegEventFilter.StateEvent).toMutableList()
         logPort.debug(command.tegId, "Handling ${command.message::class.simpleName}")
         when (val msg = command.message) {
-            is TEGMessageIn.TEGTaskResultMessage -> handleResultMsg(msg, events, command, now)
-            is TEGMessageIn.TEGTaskFailedMessage -> handleFailedMessage(msg, events, command, now)
-            is TEGMessageIn.TEGTaskProgressMessage -> handleProgressMessage(msg, events, command, now)
-            is TEGMessageIn.TEGTaskLogMessage -> handleLogMessage(msg, events, command, now)
+            is TEGMessageIn.TEGTaskResultMessage -> handleResultMsg(msg, getStateEvents(command), command, now)
+            is TEGMessageIn.TEGTaskFailedMessage -> handleFailedMessage(msg, getStateEvents(command), command, now)
+            is TEGMessageIn.TEGTaskProgressMessage -> handleProgressMessage(msg, command, now)
+            is TEGMessageIn.TEGTaskLogMessage -> handleLogMessage(msg, command, now)
         }.bind()
         return Unit.right()
     }
 
+    private fun getStateEvents(command: TEGUpdateCommand): List<TEGEvent> =
+        persistencePort.getEventsForTeg(command.tegId, TegEventFilter.StateEvent)
+
     private fun handleResultMsg(
         msg: TEGMessageIn.TEGTaskResultMessage,
-        events: MutableList<TEGEvent>,
+        events: List<TEGEvent>,
         command: TEGUpdateCommand,
         now: Instant,
     ): Either<TegUpdateError, Unit> {
+        val eventsToVerify = events.toMutableList()
         val newEvents = mutableListOf<TEGEvent>()
         val completedEvent = TEGEvent.Completed(
             taskName = msg.taskName,
             timestamp = now,
             outputArtefacts = msg.outputArtefacts,
         )
-        events.add(completedEvent)
+        eventsToVerify.add(completedEvent)
         newEvents.add(completedEvent)
         logPort.info(command.tegId, "Task '${msg.taskName}' completed")
-        val allCreatedTasks = events.filterIsInstance<TEGEvent.Created>().map { it.task.name }.toSet()
-        val allCompletedTasks = events.filterIsInstance<TEGEvent.Completed>().map { it.taskName }.toSet()
+        val allCreatedTasks = eventsToVerify.filterIsInstance<TEGEvent.Created>().map { it.task.name }.toSet()
+        val allCompletedTasks = eventsToVerify.filterIsInstance<TEGEvent.Completed>().map { it.taskName }.toSet()
         if (allCreatedTasks.all { allCompletedTasks.contains(it) }) {
             logPort.info(command.tegId, "All tasks completed, TEG finished")
             val noMoreTasksEvent = TEGEvent.NoMoreTasksToSchedule(timestamp = now)
-            events.add(noMoreTasksEvent)
+            eventsToVerify.add(noMoreTasksEvent)
             newEvents.add(noMoreTasksEvent)
         }
 
-        val completedArtefacts = events.filterIsInstance<TEGEvent.Completed>()
+        val completedArtefacts = eventsToVerify.filterIsInstance<TEGEvent.Completed>()
             .flatMap { it.outputArtefacts }
-        val tasksThatWereAlreadyScheduled = events.filterIsInstance<TEGEvent.Scheduled>()
+        val tasksThatWereAlreadyScheduled = eventsToVerify.filterIsInstance<TEGEvent.Scheduled>()
             .map { it.taskName }
             .toSet()
-        events.filterIsInstance<TEGEvent.Created>()
+        eventsToVerify.filterIsInstance<TEGEvent.Created>()
             .filter { event ->
                 !tasksThatWereAlreadyScheduled.contains(event.task.name)
                         && event.task.inputs.all { input -> completedArtefacts.find { input.name == it.name() } != null }
@@ -218,7 +221,7 @@ class TEGScheduler(
 
     private fun handleFailedMessage(
         msg: TEGMessageIn.TEGTaskFailedMessage,
-        events: MutableList<TEGEvent>,
+        events: List<TEGEvent>,
         command: TEGUpdateCommand,
         now: Instant,
     ): Either<TegUpdateError, Unit> {
@@ -228,9 +231,8 @@ class TEGScheduler(
             timestamp = now,
             reason = msg.reason,
         )
-        events.add(failedEvent)
 
-        if (handleFailedEvent(command.tegId, failedEvent, events, now)) {
+        if (handleFailedEvent(command.tegId, failedEvent, events + listOf(failedEvent), now)) {
             return TegUpdateError.MaxRetriesExceeded(command.tegId, failedEvent.taskName).left()
         }
 
@@ -277,7 +279,6 @@ class TEGScheduler(
 
     private fun handleProgressMessage(
         msg: TEGMessageIn.TEGTaskProgressMessage,
-        events: MutableList<TEGEvent>,
         command: TEGUpdateCommand,
         now: Instant,
     ): Either<TegUpdateError, Unit> {
@@ -287,14 +288,12 @@ class TEGScheduler(
             timestamp = now,
             progress = msg.progress,
         )
-        events.add(progressEvent)
         persistencePort.saveEvents(command.tegId, listOf(progressEvent))
         return Unit.right()
     }
 
     private fun handleLogMessage(
         msg: TEGMessageIn.TEGTaskLogMessage,
-        events: MutableList<TEGEvent>,
         command: TEGUpdateCommand,
         now: Instant,
     ): Either<TegUpdateError, Unit> {
@@ -304,20 +303,19 @@ class TEGScheduler(
             timestamp = now,
             log = msg.log,
         )
-        events.add(logEvent)
         persistencePort.saveEvents(command.tegId, listOf(logEvent))
         return Unit.right()
     }
 
     fun runTimeoutCheck(): Either<TegTimeoutCheckError, Unit> {
         val now = nowPort.now()
-        val openTegs = persistencePort.getTegsThatDontHaveEvent(TEGEvent.NoMoreTasksToSchedule::class)
-        for (tegId in openTegs) {
-            val events =
-                persistencePort.getEventsForTeg(tegId, TegEventFilter.StateEvent).toList()
+        for ((tegId, events) in persistencePort.getTegsThatDontHaveEvents(listOf(
+            TEGEvent.NoMoreTasksToSchedule::class,
+            TEGEvent.TEGFailed::class,
+        ))) {
             val tasks = events.filterIsInstance<TEGEvent.Created>().map { it.task }
-            val allScheduledTasks = events.filterIsInstance<TEGEvent.Scheduled>().map { it }.toMutableList()
-            val allCompletedTasks = events.filterIsInstance<TEGEvent.Completed>().map { it }.toMutableList()
+            val allScheduledTasks = events.filterIsInstance<TEGEvent.Scheduled>().map { it }
+            val allCompletedTasks = events.filterIsInstance<TEGEvent.Completed>().map { it }
             val notCompletedTasks = allScheduledTasks
                 .filterNot { scheduled ->
                     allCompletedTasks.any { completed -> completed.taskName == scheduled.taskName }

@@ -3,7 +3,9 @@ package me.noukakis.re_do.adapters.driven.scheduler
 import me.noukakis.re_do.scheduler.model.TEGEvent
 import me.noukakis.re_do.scheduler.port.PersistencePort
 import me.noukakis.re_do.scheduler.port.TegEventFilter
+import java.util.stream.Stream
 import kotlin.reflect.KClass
+import kotlin.streams.asStream
 
 class InMemoryPersistenceAdapter : PersistencePort {
     val state = mutableMapOf<String, List<TEGEvent>>()
@@ -31,9 +33,12 @@ class InMemoryPersistenceAdapter : PersistencePort {
         }
     }
 
-    override fun getTegsThatDontHaveEvent(klass: KClass<out TEGEvent>): List<String> {
-        return state.filter { (_, events) ->
-            events.none { klass.isInstance(it) }
-        }.keys.toList()
+    override fun getTegsThatDontHaveEvents(klass: List<KClass<out TEGEvent>>): Stream<Pair<String, List<TEGEvent>>> {
+        return state.entries.asSequence()
+            .filter { entry ->
+                entry.value.none { klass.contains(it::class) }
+            }
+            .map { entry -> entry.key to entry.value }
+            .asStream()
     }
 }

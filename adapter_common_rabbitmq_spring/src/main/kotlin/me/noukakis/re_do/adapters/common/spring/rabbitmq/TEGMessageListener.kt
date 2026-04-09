@@ -1,4 +1,4 @@
-package me.noukakis.re_do.adapters.common.spring
+package me.noukakis.re_do.adapters.common.spring.rabbitmq
 
 import me.noukakis.re_do.common.port.MessageListenerErrorPort
 import org.slf4j.LoggerFactory

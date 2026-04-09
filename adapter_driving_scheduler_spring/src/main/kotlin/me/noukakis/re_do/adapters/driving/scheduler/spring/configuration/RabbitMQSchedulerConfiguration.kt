@@ -1,8 +1,8 @@
 package me.noukakis.re_do.adapters.driving.scheduler.spring.configuration
 
 import io.sentry.Sentry
-import me.noukakis.re_do.adapters.common.spring.RabbitMQMessagingSchedulerAdapter
-import me.noukakis.re_do.adapters.common.spring.TEGMessageListener
+import me.noukakis.re_do.adapters.common.spring.rabbitmq.RabbitMQMessagingSchedulerAdapter
+import me.noukakis.re_do.adapters.common.spring.rabbitmq.TEGMessageListener
 import me.noukakis.re_do.adapters.driving.scheduler.spring.SchedulerMessageListener
 import me.noukakis.re_do.scheduler.model.TegUpdateError
 import me.noukakis.re_do.scheduler.port.MessagingPort

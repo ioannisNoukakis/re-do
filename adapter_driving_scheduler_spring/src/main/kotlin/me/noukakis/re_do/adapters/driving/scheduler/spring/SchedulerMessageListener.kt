@@ -1,7 +1,7 @@
 package me.noukakis.re_do.adapters.driving.scheduler.spring
 
 import arrow.core.Either
-import me.noukakis.re_do.adapters.common.spring.TEGMessageHandler
+import me.noukakis.re_do.adapters.common.spring.rabbitmq.TEGMessageHandler
 import me.noukakis.re_do.common.model.TEGMessageIn
 import me.noukakis.re_do.scheduler.model.TegUpdateError
 import me.noukakis.re_do.scheduler.port.SchedulerUpdateErrorHandlerPort

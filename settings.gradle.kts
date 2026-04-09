@@ -17,4 +17,5 @@ include(
     "adapter_driving_scheduler_spring",
     "adapter_driving_runner_spring",
     "adapter_common_rabbitmq_spring",
+    "adapter_common_mongodb_spring",
 )

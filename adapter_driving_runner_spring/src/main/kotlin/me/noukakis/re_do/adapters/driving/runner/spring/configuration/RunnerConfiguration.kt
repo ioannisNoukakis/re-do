@@ -1,8 +1,8 @@
 package me.noukakis.re_do.adapters.driving.runner.spring.configuration
 
 import io.sentry.Sentry
-import me.noukakis.re_do.adapters.common.spring.RabbitMQMessagingRunnerAdapter
-import me.noukakis.re_do.adapters.common.spring.TEGMessageListener
+import me.noukakis.re_do.adapters.common.spring.rabbitmq.RabbitMQMessagingRunnerAdapter
+import me.noukakis.re_do.adapters.common.spring.rabbitmq.TEGMessageListener
 import me.noukakis.re_do.adapters.driven.runner.RunWithTimeoutAdapter
 import me.noukakis.re_do.adapters.driving.runner.spring.RunnerMessageListener
 import me.noukakis.re_do.adapters.driving.runner.spring.task.TaskHandlerRegistry

@@ -1,4 +1,4 @@
-package me.noukakis.re_do.adapters.common.spring.configuration
+package me.noukakis.re_do.adapters.common.spring.rabbitmq.configuration
 
 import tools.jackson.core.JsonGenerator
 import tools.jackson.core.JsonParser
