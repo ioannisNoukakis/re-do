@@ -1,4 +1,4 @@
-package me.noukakis.re_do.adapters.common.spring.configuration
+package me.noukakis.re_do.adapters.common.spring.rabbitmq.configuration
 
 import org.springframework.amqp.rabbit.connection.ConnectionFactory
 import org.springframework.amqp.rabbit.core.RabbitTemplate
@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Configuration
 @Configuration
 class RabbitMQCommonConfiguration {
     @Bean
-    fun messageConverter(): MessageConverter = me.noukakis.re_do.adapters.common.spring.MessageConverter.new()
+    fun messageConverter(): MessageConverter = me.noukakis.re_do.adapters.common.spring.rabbitmq.MessageConverter.new()
 
     @Bean
     fun rabbitTemplate(

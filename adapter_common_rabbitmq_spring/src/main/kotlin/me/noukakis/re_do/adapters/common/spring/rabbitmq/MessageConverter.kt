@@ -1,8 +1,8 @@
-package me.noukakis.re_do.adapters.common.spring
+package me.noukakis.re_do.adapters.common.spring.rabbitmq
 
-import me.noukakis.re_do.adapters.common.spring.configuration.TEGArtefactMixin
-import me.noukakis.re_do.adapters.common.spring.configuration.TEGMessageInMixin
-import me.noukakis.re_do.adapters.common.spring.configuration.TEGMessageOutMixin
+import me.noukakis.re_do.adapters.common.spring.rabbitmq.configuration.TEGArtefactMixin
+import me.noukakis.re_do.adapters.common.spring.rabbitmq.configuration.TEGMessageInMixin
+import me.noukakis.re_do.adapters.common.spring.rabbitmq.configuration.TEGMessageOutMixin
 import me.noukakis.re_do.common.model.TEGMessageIn
 import me.noukakis.re_do.common.model.TEGMessageOut
 import me.noukakis.re_do.scheduler.model.TEGArtefact

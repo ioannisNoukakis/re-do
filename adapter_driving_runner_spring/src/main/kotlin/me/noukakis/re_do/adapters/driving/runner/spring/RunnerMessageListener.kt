@@ -2,7 +2,7 @@ package me.noukakis.re_do.adapters.driving.runner.spring
 
 import arrow.core.Either
 import kotlinx.coroutines.runBlocking
-import me.noukakis.re_do.adapters.common.spring.TEGMessageHandler
+import me.noukakis.re_do.adapters.common.spring.rabbitmq.TEGMessageHandler
 import me.noukakis.re_do.common.model.TEGMessageOut
 import me.noukakis.re_do.runner.port.RunnerErrorHandlerPort
 import me.noukakis.re_do.runner.service.TaskRunnerService

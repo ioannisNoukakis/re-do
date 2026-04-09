@@ -3,7 +3,7 @@ package me.noukakis.re_do.adapters.driving.runner.spring.messaging
 import arrow.core.Either
 import arrow.core.left
 import arrow.core.right
-import me.noukakis.re_do.adapters.common.spring.MessageConverter
+import me.noukakis.re_do.adapters.common.spring.rabbitmq.MessageConverter
 import me.noukakis.re_do.adapters.driving.runner.spring.RunnerMessageListener
 import me.noukakis.re_do.common.model.TEGMessageOut
 import me.noukakis.re_do.runner.port.RunnerErrorHandlerPort

@@ -6,13 +6,20 @@ spring:
     port: 5672
     username: root
     password: example
+  mongodb:
+    host: localhost
+    port: 27017
+    database: scheduler
+    username: root
+    password: example
+    authentication-database: admin
 
 
 scheduler:
   max-failures-before-giving-up: 3
   messaging: # Either "in-memory" or "rabbitmq"
     mode: "in-memory"
-  persistence: # Either "in-memory" or "rabbitmq"
+  persistence: # Either "in-memory" or "mongodb"
     mode: "in-memory"
   rabbitmq:
     task-exchange: "teg.tasks"
@@ -21,3 +28,6 @@ scheduler:
     reply-routing-key: "#"                         # catch-all from the results exchange
     dead-letter-exchange: "teg.scheduler.dead-letter"
     dead-letter-routing-key: "scheduler.dead-letter"
+  mongodb:
+    cursor-batch-size-for-get-all-teg-not-events: 100
+    teg-event-lookback-duration: 30d

@@ -8,3 +8,15 @@ services:
     ports:
       - "5672:5672"
       - "5050:15672"
+  mongoDB:
+    image: mongo:7.0.31
+    container_name: redo-mongodb-dev
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=example
+volumes:
+    mongo-data:

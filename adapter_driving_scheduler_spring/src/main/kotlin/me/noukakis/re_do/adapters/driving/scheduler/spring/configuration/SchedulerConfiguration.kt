@@ -1,6 +1,6 @@
 package me.noukakis.re_do.adapters.driving.scheduler.spring.configuration
 
-import me.noukakis.re_do.adapters.common.spring.Slf4jLogAdapter
+import me.noukakis.re_do.adapters.common.spring.rabbitmq.Slf4jLogAdapter
 import me.noukakis.re_do.adapters.driven.common.InMemoryMessagingAdapter
 import me.noukakis.re_do.adapters.driven.scheduler.InMemoryPersistenceAdapter
 import me.noukakis.re_do.adapters.driven.scheduler.StdLibNowAdapter

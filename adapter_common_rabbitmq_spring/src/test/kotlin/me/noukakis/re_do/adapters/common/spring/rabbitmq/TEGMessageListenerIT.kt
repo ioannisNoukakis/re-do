@@ -1,4 +1,4 @@
-package me.noukakis.re_do.adapters.common.spring
+package me.noukakis.re_do.adapters.common.spring.rabbitmq
 
 import arrow.core.Either
 import arrow.core.left

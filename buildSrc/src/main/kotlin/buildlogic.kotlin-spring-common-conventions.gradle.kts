@@ -9,9 +9,6 @@ plugins {
 
 dependencies {
     implementation("tools.jackson.module:jackson-module-kotlin")
+    implementation("org.springframework.boot:spring-boot-starter-data-mongodb")
     implementation("org.springframework.boot:spring-boot-starter-amqp")
-
-
-    testImplementation("org.springframework.boot:spring-boot-starter-amqp-test")
-    testImplementation("org.testcontainers:testcontainers-rabbitmq:2.0.3")
 }

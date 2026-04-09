@@ -11,7 +11,6 @@ import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import java.time.Instant
 import java.util.stream.Stream
-import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
 val NOW_0: Instant = Instant.ofEpochMilli(0)
@@ -1488,6 +1487,29 @@ class TEGSchedulerTest {
                     )
                 )
             )
+        }
+
+        @Test
+        fun `Timeout should not evaluate failed TEGs`() {
+            val testBase = baseEvents + listOf(
+                TEGEvent.Failed(
+                    taskName = "A",
+                    timestamp = NOW_1,
+                    reason = "Some reason"
+                ),
+                TEGEvent.TEGFailed(
+                    timestamp = NOW_1,
+                    reason = "Task A failed, so the whole TEG is marked as failed"
+                )
+            )
+            sut.givenTheDatesToReturn(NOW_2)
+            sut.givenTheExistingEvents(mapOf(TEST_TEG_ID to testBase))
+
+            sut.whenTheTimeoutCheckerRuns()
+
+            sut.thenTheTimeoutCheckResultIsASuccess()
+            sut.thenTheScheduledTasksAre()
+            sut.thenThePersistedEventsShouldBe(mapOf(TEST_TEG_ID to testBase))
         }
 
         @Test

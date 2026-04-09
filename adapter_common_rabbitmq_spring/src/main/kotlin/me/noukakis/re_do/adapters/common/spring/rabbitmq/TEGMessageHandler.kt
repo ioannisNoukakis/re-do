@@ -1,4 +1,4 @@
-package me.noukakis.re_do.adapters.common.spring
+package me.noukakis.re_do.adapters.common.spring.rabbitmq
 
 import arrow.core.Either
 import org.springframework.amqp.core.Message
@@ -18,7 +18,7 @@ interface TEGMessageHandler<M : Any, E> {
     /** Invoke the domain service and return its result. */
     fun handleMessage(tegId: String, message: M): Either<E, Unit>
 
-    /** Called when [handleMessage] returns a [arrow.core.Either.Left]. */
+    /** Called when [handleMessage] returns a [Either.Left]. */
     fun onHandlingError(tegId: String, error: E)
 }
 

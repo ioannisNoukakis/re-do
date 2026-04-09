@@ -1,4 +1,4 @@
-package me.noukakis.re_do.adapters.common.spring.configuration
+package me.noukakis.re_do.adapters.common.spring.rabbitmq.configuration
 
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
