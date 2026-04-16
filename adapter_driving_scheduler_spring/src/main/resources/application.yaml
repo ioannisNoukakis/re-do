@@ -13,7 +13,10 @@ spring:
     username: root
     password: example
     authentication-database: admin
-
+  servlet:
+    multipart:
+      max-file-size: 500MB
+      max-request-size: 500MB
 
 scheduler:
   max-failures-before-giving-up: 3
@@ -31,3 +34,13 @@ scheduler:
   mongodb:
     cursor-batch-size-for-get-all-teg-not-events: 100
     teg-event-lookback-duration: 30d
+  file-storage: # Either "in-memory" or "s3"
+    mode: "in-memory"
+    s3:
+      endpoint: "http://localhost:9000"
+      bucket: "scheduler-files"
+      access-key: "root"
+      secret-key: "example"
+      region: "us-east-1"
+  file-reference-store: # Either "in-memory" or "mongodb"
+    mode: "in-memory"

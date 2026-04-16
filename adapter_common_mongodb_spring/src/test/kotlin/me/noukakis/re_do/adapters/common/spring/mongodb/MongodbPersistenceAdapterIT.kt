@@ -2,8 +2,6 @@ package me.noukakis.re_do.adapters.common.spring.mongodb
 
 import com.mongodb.client.MongoClient
 import com.mongodb.client.MongoClients
-import io.mongock.driver.mongodb.sync.v4.driver.MongoSync4Driver
-import io.mongock.runner.springboot.MongockSpringboot
 import me.noukakis.re_do.adapters.common.spring.mongodb.migrations._001TegEventInitializerChange
 import me.noukakis.re_do.adapters.common.spring.mongodb.model.MongodbTEGEvent
 import me.noukakis.re_do.common.model.Identity
@@ -19,7 +17,6 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import org.springframework.context.support.GenericApplicationContext
 import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.data.mongodb.core.collectionExists
 import org.springframework.data.mongodb.core.findAll
@@ -30,10 +27,7 @@ import org.testcontainers.mongodb.MongoDBContainer
 import org.testcontainers.utility.DockerImageName
 import java.time.Duration
 import java.time.Instant
-import java.util.function.Supplier
 import kotlin.time.Duration.Companion.minutes
-
-const val MONGODB_DB_NAME = "test"
 
 @Testcontainers
 class MongodbPersistenceAdapterIT {
@@ -55,7 +49,7 @@ class MongodbPersistenceAdapterIT {
             cursorBatchSizeForGetAllTegNotEvents = 500,
             tegEventLookbackDuration = Duration.ofDays(365),
         )
-        runMigrations()
+        runMigrations(mongoClient, mongoTemplate)
     }
 
     @AfterEach
@@ -98,7 +92,7 @@ class MongodbPersistenceAdapterIT {
 
         @Test
         fun `rollback drops the teg events collection`() {
-            runMigrations()
+            runMigrations(mongoClient, mongoTemplate)
 
             _001TegEventInitializerChange(mongoTemplate).rollback()
 
@@ -243,21 +237,6 @@ class MongodbPersistenceAdapterIT {
 
                 assertEquals(listOf("recent-teg"), result.map { it.first })
             }
-        }
-    }
-
-    private fun runMigrations() {
-        GenericApplicationContext().apply {
-            registerBean(MongoTemplate::class.java, Supplier { mongoTemplate })
-            refresh()
-        }.use { springContext ->
-            MongockSpringboot.builder()
-                .setDriver(MongoSync4Driver.withDefaultLock(mongoClient, MONGODB_DB_NAME))
-                .addMigrationScanPackage("me.noukakis.re_do.adapters.common.spring.mongodb.migrations")
-                .setSpringContext(springContext)
-                .setTransactional(false)
-                .buildRunner()
-                .execute()
         }
     }
 

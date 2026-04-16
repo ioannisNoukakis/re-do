@@ -1,6 +1,8 @@
 package me.noukakis.re_do.adapters.driving.scheduler.spring.configuration
 
+import me.noukakis.re_do.adapters.common.spring.mongodb.MongodbFileReferenceStoreAdapter
 import me.noukakis.re_do.adapters.common.spring.mongodb.MongodbPersistenceAdapter
+import me.noukakis.re_do.scheduler.port.FileReferenceStorePort
 import me.noukakis.re_do.scheduler.port.PersistencePort
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
@@ -18,12 +20,17 @@ class MongodbSchedulerConfiguration {
         mongodbTemplate: MongoTemplate,
         @Value("\${scheduler.mongodb.cursor-batch-size-for-get-all-teg-not-events:100}") cursorBatchSizeForGetAllTegNotEvents: Int,
         @Value("\${scheduler.mongodb.teg-event-lookback-duration:30d}") tegEventLookbackDuration: Duration,
-
-        ): PersistencePort {
+    ): PersistencePort {
         return MongodbPersistenceAdapter(
             mongodbTemplate = mongodbTemplate,
             cursorBatchSizeForGetAllTegNotEvents = cursorBatchSizeForGetAllTegNotEvents,
             tegEventLookbackDuration = tegEventLookbackDuration,
         )
     }
+
+    @Bean
+    @ConditionalOnProperty(name = ["scheduler.file-reference-store.mode"], havingValue = "mongodb")
+    fun fileReferenceStorePortBean(
+        mongodbTemplate: MongoTemplate,
+    ): FileReferenceStorePort = MongodbFileReferenceStoreAdapter(mongodbTemplate)
 }

@@ -11,12 +11,24 @@ services:
   mongoDB:
     image: mongo:7.0.31
     container_name: redo-mongodb-dev
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=example
     ports:
       - "27017:27017"
     volumes:
       - mongo-data:/data/db
+  rustfs:
+    image: rustfs/rustfs:1.0.0-alpha.90
+    container_name: redo-rustfs-dev
     environment:
-      - MONGO_INITDB_ROOT_USERNAME=root
-      - MONGO_INITDB_ROOT_PASSWORD=example
+      - RUSTFS_ACCESS_KEY=root
+      - RUSTFS_SECRET_KEY=example
+    ports:
+      - "9000:9000"
+      - "9001:9001" # console
+    volumes:
+      - rustfs-data:/data
 volumes:
     mongo-data:
+    rustfs-data:
