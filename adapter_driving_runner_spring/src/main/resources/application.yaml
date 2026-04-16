@@ -19,3 +19,10 @@ runner:
     # Exchange and routing key for unprocessable messages (dead-letter)
     dead-letter-exchange: "teg.dead-letter"
     dead-letter-routing-key: "task.dead-letter"
+  file-storage:
+    s3:
+      endpoint: "http://localhost:9000"
+      bucket: "scheduler-files"
+      access-key: "root"
+      secret-key: "example"
+      region: "us-east-1"

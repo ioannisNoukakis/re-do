@@ -1,13 +1,18 @@
 package me.noukakis.re_do.adapters.driving.runner.spring.configuration
 
 import io.sentry.Sentry
+import me.noukakis.re_do.adapters.common.s3.S3FileStorageAdapter
 import me.noukakis.re_do.adapters.common.spring.rabbitmq.RabbitMQMessagingRunnerAdapter
 import me.noukakis.re_do.adapters.common.spring.rabbitmq.TEGMessageListener
 import me.noukakis.re_do.adapters.driven.runner.RunWithTimeoutAdapter
+import me.noukakis.re_do.adapters.driven.runner.TempWorkingDirAdapter
 import me.noukakis.re_do.adapters.driving.runner.spring.RunnerMessageListener
 import me.noukakis.re_do.adapters.driving.runner.spring.task.TaskHandlerRegistry
+import me.noukakis.re_do.common.port.FileStoragePort
 import me.noukakis.re_do.runner.port.MessagingPort
+import me.noukakis.re_do.runner.port.RunWithTimeoutPort
 import me.noukakis.re_do.runner.port.RunnerErrorHandlerPort
+import me.noukakis.re_do.runner.port.TempWorkingDirPort
 import me.noukakis.re_do.runner.service.TaskRunner
 import me.noukakis.re_do.runner.service.TaskRunnerService
 import me.noukakis.re_do.scheduler.model.TaskRunnerError
@@ -26,12 +31,32 @@ import java.nio.file.Path
 class RunnerConfiguration {
 
     @Bean
+    fun tempDirPort(): TempWorkingDirPort = TempWorkingDirAdapter()
+
+    @Bean
+    fun fileStoragePort(
+        @Value("\${runner.file-storage.s3.endpoint}") endpoint: String,
+        @Value("\${runner.file-storage.s3.bucket}") bucket: String,
+        @Value("\${runner.file-storage.s3.access-key}") accessKey: String,
+        @Value("\${runner.file-storage.s3.secret-key}") secretKey: String,
+        @Value("\${runner.file-storage.s3.region:us-east-1}") region: String,
+    ): FileStoragePort = S3FileStorageAdapter.create(endpoint, bucket, accessKey, secretKey, region)
+
+    @Bean
+    fun runWithTimeoutPort(): RunWithTimeoutPort = RunWithTimeoutAdapter()
+
+    @Bean
     fun taskRunnerService(
         registry: TaskHandlerRegistry,
         messagingAdapter: MessagingPort,
+        runWithTimeoutPort: RunWithTimeoutPort,
+        tempWorkingDirPort: TempWorkingDirPort,
+        fileStoragePort: FileStoragePort,
     ): TaskRunnerService = TaskRunner(
         messagingPort = messagingAdapter,
-        runWithTimeoutPort = RunWithTimeoutAdapter(),
+        runWithTimeoutPort = runWithTimeoutPort,
+        tempWorkingDirPort = tempWorkingDirPort,
+        fileStoragePort = fileStoragePort,
         registry.toMap()
     )
 
