@@ -1,0 +1,13 @@
+### @title Get job list no skipping or limiting
+POST {{v1Url}}/files/upload
+X-Auth-Principal: "test-user"
+X-Auth-Roles: "admin,other-role"
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="file"; filename="finally_awake_1080p.mp4"
+Content-Type: video/mp4
+
+< ../resources/media_files/finally_awake_1080p.mp4
+
+--boundary--

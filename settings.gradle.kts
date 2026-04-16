@@ -18,4 +18,5 @@ include(
     "adapter_driving_runner_spring",
     "adapter_common_rabbitmq_spring",
     "adapter_common_mongodb_spring",
+    "adapter_common_s3",
 )
