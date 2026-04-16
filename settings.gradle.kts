@@ -13,10 +13,11 @@ plugins {
 rootProject.name = "re-do"
 include(
     "core",
-    "task_impl_demo",
     "adapter_driving_scheduler_spring",
     "adapter_driving_runner_spring",
     "adapter_common_rabbitmq_spring",
     "adapter_common_mongodb_spring",
     "adapter_common_s3",
+    "task_impl_demo",
+    "task_impl_ffmpeg",
 )

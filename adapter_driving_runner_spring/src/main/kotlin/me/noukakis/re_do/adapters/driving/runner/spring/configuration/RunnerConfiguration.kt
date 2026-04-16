@@ -4,11 +4,13 @@ import io.sentry.Sentry
 import me.noukakis.re_do.adapters.common.s3.S3FileStorageAdapter
 import me.noukakis.re_do.adapters.common.spring.rabbitmq.RabbitMQMessagingRunnerAdapter
 import me.noukakis.re_do.adapters.common.spring.rabbitmq.TEGMessageListener
+import me.noukakis.re_do.adapters.driven.common.StdLibUuidAdapter
 import me.noukakis.re_do.adapters.driven.runner.RunWithTimeoutAdapter
 import me.noukakis.re_do.adapters.driven.runner.TempWorkingDirAdapter
 import me.noukakis.re_do.adapters.driving.runner.spring.RunnerMessageListener
 import me.noukakis.re_do.adapters.driving.runner.spring.task.TaskHandlerRegistry
 import me.noukakis.re_do.common.port.FileStoragePort
+import me.noukakis.re_do.common.port.UUIDPort
 import me.noukakis.re_do.runner.port.MessagingPort
 import me.noukakis.re_do.runner.port.RunWithTimeoutPort
 import me.noukakis.re_do.runner.port.RunnerErrorHandlerPort
@@ -31,6 +33,9 @@ import java.nio.file.Path
 class RunnerConfiguration {
 
     @Bean
+    fun uuidPort(): UUIDPort = StdLibUuidAdapter()
+
+    @Bean
     fun tempDirPort(): TempWorkingDirPort = TempWorkingDirAdapter()
 
     @Bean
@@ -51,12 +56,14 @@ class RunnerConfiguration {
         messagingAdapter: MessagingPort,
         runWithTimeoutPort: RunWithTimeoutPort,
         tempWorkingDirPort: TempWorkingDirPort,
+        uuidPort: UUIDPort,
         fileStoragePort: FileStoragePort,
     ): TaskRunnerService = TaskRunner(
         messagingPort = messagingAdapter,
         runWithTimeoutPort = runWithTimeoutPort,
         tempWorkingDirPort = tempWorkingDirPort,
         fileStoragePort = fileStoragePort,
+        uuidPort = uuidPort,
         registry.toMap()
     )
 

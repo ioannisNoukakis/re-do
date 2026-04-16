@@ -46,14 +46,14 @@ class TEGSchedulerTest {
 
         @Test
         fun `an empty TEG should not schedule any tasks`() {
-            sut.whenSubmittingTheTeg()
+            sut.whenSubmittingTheTeg(listOf(), listOf())
 
             sut.thenTheScheduledTasksAre()
         }
 
         @Test
         fun `an empty TEG should result in an error`() {
-            sut.whenSubmittingTheTeg()
+            sut.whenSubmittingTheTeg(listOf(), listOf())
 
             sut.thenTheResultIsAnError(TegSchedulingError.EmptyTegNotAllowed)
         }
@@ -61,8 +61,11 @@ class TEGSchedulerTest {
         @Test
         fun `should schedule tasks without errors`() {
             sut.whenSubmittingTheTeg(
-                TEGTaskBuilder("A")
-                    .build(),
+                listOf(
+                    TEGTaskBuilder("A")
+                        .build()
+                ),
+                listOf(),
             )
 
             sut.thenTheResultIsASuccess()
@@ -71,14 +74,17 @@ class TEGSchedulerTest {
         @Test
         fun `should schedule tasks that can immediately run`() {
             sut.whenSubmittingTheTeg(
-                TEGTaskBuilder("A")
-                    .withImplementation("ImplA")
-                    .withOutputs(TEGArtefactDefBuilder("AOutput").build())
-                    .withArguments("arg1", "arg2")
-                    .build(),
-                TEGTaskBuilder("B")
-                    .withInputs(TEGArtefactDefBuilder("AOutput").build())
-                    .build()
+                listOf(
+                    TEGTaskBuilder("A")
+                        .withImplementation("ImplA")
+                        .withOutputs(TEGArtefactDefBuilder("AOutput").build())
+                        .withArguments("arg1", "arg2")
+                        .build(),
+                    TEGTaskBuilder("B")
+                        .withInputs(TEGArtefactDefBuilder("AOutput").build())
+                        .build()
+                ),
+                listOf()
             )
 
             sut.thenTheScheduledTasksAre(
@@ -93,12 +99,15 @@ class TEGSchedulerTest {
         @Test
         fun `should save the resulting events in persistence`() {
             sut.whenSubmittingTheTeg(
-                TEGTaskBuilder("A")
-                    .withOutputs(TEGArtefactDefBuilder("AOutput").build())
-                    .build(),
-                TEGTaskBuilder("B")
-                    .withInputs(TEGArtefactDefBuilder("AOutput").build())
-                    .build(),
+                listOf(
+                    TEGTaskBuilder("A")
+                        .withOutputs(TEGArtefactDefBuilder("AOutput").build())
+                        .build(),
+                    TEGTaskBuilder("B")
+                        .withInputs(TEGArtefactDefBuilder("AOutput").build())
+                        .build()
+                ),
+                listOf()
             )
 
             sut.thenThePersistedEventsShouldBe(
@@ -139,10 +148,12 @@ class TEGSchedulerTest {
         @Test
         fun `should error out if no task has no inputs and thus cannot start the execution`() {
             sut.whenSubmittingTheTeg(
-                TEGTaskBuilder("A")
-                    .withInputs(TEGArtefactDefBuilder("AOutput").build())
-                    .withOutputs(TEGArtefactDefBuilder("AOutput").build())
-                    .build(),
+                listOf(
+                    TEGTaskBuilder("A")
+                        .withInputs(TEGArtefactDefBuilder("AOutput").build())
+                        .withOutputs(TEGArtefactDefBuilder("AOutput").build())
+                        .build(),
+                ), listOf()
             )
 
             sut.thenTheResultIsAnError(
@@ -153,15 +164,17 @@ class TEGSchedulerTest {
         @Test
         fun `should detect missing artefact producers in the TEG and error out`() {
             sut.whenSubmittingTheTeg(
-                TEGTaskBuilder("A")
-                    .withOutputs(TEGArtefactDefBuilder("AOutput").build())
-                    .build(),
-                TEGTaskBuilder("B")
-                    .withInputs(
-                        TEGArtefactDefBuilder("NonExistentOutput").build(),
-                        TEGArtefactDefBuilder("AOutput").build(),
-                    )
-                    .build(),
+                listOf(
+                    TEGTaskBuilder("A")
+                        .withOutputs(TEGArtefactDefBuilder("AOutput").build())
+                        .build(),
+                    TEGTaskBuilder("B")
+                        .withInputs(
+                            TEGArtefactDefBuilder("NonExistentOutput").build(),
+                            TEGArtefactDefBuilder("AOutput").build(),
+                        )
+                        .build()
+                ), listOf()
             )
 
             sut.thenTheResultIsAnError(
@@ -172,13 +185,49 @@ class TEGSchedulerTest {
             )
         }
 
+        @Test
+        fun `should accept a missing artefact producer if the value is provided as init artefact`() {
+            sut.whenSubmittingTheTeg(
+                listOf(
+                    TEGTaskBuilder("A")
+                        .withInputs(
+                            TEGArtefactDefBuilder(
+                                name = "init-value",
+                                type = TEGArtefactType.STRING_VALUE,
+                            ).build(),
+                        )
+                        .withOutputs(TEGArtefactDefBuilder("AOutput").build())
+                        .build(),
+                ),
+                listOf(
+                    TEGArtefact.TEGArtefactStringValue(
+                        name = "init-value",
+                        value = "Some existing value"
+                    )
+                )
+            )
+
+            sut.thenTheResultIsASuccess()
+            sut.thenTheScheduledTasksAre(
+                TEGMessageBuilder("A")
+                    .asRunType()
+                    .withArtefacts(
+                        TEGArtefact.TEGArtefactStringValue(
+                            name = "init-value",
+                            value = "Some existing value"
+                        )
+                    )
+                    .build(),
+            )
+        }
+
         @ParameterizedTest
         @MethodSource("me.noukakis.re_do.scheduler.service.TEGSchedulerTest#cycleProvider")
         fun `should detect any cycle in the task execution graph and error out`(
             tasks: List<TEGTask>,
             expectedError: TegSchedulingError.CyclicDependencyDetected
         ) {
-            sut.whenSubmittingTheTeg(*tasks.toTypedArray())
+            sut.whenSubmittingTheTeg(tasks, listOf())
 
             sut.thenTheResultIsAnError(expectedError)
         }
@@ -186,12 +235,14 @@ class TEGSchedulerTest {
         @Test
         fun `should detect if two tasks have the same name and error out`() {
             sut.whenSubmittingTheTeg(
-                TEGTaskBuilder("A")
-                    .withOutputs(TEGArtefactDefBuilder("AOutput").build())
-                    .build(),
-                TEGTaskBuilder("A")
-                    .withInputs(TEGArtefactDefBuilder("AOutput").build())
-                    .build(),
+                listOf(
+                    TEGTaskBuilder("A")
+                        .withOutputs(TEGArtefactDefBuilder("AOutput").build())
+                        .build(),
+                    TEGTaskBuilder("A")
+                        .withInputs(TEGArtefactDefBuilder("AOutput").build())
+                        .build()
+                ), listOf()
             )
 
             sut.thenTheResultIsAnError(
@@ -204,12 +255,14 @@ class TEGSchedulerTest {
         @Test
         fun `should detect if two artefacts have the same name produced by different tasks and error out`() {
             sut.whenSubmittingTheTeg(
-                TEGTaskBuilder("A")
-                    .withOutputs(TEGArtefactDefBuilder("CommonOutput").build())
-                    .build(),
-                TEGTaskBuilder("B")
-                    .withOutputs(TEGArtefactDefBuilder("CommonOutput").build())
-                    .build(),
+                listOf(
+                    TEGTaskBuilder("A")
+                        .withOutputs(TEGArtefactDefBuilder("CommonOutput").build())
+                        .build(),
+                    TEGTaskBuilder("B")
+                        .withOutputs(TEGArtefactDefBuilder("CommonOutput").build())
+                        .build()
+                ), listOf()
             )
 
             sut.thenTheResultIsAnError(
@@ -221,43 +274,23 @@ class TEGSchedulerTest {
         }
 
         @Test
-        fun `should detect and error out if an output artefact is never consumed`() {
-            sut.whenSubmittingTheTeg(
-                TEGTaskBuilder("A")
-                    .withOutputs(
-                        TEGArtefactDefBuilder("AOutput").build(),
-                        TEGArtefactDefBuilder("oooooooooo").build(),
-                    )
-                    .build(),
-                TEGTaskBuilder("B")
-                    .withInputs(TEGArtefactDefBuilder("AOutput").build())
-                    .build(),
-            )
-
-            sut.thenTheResultIsAnError(
-                TegSchedulingError.NotAllProducedArtefactsAreConsumed(
-                    producingTaskName = "A",
-                    artefactName = "oooooooooo"
-                )
-            )
-        }
-
-        @Test
         fun `task with multiple outputs consumed by different dependent tasks should be valid`() {
             // A produces two artefacts, B consumes one and C consumes the other
             sut.whenSubmittingTheTeg(
-                TEGTaskBuilder("A")
-                    .withOutputs(
-                        TEGArtefactDefBuilder("AOutput1").build(),
-                        TEGArtefactDefBuilder("AOutput2").build(),
-                    )
-                    .build(),
-                TEGTaskBuilder("B")
-                    .withInputs(TEGArtefactDefBuilder("AOutput1").build())
-                    .build(),
-                TEGTaskBuilder("C")
-                    .withInputs(TEGArtefactDefBuilder("AOutput2").build())
-                    .build(),
+                listOf(
+                    TEGTaskBuilder("A")
+                        .withOutputs(
+                            TEGArtefactDefBuilder("AOutput1").build(),
+                            TEGArtefactDefBuilder("AOutput2").build(),
+                        )
+                        .build(),
+                    TEGTaskBuilder("B")
+                        .withInputs(TEGArtefactDefBuilder("AOutput1").build())
+                        .build(),
+                    TEGTaskBuilder("C")
+                        .withInputs(TEGArtefactDefBuilder("AOutput2").build())
+                        .build()
+                ), listOf()
             )
 
             sut.thenTheResultIsASuccess()
@@ -271,18 +304,20 @@ class TEGSchedulerTest {
         @Test
         fun `should schedule multiple starting tasks simultaneously`() {
             sut.whenSubmittingTheTeg(
-                TEGTaskBuilder("A")
-                    .withOutputs(TEGArtefactDefBuilder("AOutput").build())
-                    .build(),
-                TEGTaskBuilder("B")
-                    .withOutputs(TEGArtefactDefBuilder("BOutput").build())
-                    .build(),
-                TEGTaskBuilder("C")
-                    .withInputs(
-                        TEGArtefactDefBuilder("AOutput").build(),
-                        TEGArtefactDefBuilder("BOutput").build(),
-                    )
-                    .build(),
+                listOf(
+                    TEGTaskBuilder("A")
+                        .withOutputs(TEGArtefactDefBuilder("AOutput").build())
+                        .build(),
+                    TEGTaskBuilder("B")
+                        .withOutputs(TEGArtefactDefBuilder("BOutput").build())
+                        .build(),
+                    TEGTaskBuilder("C")
+                        .withInputs(
+                            TEGArtefactDefBuilder("AOutput").build(),
+                            TEGArtefactDefBuilder("BOutput").build(),
+                        )
+                        .build()
+                ), listOf()
             )
 
             sut.thenTheResultIsASuccess()
@@ -299,18 +334,20 @@ class TEGSchedulerTest {
         @Test
         fun `should persist events for multiple starting tasks`() {
             sut.whenSubmittingTheTeg(
-                TEGTaskBuilder("A")
-                    .withOutputs(TEGArtefactDefBuilder("AOutput").build())
-                    .build(),
-                TEGTaskBuilder("B")
-                    .withOutputs(TEGArtefactDefBuilder("BOutput").build())
-                    .build(),
-                TEGTaskBuilder("C")
-                    .withInputs(
-                        TEGArtefactDefBuilder("AOutput").build(),
-                        TEGArtefactDefBuilder("BOutput").build(),
-                    )
-                    .build(),
+                listOf(
+                    TEGTaskBuilder("A")
+                        .withOutputs(TEGArtefactDefBuilder("AOutput").build())
+                        .build(),
+                    TEGTaskBuilder("B")
+                        .withOutputs(TEGArtefactDefBuilder("BOutput").build())
+                        .build(),
+                    TEGTaskBuilder("C")
+                        .withInputs(
+                            TEGArtefactDefBuilder("AOutput").build(),
+                            TEGArtefactDefBuilder("BOutput").build(),
+                        )
+                        .build()
+                ), listOf()
             )
 
             sut.thenThePersistedEventsShouldBe(
@@ -349,23 +386,25 @@ class TEGSchedulerTest {
         fun `diamond dependency pattern should be valid`() {
             // A -> B, A -> C, B -> D, C -> D (diamond shape)
             sut.whenSubmittingTheTeg(
-                TEGTaskBuilder("A")
-                    .withOutputs(TEGArtefactDefBuilder("AOutput").build())
-                    .build(),
-                TEGTaskBuilder("B")
-                    .withInputs(TEGArtefactDefBuilder("AOutput").build())
-                    .withOutputs(TEGArtefactDefBuilder("BOutput").build())
-                    .build(),
-                TEGTaskBuilder("C")
-                    .withInputs(TEGArtefactDefBuilder("AOutput").build())
-                    .withOutputs(TEGArtefactDefBuilder("COutput").build())
-                    .build(),
-                TEGTaskBuilder("D")
-                    .withInputs(
-                        TEGArtefactDefBuilder("BOutput").build(),
-                        TEGArtefactDefBuilder("COutput").build(),
-                    )
-                    .build(),
+                listOf(
+                    TEGTaskBuilder("A")
+                        .withOutputs(TEGArtefactDefBuilder("AOutput").build())
+                        .build(),
+                    TEGTaskBuilder("B")
+                        .withInputs(TEGArtefactDefBuilder("AOutput").build())
+                        .withOutputs(TEGArtefactDefBuilder("BOutput").build())
+                        .build(),
+                    TEGTaskBuilder("C")
+                        .withInputs(TEGArtefactDefBuilder("AOutput").build())
+                        .withOutputs(TEGArtefactDefBuilder("COutput").build())
+                        .build(),
+                    TEGTaskBuilder("D")
+                        .withInputs(
+                            TEGArtefactDefBuilder("BOutput").build(),
+                            TEGArtefactDefBuilder("COutput").build(),
+                        )
+                        .build()
+                ), listOf()
             )
 
             sut.thenTheResultIsASuccess()

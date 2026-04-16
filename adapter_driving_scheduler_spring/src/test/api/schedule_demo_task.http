@@ -9,16 +9,47 @@ Content-Type: application/json
     {
       "name": "it-should-run",
       "implementationName": "DemoEchoTask",
-      "inputs": [],
-      "outputs": [],
+      "inputs": [
+        {
+          "name": "finally-awake.mp4",
+          "type": "FILE"
+        },
+        {
+          "name": "other-values",
+          "type": "STRING_VALUE"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "finally-awake.mp4-processed",
+          "type": "FILE"
+        },
+        {
+          "name": "other-values-processed",
+          "type": "STRING_VALUE"
+        }
+      ],
       "arguments": [
         "one",
         "two"
       ],
       "timeout": {
-        "amount": 2,
+        "amount": 20,
         "temporalUnit": "SECONDS"
       }
+    }
+  ],
+  "initArtefacts": [
+    {
+      "name": "finally-awake.mp4",
+      "type": "FILE",
+      "ref": "e1388320-1a56-4bba-b722-8513dd438070",
+      "storedWith": "s3"
+    },
+    {
+      "name": "other-values",
+      "type": "STRING_VALUE",
+      "value": "one,two"
     }
   ]
 }

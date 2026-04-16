@@ -1,11 +1,10 @@
 package me.noukakis.re_do.runner.port
 
 import me.noukakis.re_do.runner.model.LocalTegArtefact
-import me.noukakis.re_do.scheduler.model.TEGArtefact
 import java.nio.file.Path
 
 sealed interface TaskImplementationResult {
-    data class Success(val outputArtefacts: List<TEGArtefact>) : TaskImplementationResult
+    data class Success(val outputArtefacts: List<LocalTegArtefact>) : TaskImplementationResult
     data class Failure(val reason: String) : TaskImplementationResult
 }
 

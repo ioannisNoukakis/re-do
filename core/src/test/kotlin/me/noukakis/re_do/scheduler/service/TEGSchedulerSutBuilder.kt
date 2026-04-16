@@ -4,9 +4,9 @@ import arrow.core.Either
 import arrow.core.left
 import arrow.core.right
 import me.noukakis.re_do.adapters.driven.common.InMemoryMessagingAdapter
+import me.noukakis.re_do.adapters.driven.common.StubUuidAdapter
 import me.noukakis.re_do.adapters.driven.scheduler.InMemoryPersistenceAdapter
 import me.noukakis.re_do.adapters.driven.scheduler.adapter.StubNowAdapter
-import me.noukakis.re_do.adapters.driven.scheduler.adapter.StubUuidAdapter
 import me.noukakis.re_do.common.model.Identity
 import me.noukakis.re_do.common.model.TEGMessageIn
 import me.noukakis.re_do.common.model.TEGMessageOut
@@ -26,7 +26,7 @@ const val TEST_TEG_ID = "test-teg-id"
 class TEGSchedulerSutBuilder {
     val messagingAdapter = InMemoryMessagingAdapter()
     val persistenceAdapter = InMemoryPersistenceAdapter()
-    val uuidAdapter = StubUuidAdapter(TEST_TEG_ID)
+    val uuidAdapter = StubUuidAdapter(listOf(TEST_TEG_ID))
     val nowAdapter = StubNowAdapter()
     var sut: TEGScheduler? = null
 
@@ -42,9 +42,9 @@ class TEGSchedulerSutBuilder {
         nowAdapter.toReturn = timestamps.toMutableList()
     }
 
-    fun whenSubmittingTheTeg(vararg tasks: TEGTask) {
+    fun whenSubmittingTheTeg(tasks: List<TEGTask>, initArtefacts: List<TEGArtefact>) {
         createSut()
-        scheduleResult = sut!!.scheduleTeg(ScheduleTEGCommand(IDENTITY, tasks.toList()))
+        scheduleResult = sut!!.scheduleTeg(ScheduleTEGCommand(IDENTITY, tasks, initArtefacts))
     }
 
     fun whenGettingTegUpdate(message: TEGMessageIn) {
@@ -233,8 +233,8 @@ val TEST_ARTEFACT_TYPE = TEGArtefactType.STRING_VALUE
 
 class TEGArtefactDefBuilder(
     private val name: String,
-) {
     private var type: TEGArtefactType = TEST_ARTEFACT_TYPE
+) {
 
     fun build(): TEGArtefactDefinition {
         return TEGArtefactDefinition(

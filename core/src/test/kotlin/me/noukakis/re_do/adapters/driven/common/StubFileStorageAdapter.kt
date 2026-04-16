@@ -1,26 +1,26 @@
 package me.noukakis.re_do.adapters.driven.common
 
-import arrow.core.Tuple4
 import me.noukakis.re_do.common.port.FileStoragePort
 import me.noukakis.re_do.common.port.StoredFileRef
-import java.io.InputStream
 import java.nio.file.Path
 
+const val STORED_WITH_STUB = "StubFileStorageAdapter"
+
 class StubFileStorageAdapter(
-    val storage: MutableMap<Tuple4<String, String, String, Long>, StoredFileRef> = mutableMapOf(),
+    val storage: MutableMap<String, StoredFileRef> = mutableMapOf(),
 ) : FileStoragePort {
-    override fun upload(fileId: String, filename: String, contentType: String, contentLength: Long, stream: InputStream): StoredFileRef {
-        val ref = StoredFileRef(ref = fileId, storedWith = "StubFileStorageAdapter")
-        storage[Tuple4(fileId, filename, contentType, contentLength)] = ref
-        return ref
+    override fun upload(ref: String, sourcePath: Path): StoredFileRef {
+        val storedRef = StoredFileRef(ref = ref, storedWith = STORED_WITH_STUB)
+        storage[ref] = storedRef
+        return storedRef
     }
 
-    override fun download(fileId: String, targetPath: Path): Path {
+    override fun download(ref: String, targetPath: Path): Path {
         for (entry in storage.entries) {
-            if (entry.key.first == fileId) {
+            if (entry.key == ref) {
                 return targetPath
             }
         }
-        throw IllegalStateException("No stubbed file for fileId=$fileId")
+        throw IllegalStateException("No stubbed file for fileId=$ref")
     }
 }

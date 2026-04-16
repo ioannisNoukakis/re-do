@@ -25,6 +25,9 @@ private const val ACCESS_KEY = "testadmin"
 private const val SECRET_KEY = "testadmin123"
 private const val TEST_BUCKET = "test-bucket"
 
+private const val FILE_ID = "reports/file-abc-123"
+private const val CONTENTS = "col1,col2\nval1,val2"
+
 @Testcontainers
 class S3FileStorageAdapterIT {
 
@@ -37,9 +40,13 @@ class S3FileStorageAdapterIT {
 
     private lateinit var s3Client: S3Client
     private lateinit var sut: S3FileStorageAdapter
+    private lateinit var testFile: Path
 
     @BeforeEach
-    fun setup() {
+    fun setup(@TempDir tempDir: Path) {
+        testFile = tempDir.resolve("report.csv")
+        testFile.toFile().createNewFile()
+        testFile.toFile().writeText(CONTENTS)
         val endpoint = "http://${rustfsContainer.host}:${rustfsContainer.getMappedPort(RUSTFS_PORT)}"
         s3Client = S3Client.builder()
             .endpointOverride(URI.create(endpoint))
@@ -64,51 +71,38 @@ class S3FileStorageAdapterIT {
 
         @Test
         fun `upload returns the file id as ref and s3 as storedWith`() {
-            val content = "col1,col2\nval1,val2"
             val result = sut.upload(
-                fileId = "reports/file-abc-123",
-                filename = "report.csv",
-                contentType = "text/csv",
-                contentLength = content.length.toLong(),
-                stream = content.byteInputStream(),
+                ref = FILE_ID,
+                sourcePath = testFile,
             )
 
-            assertEquals(StoredFileRef(ref = "reports/file-abc-123", storedWith = "s3"), result)
+            assertEquals(StoredFileRef(ref = FILE_ID, storedWith = "s3"), result)
         }
 
         @Test
         fun `upload stores the file content at the expected key in the bucket`() {
-            val content = "col1,col2\nval1,val2"
-
             sut.upload(
-                fileId = "reports/file-abc-123",
-                filename = "report.csv",
-                contentType = "text/csv",
-                contentLength = content.length.toLong(),
-                stream = content.byteInputStream(),
+                ref = FILE_ID,
+                sourcePath = testFile,
             )
 
             val stored = s3Client.getObjectAsBytes(
-                GetObjectRequest.builder().bucket(TEST_BUCKET).key("reports/file-abc-123").build()
+                GetObjectRequest.builder().bucket(TEST_BUCKET).key(FILE_ID).build()
             ).asUtf8String()
-            assertEquals(content, stored)
+            assertEquals(CONTENTS, stored)
         }
 
         @Test
         fun `upload stores the correct content type`() {
-            val content = "pdf-content"
             sut.upload(
-                fileId = "docs/file-xyz-456",
-                filename = "document.pdf",
-                contentType = "application/pdf",
-                contentLength = content.length.toLong(),
-                stream = content.byteInputStream(),
+                ref = FILE_ID,
+                sourcePath = testFile,
             )
 
             val metadata = s3Client.headObject {
-                it.bucket(TEST_BUCKET).key("docs/file-xyz-456")
+                it.bucket(TEST_BUCKET).key(FILE_ID)
             }
-            assertEquals("application/pdf", metadata.contentType())
+            assertEquals("text/csv", metadata.contentType())
         }
     }
 
@@ -117,36 +111,28 @@ class S3FileStorageAdapterIT {
 
         @Test
         fun `download returns the target path`(@TempDir tempDir: Path) {
-            val content = "col1,col2\nval1,val2"
             sut.upload(
-                fileId = "reports/file-abc-123",
-                filename = "report.csv",
-                contentType = "text/csv",
-                contentLength = content.length.toLong(),
-                stream = content.byteInputStream(),
+                ref = FILE_ID,
+                sourcePath = testFile,
             )
 
             val targetPath = tempDir.resolve("downloaded.csv")
-            val result = sut.download("reports/file-abc-123", targetPath)
+            val result = sut.download(FILE_ID, targetPath)
 
             assertEquals(targetPath, result)
         }
 
         @Test
         fun `download writes the file content to the target path`(@TempDir tempDir: Path) {
-            val content = "col1,col2\nval1,val2"
             sut.upload(
-                fileId = "reports/file-abc-123",
-                filename = "report.csv",
-                contentType = "text/csv",
-                contentLength = content.length.toLong(),
-                stream = content.byteInputStream(),
+                ref = FILE_ID,
+                sourcePath = testFile,
             )
 
             val targetPath = tempDir.resolve("downloaded.csv")
-            sut.download("reports/file-abc-123", targetPath)
+            sut.download(FILE_ID, targetPath)
 
-            assertEquals(content, targetPath.toFile().readText())
+            assertEquals(CONTENTS, targetPath.toFile().readText())
         }
     }
 }

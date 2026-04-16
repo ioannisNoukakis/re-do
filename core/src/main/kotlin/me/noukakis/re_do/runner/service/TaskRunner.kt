@@ -2,18 +2,13 @@ package me.noukakis.re_do.runner.service
 
 import arrow.core.Either
 import arrow.core.left
-import arrow.core.raise.either
 import arrow.core.right
-import me.noukakis.re_do.runner.port.MessagingPort
-import me.noukakis.re_do.runner.port.RunWithTimeoutPort
-import me.noukakis.re_do.runner.port.TaskExecutionContext
-import me.noukakis.re_do.runner.port.TaskHandler
-import me.noukakis.re_do.runner.port.TaskImplementationResult
 import me.noukakis.re_do.common.model.TEGMessageIn
 import me.noukakis.re_do.common.model.TEGMessageOut
 import me.noukakis.re_do.common.port.FileStoragePort
+import me.noukakis.re_do.common.port.UUIDPort
 import me.noukakis.re_do.runner.model.LocalTegArtefact
-import me.noukakis.re_do.runner.port.TempWorkingDirPort
+import me.noukakis.re_do.runner.port.*
 import me.noukakis.re_do.scheduler.model.TEGArtefact
 import me.noukakis.re_do.scheduler.model.TaskRunnerError
 import java.nio.file.Path
@@ -27,6 +22,7 @@ class TaskRunner(
     private val runWithTimeoutPort: RunWithTimeoutPort,
     private val tempWorkingDirPort: TempWorkingDirPort,
     private val fileStoragePort: FileStoragePort,
+    private val uuidPort: UUIDPort,
     private val implementations: Map<String, TaskHandler> = emptyMap(),
 ) : TaskRunnerService {
     override suspend fun execute(tegId: String, message: TEGMessageOut): Either<TaskRunnerError, Unit> =
@@ -37,90 +33,143 @@ class TaskRunner(
     private suspend fun runTask(
         tegId: String,
         message: TEGMessageOut.TEGRunTaskMessage
-    ): Either<TaskRunnerError, Unit> = either {
-        val impl = implementations[message.implementationName]
-            ?: return handleMissingImplementation(tegId, message)
+    ): Either<TaskRunnerError, Unit> {
+        return runTaskBase(message, tegId).onLeft { sendErrorMessage(it, tegId, message) }
+    }
 
-        tempWorkingDirPort.create().use { workingDir ->
-            val context = object : TaskExecutionContext {
-                override fun reportProgress(progress: Int) {
-                    messagingPort.send(
-                        tegId,
-                        TEGMessageIn.TEGTaskProgressMessage(
-                            taskName = message.taskName,
-                            progress = progress,
-                        )
-                    )
-                }
-
-                override fun reportLog(log: String) {
-                    messagingPort.send(
-                        tegId,
-                        TEGMessageIn.TEGTaskLogMessage(
-                            taskName = message.taskName,
-                            log = log,
-                        )
-                    )
-                }
-
-                override fun workingDir(): Path = workingDir.path()
-            }
-
-            val artefacts = message.artefacts.map {
-                when (it) {
-                    is TEGArtefact.TEGArtefactFile -> LocalTegArtefact.LocalTegArtefactFile(
-                        it.name,
-                        fileStoragePort.download(it.ref, workingDir.path().resolve(it.name()))
-                    )
-
-                    is TEGArtefact.TEGArtefactStringValue -> LocalTegArtefact.LocalTEGArtefactStringValue(
-                        it.name,
-                        it.value
-                    )
-                }
-            }
-
-            val implResult = runWithTimeoutPort.execute(
-                supplier = { impl.run(artefacts, message.arguments, context) },
-                timeout = message.timeout
-            )
-                .fold(
-                    ifLeft = {
+    private suspend fun runTaskBase(
+        message: TEGMessageOut.TEGRunTaskMessage,
+        tegId: String
+    ): Either<TaskRunnerError, Unit> {
+        try {
+            tempWorkingDirPort.create().use { workingDir ->
+                val impl = implementations[message.implementationName]
+                    ?: return handleMissingImplementation(tegId, message)
+                val context = object : TaskExecutionContext {
+                    override fun reportProgress(progress: Int) {
                         messagingPort.send(
                             tegId,
-                            TEGMessageIn.TEGTaskFailedMessage(
+                            TEGMessageIn.TEGTaskProgressMessage(
                                 taskName = message.taskName,
-                                reason = "Task timed out",
+                                progress = progress,
                             )
                         )
-                        return TaskRunnerError.TaskTimedOut(tegId, message.taskName).left()
-                    },
-                    ifRight = { it }
-                )
+                    }
 
-            return when (implResult) {
-                is TaskImplementationResult.Success -> {
-                    messagingPort.send(
-                        tegId,
-                        TEGMessageIn.TEGTaskResultMessage(
-                            taskName = message.taskName,
-                            outputArtefacts = implResult.outputArtefacts,
+                    override fun reportLog(log: String) {
+                        messagingPort.send(
+                            tegId,
+                            TEGMessageIn.TEGTaskLogMessage(
+                                taskName = message.taskName,
+                                log = log,
+                            )
                         )
-                    )
-                    Unit.right()
+                    }
+
+                    override fun workingDir(): Path = workingDir.path()
                 }
 
-                is TaskImplementationResult.Failure -> {
-                    messagingPort.send(
-                        tegId,
-                        TEGMessageIn.TEGTaskFailedMessage(
-                            taskName = message.taskName,
-                            reason = implResult.reason,
+                val artefacts = message.artefacts.map {
+                    when (it) {
+                        is TEGArtefact.TEGArtefactFile -> LocalTegArtefact.LocalTegArtefactFile(
+                            it.name,
+                            fileStoragePort.download(it.ref, workingDir.path().resolve(it.name()))
                         )
+
+                        is TEGArtefact.TEGArtefactStringValue -> LocalTegArtefact.LocalTEGArtefactStringValue(
+                            it.name,
+                            it.value
+                        )
+                    }
+                }
+
+                val implResult = runWithTimeoutPort.execute(
+                    supplier = { impl.run(artefacts, message.arguments, context) },
+                    timeout = message.timeout
+                )
+                    .fold(
+                        ifLeft = {
+                            return TaskRunnerError.TaskTimedOut(tegId, message.taskName).left()
+                        },
+                        ifRight = { it }
                     )
-                    TaskRunnerError.TaskFailed(tegId, message.taskName, implResult.reason).left()
+
+                return when (implResult) {
+                    is TaskImplementationResult.Success -> {
+                        val remoteArtefacts = implResult.outputArtefacts.map {
+                            when (it) {
+                                is LocalTegArtefact.LocalTegArtefactFile -> {
+                                    val ref = fileStoragePort.upload(uuidPort.next(), it.path)
+                                    TEGArtefact.TEGArtefactFile(
+                                        it.name,
+                                        ref.ref,
+                                        ref.storedWith
+                                    )
+                                }
+
+                                is LocalTegArtefact.LocalTEGArtefactStringValue -> TEGArtefact.TEGArtefactStringValue(
+                                    it.name,
+                                    it.value
+                                )
+                            }
+                        }
+                        messagingPort.send(
+                            tegId,
+                            TEGMessageIn.TEGTaskResultMessage(
+                                taskName = message.taskName,
+                                outputArtefacts = remoteArtefacts,
+                            )
+                        )
+                        Unit.right()
+                    }
+
+                    is TaskImplementationResult.Failure -> TaskRunnerError.TaskFailed(
+                        tegId,
+                        message.taskName,
+                        implResult.reason
+                    ).left()
                 }
             }
+        } catch (e: Exception) {
+            val stackTrace = e.stackTraceToString()
+            return TaskRunnerError.TaskFailed(
+                tegId,
+                message.taskName,
+                stackTrace
+            ).left()
+        }
+    }
+
+    private fun sendErrorMessage(
+        error: TaskRunnerError,
+        tegId: String,
+        message: TEGMessageOut.TEGRunTaskMessage
+    ) {
+        when (error) {
+            is TaskRunnerError.TaskTimedOut ->
+                messagingPort.send(
+                    tegId,
+                    TEGMessageIn.TEGTaskFailedMessage(
+                        taskName = message.taskName,
+                        reason = "Task timed out",
+                    )
+                )
+
+            is TaskRunnerError.TaskFailed -> messagingPort.send(
+                tegId,
+                TEGMessageIn.TEGTaskFailedMessage(
+                    taskName = message.taskName,
+                    reason = error.reason,
+                )
+            )
+
+            is TaskRunnerError.ImplementationNotFound -> messagingPort.send(
+                tegId,
+                TEGMessageIn.TEGTaskFailedMessage(
+                    taskName = message.taskName,
+                    reason = "No implementation found for: ${message.implementationName}",
+                )
+            )
         }
     }
 
@@ -128,13 +177,6 @@ class TaskRunner(
         tegId: String,
         message: TEGMessageOut.TEGRunTaskMessage
     ): Either<TaskRunnerError, Nothing> {
-        messagingPort.send(
-            tegId,
-            TEGMessageIn.TEGTaskFailedMessage(
-                taskName = message.taskName,
-                reason = "No implementation found for: ${message.implementationName}",
-            )
-        )
         return TaskRunnerError.ImplementationNotFound(tegId, message.implementationName).left()
     }
 }

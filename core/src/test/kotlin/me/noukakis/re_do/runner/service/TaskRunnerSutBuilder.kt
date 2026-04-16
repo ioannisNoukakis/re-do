@@ -5,15 +5,17 @@ import arrow.core.left
 import arrow.core.right
 import me.noukakis.re_do.adapters.driven.common.InMemoryMessagingAdapter
 import me.noukakis.re_do.adapters.driven.common.StubFileStorageAdapter
+import me.noukakis.re_do.adapters.driven.common.StubUuidAdapter
 import me.noukakis.re_do.adapters.driven.runner.FakeTempWorkingDirAdapter
 import me.noukakis.re_do.common.model.TEGMessageIn
 import me.noukakis.re_do.common.model.TEGMessageOut
+import me.noukakis.re_do.common.port.StoredFileRef
 import me.noukakis.re_do.runner.model.LocalTegArtefact
 import me.noukakis.re_do.runner.port.*
 import me.noukakis.re_do.scheduler.model.TaskRunnerError
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.*
 import java.nio.file.Path
+import kotlin.reflect.KClass
 import kotlin.time.Duration
 
 const val TEG_ID = "tegId"
@@ -38,6 +40,7 @@ class TaskRunnerSutBuilder {
     private val messagingAdapter = InMemoryMessagingAdapter()
     private val runWithTimeoutAdapter = ConfigurableRunWithTimeoutAdapter()
     private val tempWorkingDirPort = FakeTempWorkingDirAdapter(WORKING_DIR)
+    private val uuidPort = StubUuidAdapter()
     private val storageAdapter = StubFileStorageAdapter()
     private lateinit var message: TEGMessageOut
     private lateinit var result: Either<TaskRunnerError, Unit>
@@ -49,12 +52,20 @@ class TaskRunnerSutBuilder {
 
     fun givenTheFileInStorage(
         fileId: String,
-        filename: String,
-        contentType: String,
-        contentLength: Long,
-        contents: String
     ) {
-        storageAdapter.upload(fileId, filename, contentType, contentLength, contents.toByteArray().inputStream())
+        storageAdapter.storage[fileId] = StoredFileRef(
+            ref = fileId,
+            storedWith = "StubFileStorageAdapter"
+        )
+    }
+
+    fun givenTheArtefactDownloadWillFail(fileId: String) {
+        // Intentionally not adding to storage so download throws
+        storageAdapter.storage.remove(fileId)
+    }
+
+    fun givenTheUUidsToReturn(vararg uuids: String) {
+        uuidPort.uuidsToReturn = uuids.toList()
     }
 
     fun givenTheImplementation(
@@ -90,13 +101,31 @@ class TaskRunnerSutBuilder {
                         .find { it.path == expected }
                         ?: throw IllegalStateException("Expected file ref with path $expected not found in artefacts")
                 }
-                return TaskImplementationResult.Success(outputArtefacts = emptyList())
+                return TaskImplementationResult.Success(outputArtefacts = artefacts)
             }
 
             override fun implementationName(): String {
                 return name
             }
         })
+    }
+
+    fun givenAnImplementationThatThrowsAnException(name: String = TEST_TASK_IMPL_NAME, exception: Exception): String {
+        val stackTrace = exception.stackTraceToString()
+        givenTheImplementation(name, object : TaskHandler {
+            override fun run(
+                artefacts: List<LocalTegArtefact>,
+                arguments: List<String>,
+                context: TaskExecutionContext,
+            ): TaskImplementationResult {
+                throw exception
+            }
+
+            override fun implementationName(): String {
+                return name
+            }
+        })
+        return stackTrace
     }
 
     fun givenAFailingImplementation(name: String = TEST_TASK_IMPL_NAME, reason: String) {
@@ -163,6 +192,7 @@ class TaskRunnerSutBuilder {
             runWithTimeoutAdapter,
             tempWorkingDirPort,
             storageAdapter,
+            uuidPort,
             implementations
         )
             .execute(TEG_ID, message)
@@ -174,6 +204,14 @@ class TaskRunnerSutBuilder {
         }
     }
 
+    fun <T : Any>thenTheTaskShouldFail(expectedType: KClass<T>) {
+        assert(result.isLeft()) {
+            "Expected task to fail, but it completed successfully"
+        }
+        val error = result.swap().getOrNull()
+        assertInstanceOf(expectedType.java, error)
+    }
+
     fun thenTheTaskShouldFailWith(expected: TaskRunnerError) {
         assert(result.isLeft()) {
             "Expected task to fail, but it completed successfully"
@@ -183,6 +221,13 @@ class TaskRunnerSutBuilder {
 
     fun thenTheEventsShouldBeEmitted(vararg messages: TEGMessageIn) {
         assertEquals(messages.map { TEG_ID to it }.toList(), messagingAdapter.incomingMessages)
+    }
+
+    fun thenTheFailedEventShouldBeEmittedNoCheckReason() {
+        assertInstanceOf(
+            TEGMessageIn.TEGTaskFailedMessage::class.java,
+            messagingAdapter.incomingMessages.first().second,
+            "Expected message to be of type TEGTaskFailedMessage, but was ${messagingAdapter.incomingMessages.first().second::class.java}")
     }
 
     fun thenTheWorkingDirectoryIsClosed() {

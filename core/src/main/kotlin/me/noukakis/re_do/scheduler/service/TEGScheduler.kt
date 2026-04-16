@@ -9,6 +9,7 @@ import me.noukakis.re_do.scheduler.model.TEGEvent
 import me.noukakis.re_do.common.model.TEGMessageIn
 import me.noukakis.re_do.common.model.TEGMessageOut
 import me.noukakis.re_do.common.model.TEGTask
+import me.noukakis.re_do.common.port.UUIDPort
 import me.noukakis.re_do.scheduler.model.TEGArtefact
 import me.noukakis.re_do.scheduler.model.TegSchedulingError
 import me.noukakis.re_do.scheduler.model.TegTimeoutCheckError
@@ -18,13 +19,13 @@ import me.noukakis.re_do.scheduler.port.MessagingPort
 import me.noukakis.re_do.scheduler.port.NowPort
 import me.noukakis.re_do.scheduler.port.PersistencePort
 import me.noukakis.re_do.scheduler.port.TegEventFilter
-import me.noukakis.re_do.scheduler.port.UUIDPort
 import java.time.Instant
 import kotlin.time.toJavaDuration
 
 data class ScheduleTEGCommand(
     val identity: Identity,
     val tasks: List<TEGTask>,
+    val initArtefacts: List<TEGArtefact>,
 )
 
 data class TEGUpdateCommand(
@@ -46,18 +47,23 @@ class TEGScheduler(
         validateAllTaskHaveUniqueNames(command).bind()
         validateAllTaskProducedArtefactsHaveUniqueNames(command).bind()
         validateAllTaskInputExist(command).bind()
-        validateAllProducedArtefactsAreConsumed(command).bind()
-        val startingTasks = command.tasks.filter { it.inputs.isEmpty() }
+        val startingTasks = command.tasks.filter { task ->
+            val commandInitNames = command.initArtefacts.map { it.name() }.toSet()
+            val taskInputNames = task.inputs.map { it.name }
+            task.inputs.isEmpty() || taskInputNames.all { commandInitNames.contains(it) }
+        }
         validateAtLeastOneStartingTask(startingTasks).bind()
         validateNoCyclicDependencies(command, startingTasks).bind()
 
-        val tegId = uuidPort.generateUUID()
-        logPort.info(tegId, "Scheduling TEG with ${command.tasks.size} tasks, ${startingTasks.size} that can be dispatched immediately")
-        command.tasks
-            .filter { it.inputs.isEmpty() }
+        val tegId = uuidPort.next()
+        logPort.info(
+            tegId,
+            "Scheduling TEG with ${command.tasks.size} tasks, ${startingTasks.size} that can be dispatched immediately"
+        )
+        startingTasks
             .forEach {
                 logPort.debug(tegId, "Dispatching initial task '${it.name}'")
-                messagingPort.send(tegId, it.toRunTaskMessageNoArtefacts())
+                messagingPort.send(tegId, it.toRunTaskMessage(command.initArtefacts))
             }
         persistencePort.saveEvents(
             tegId,
@@ -131,7 +137,9 @@ class TEGScheduler(
     private fun validateAllTaskInputExist(
         command: ScheduleTEGCommand
     ): Either<TegSchedulingError, Unit> {
-        val producedArtefactNames = command.tasks.flatMap { it.outputs }.map { it.name }.toSet()
+        val producedArtefactNames =
+            command.tasks.flatMap { it.outputs }.map { it.name }.toSet() + command.initArtefacts.map { it.name() }
+                .toSet()
         for (task in command.tasks) {
             for (input in task.inputs) {
                 if (!producedArtefactNames.contains(input.name)) {
@@ -143,24 +151,6 @@ class TEGScheduler(
             }
         }
         return Unit.right()
-    }
-
-    private fun validateAllProducedArtefactsAreConsumed(
-        command: ScheduleTEGCommand
-    ): Either<TegSchedulingError, Unit> {
-        val consumedArtefactNames = command.tasks.flatMap { it.inputs }.map { it.name }.toSet()
-        for (task in command.tasks) {
-            for (output in task.outputs) {
-                if (!consumedArtefactNames.contains(output.name)) {
-                    return TegSchedulingError.NotAllProducedArtefactsAreConsumed(
-                        artefactName = output.name,
-                        producingTaskName = task.name
-                    ).left()
-                }
-            }
-        }
-        return Unit.right()
-
     }
 
     override fun handleTegUpdate(command: TEGUpdateCommand): Either<TegUpdateError, Unit> = either {
@@ -205,7 +195,6 @@ class TEGScheduler(
             eventsToVerify.add(noMoreTasksEvent)
             newEvents.add(noMoreTasksEvent)
         }
-
         val completedArtefacts = eventsToVerify.filterIsInstance<TEGEvent.Completed>()
             .flatMap { it.outputArtefacts }
         val tasksThatWereAlreadyScheduled = eventsToVerify.filterIsInstance<TEGEvent.Scheduled>()
@@ -259,7 +248,10 @@ class TEGScheduler(
         val failureCount = events.filterIsInstance<TEGEvent.Failed>()
             .count { it.taskName == failedEvent.taskName }
         if (failureCount >= maxFailuresBeforeGivingUp) {
-            logPort.error(tegId, "Task '${failedEvent.taskName}' exceeded max retries ($maxFailuresBeforeGivingUp), marking TEG as failed")
+            logPort.error(
+                tegId,
+                "Task '${failedEvent.taskName}' exceeded max retries ($maxFailuresBeforeGivingUp), marking TEG as failed"
+            )
             val tegFailedEvent = TEGEvent.TEGFailed(
                 timestamp = now,
                 reason = "Max retries exceeded for task ${failedEvent.taskName}"
@@ -268,7 +260,10 @@ class TEGScheduler(
             return true
         }
 
-        logPort.warn(tegId, "Task '${failedEvent.taskName}' failed (failure #$failureCount / $maxFailuresBeforeGivingUp), retrying")
+        logPort.warn(
+            tegId,
+            "Task '${failedEvent.taskName}' failed (failure #$failureCount / $maxFailuresBeforeGivingUp), retrying"
+        )
         val scheduledEvent = TEGEvent.Scheduled(taskName = failedEvent.taskName, timestamp = now)
         persistencePort.saveEvents(tegId, listOf(failedEvent, scheduledEvent))
 
@@ -312,10 +307,12 @@ class TEGScheduler(
 
     fun runTimeoutCheck(): Either<TegTimeoutCheckError, Unit> {
         val now = nowPort.now()
-        for ((tegId, events) in persistencePort.getTegsThatDontHaveEvents(listOf(
-            TEGEvent.NoMoreTasksToSchedule::class,
-            TEGEvent.TEGFailed::class,
-        ))) {
+        for ((tegId, events) in persistencePort.getTegsThatDontHaveEvents(
+            listOf(
+                TEGEvent.NoMoreTasksToSchedule::class,
+                TEGEvent.TEGFailed::class,
+            )
+        )) {
             val tasks = events.filterIsInstance<TEGEvent.Created>().map { it.task }
             val allScheduledTasks = events.filterIsInstance<TEGEvent.Scheduled>().map { it }
             val allCompletedTasks = events.filterIsInstance<TEGEvent.Completed>().map { it }
@@ -332,7 +329,10 @@ class TEGScheduler(
                 if (!now.isAfter(scheduled.timestamp.plus(task.timeout.toJavaDuration()))) {
                     continue
                 }
-                logPort.warn(tegId, "Task '${task.name}' timed out after ${task.timeout} (scheduled at ${scheduled.timestamp})")
+                logPort.warn(
+                    tegId,
+                    "Task '${task.name}' timed out after ${task.timeout} (scheduled at ${scheduled.timestamp})"
+                )
                 val failedEvent = TEGEvent.Failed(
                     taskName = task.name,
                     timestamp = now,
