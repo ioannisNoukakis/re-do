@@ -1,7 +1,7 @@
 package me.noukakis.re_do.adapters.common.s3
 
-import me.noukakis.re_do.scheduler.port.FileStoragePort
-import me.noukakis.re_do.scheduler.port.StoredFileRef
+import me.noukakis.re_do.common.port.FileStoragePort
+import me.noukakis.re_do.common.port.StoredFileRef
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
 import software.amazon.awssdk.core.sync.RequestBody
@@ -11,6 +11,7 @@ import software.amazon.awssdk.services.s3.S3Configuration
 import software.amazon.awssdk.services.s3.model.PutObjectRequest
 import java.io.InputStream
 import java.net.URI
+import java.nio.file.Path
 
 class S3FileStorageAdapter(
     private val s3Client: S3Client,
@@ -28,6 +29,10 @@ class S3FileStorageAdapter(
             RequestBody.fromInputStream(stream, contentLength)
         )
         return StoredFileRef(ref = fileId, storedWith = "s3")
+    }
+
+    override fun download(fileId: String, targetPath: Path): Path {
+        TODO("Not yet implemented")
     }
 
     companion object {

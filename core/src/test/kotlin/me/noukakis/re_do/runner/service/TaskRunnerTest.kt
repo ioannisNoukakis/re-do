@@ -1,8 +1,9 @@
-package me.noukakis.re_do.adapters.driven.runner
+package me.noukakis.re_do.runner.service
 
 import kotlinx.coroutines.test.runTest
 import me.noukakis.re_do.common.model.TEGMessageIn
 import me.noukakis.re_do.common.model.TEGMessageOut
+import me.noukakis.re_do.scheduler.model.TEGArtefact
 import me.noukakis.re_do.scheduler.model.TaskRunnerError
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
@@ -18,7 +19,7 @@ class TaskRunnerTest {
     }
 
     @Nested
-    inner class `Should run a single task` {
+    inner class `Should run a task` {
         @BeforeEach
         fun setUp() {
             sut.givenASuccessfulImplementation()
@@ -50,6 +51,79 @@ class TaskRunnerTest {
                     outputArtefacts = emptyList(),
                 )
             )
+        }
+    }
+
+    @Nested
+    inner class `Should run a task with arguments and artefacts` {
+        @BeforeEach
+        fun setUp() {
+            sut.givenTheMessage(
+                TEGMessageOut.TEGRunTaskMessage(
+                    taskName = TEST_TASK_NAME,
+                    implementationName = TEST_TASK_IMPL_NAME,
+                    artefacts = listOf(
+                        TEGArtefact.TEGArtefactFile(
+                            name = "input.txt",
+                            ref = "storage_backend_ref_for_input.txt",
+                            storedWith = "StubFileStorageAdapter",
+                        ),
+                        TEGArtefact.TEGArtefactFile(
+                            name = "input2.txt",
+                            ref = "storage_backend_ref_for_input2.txt",
+                            storedWith = "StubFileStorageAdapter",
+                        ),
+                    ),
+                    arguments = listOf("arg1", "arg2"),
+                    timeout = Duration.INFINITE,
+                )
+            )
+            sut.givenTheFileInStorage(
+                fileId = "storage_backend_ref_for_input.txt",
+                filename = "input.txt",
+                contentType = "text/plain",
+                contentLength = 10L,
+                contents = "Hello World"
+            )
+            sut.givenTheFileInStorage(
+                fileId = "storage_backend_ref_for_input2.txt",
+                filename = "input2.txt",
+                contentType = "text/plain",
+                contentLength = 10L,
+                contents = "Hello World2"
+            )
+        }
+
+        @Test
+        fun `should not fail`() = runTest {
+            sut.givenASuccessfulImplementationWithFileRefs(
+                expectedFileRefsPaths = listOf(
+                    WORKING_DIR.resolve("input.txt"),
+                    WORKING_DIR.resolve("input2.txt"),
+                )
+            )
+
+            sut.whenTheTaskIsRun()
+
+            sut.thenTheTaskShouldCompleteSuccessfully()
+        }
+
+        @Test
+        fun `close the working directory when completed`() = runTest {
+            sut.givenASuccessfulImplementation()
+
+            sut.whenTheTaskIsRun()
+
+            sut.thenTheWorkingDirectoryIsClosed()
+        }
+
+        @Test
+        fun `close the working directory upon failure`() = runTest {
+            sut.givenAFailingImplementation(reason = "Something went wrong")
+
+            sut.whenTheTaskIsRun()
+
+            sut.thenTheWorkingDirectoryIsClosed()
         }
     }
 

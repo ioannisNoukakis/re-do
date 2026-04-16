@@ -164,6 +164,9 @@ class TEGScheduler(
     }
 
     override fun handleTegUpdate(command: TEGUpdateCommand): Either<TegUpdateError, Unit> = either {
+        // FIXME I need an exclusion lock here to avoid race conditions when multiple messages for the same TEG are
+        //  being processed in parallel (e.g. two tasks complete at the same time, or a task completes while another
+        //  one fails and triggers a retry)
         val now = nowPort.now()
         logPort.debug(command.tegId, "Handling ${command.message::class.simpleName}")
         when (val msg = command.message) {

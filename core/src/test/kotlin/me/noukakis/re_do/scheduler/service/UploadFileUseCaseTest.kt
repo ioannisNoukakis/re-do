@@ -2,7 +2,7 @@ package me.noukakis.re_do.scheduler.service
 
 import me.noukakis.re_do.common.model.Identity
 import me.noukakis.re_do.scheduler.model.FileReference
-import me.noukakis.re_do.scheduler.port.StoredFileRef
+import me.noukakis.re_do.common.port.StoredFileRef
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 

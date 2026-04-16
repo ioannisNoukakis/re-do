@@ -1,12 +1,12 @@
 package me.noukakis.re_do.scheduler.service
 
 import arrow.core.Tuple4
+import me.noukakis.re_do.adapters.driven.scheduler.adapter.FakeFileReferenceStoreAdapter
+import me.noukakis.re_do.adapters.driven.common.StubFileStorageAdapter
+import me.noukakis.re_do.adapters.driven.scheduler.adapter.StubUuidAdapter
 import me.noukakis.re_do.common.model.Identity
-import me.noukakis.re_do.scheduler.adapter.FakeFileReferenceStoreAdapter
-import me.noukakis.re_do.scheduler.adapter.StubFileStorageAdapter
-import me.noukakis.re_do.scheduler.adapter.StubUuidAdapter
 import me.noukakis.re_do.scheduler.model.FileReference
-import me.noukakis.re_do.scheduler.port.StoredFileRef
+import me.noukakis.re_do.common.port.StoredFileRef
 import org.junit.jupiter.api.Assertions.assertEquals
 import java.io.ByteArrayInputStream
 import java.io.InputStream
@@ -31,15 +31,17 @@ class UploadFileUseCaseSutBuilder {
         stream: InputStream = ByteArrayInputStream(ByteArray(0)),
     ) {
         val sut = UploadFileUseCase(
-            StubFileStorageAdapter(mutableMapOf(
-                Tuple4(
-                    TEST_UPLOAD_FILE_ID,
-                    filename,
-                    contentType,
-                    contentLength
-                ) to
-                storedFileRef
-            )),
+            StubFileStorageAdapter(
+                mutableMapOf(
+                    Tuple4(
+                        TEST_UPLOAD_FILE_ID,
+                        filename,
+                        contentType,
+                        contentLength
+                    ) to
+                            storedFileRef
+                )
+            ),
             fileReferenceStoreAdapter,
             uuidAdapter,
         )

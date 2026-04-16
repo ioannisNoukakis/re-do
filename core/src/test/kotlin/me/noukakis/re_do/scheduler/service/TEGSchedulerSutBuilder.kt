@@ -5,12 +5,12 @@ import arrow.core.left
 import arrow.core.right
 import me.noukakis.re_do.adapters.driven.common.InMemoryMessagingAdapter
 import me.noukakis.re_do.adapters.driven.scheduler.InMemoryPersistenceAdapter
+import me.noukakis.re_do.adapters.driven.scheduler.adapter.StubNowAdapter
+import me.noukakis.re_do.adapters.driven.scheduler.adapter.StubUuidAdapter
 import me.noukakis.re_do.common.model.Identity
 import me.noukakis.re_do.common.model.TEGMessageIn
 import me.noukakis.re_do.common.model.TEGMessageOut
 import me.noukakis.re_do.common.model.TEGTask
-import me.noukakis.re_do.scheduler.adapter.StubNowAdapter
-import me.noukakis.re_do.scheduler.adapter.StubUuidAdapter
 import me.noukakis.re_do.scheduler.model.*
 import org.junit.jupiter.api.Assertions.assertEquals
 import java.time.Instant

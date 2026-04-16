@@ -1,6 +1,6 @@
 package me.noukakis.re_do.adapters.common.s3
 
-import me.noukakis.re_do.scheduler.port.StoredFileRef
+import me.noukakis.re_do.common.port.StoredFileRef
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test

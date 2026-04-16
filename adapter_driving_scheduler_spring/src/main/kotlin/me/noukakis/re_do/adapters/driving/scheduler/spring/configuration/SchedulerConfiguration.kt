@@ -8,7 +8,7 @@ import me.noukakis.re_do.adapters.driven.scheduler.InMemoryPersistenceAdapter
 import me.noukakis.re_do.adapters.driven.scheduler.StdLibNowAdapter
 import me.noukakis.re_do.adapters.driven.scheduler.StdLibUuidAdapter
 import me.noukakis.re_do.scheduler.port.FileReferenceStorePort
-import me.noukakis.re_do.scheduler.port.FileStoragePort
+import me.noukakis.re_do.common.port.FileStoragePort
 import me.noukakis.re_do.scheduler.port.LogPort
 import me.noukakis.re_do.scheduler.port.MessagingPort
 import me.noukakis.re_do.scheduler.port.NowPort

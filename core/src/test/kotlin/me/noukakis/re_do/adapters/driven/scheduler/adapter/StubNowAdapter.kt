@@ -1,4 +1,4 @@
-package me.noukakis.re_do.scheduler.adapter
+package me.noukakis.re_do.adapters.driven.scheduler.adapter
 
 import me.noukakis.re_do.scheduler.port.NowPort
 import java.time.Instant

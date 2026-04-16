@@ -3,7 +3,7 @@ package me.noukakis.re_do.scheduler.service
 import me.noukakis.re_do.common.model.Identity
 import me.noukakis.re_do.scheduler.model.FileReference
 import me.noukakis.re_do.scheduler.port.FileReferenceStorePort
-import me.noukakis.re_do.scheduler.port.FileStoragePort
+import me.noukakis.re_do.common.port.FileStoragePort
 import me.noukakis.re_do.scheduler.port.UUIDPort
 import java.io.InputStream
 
