@@ -5,9 +5,11 @@ import me.noukakis.re_do.common.port.StoredFileRef
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
 import software.amazon.awssdk.core.sync.RequestBody
+import software.amazon.awssdk.core.sync.ResponseTransformer
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3Client
 import software.amazon.awssdk.services.s3.S3Configuration
+import software.amazon.awssdk.services.s3.model.GetObjectRequest
 import software.amazon.awssdk.services.s3.model.PutObjectRequest
 import java.io.InputStream
 import java.net.URI
@@ -32,7 +34,14 @@ class S3FileStorageAdapter(
     }
 
     override fun download(fileId: String, targetPath: Path): Path {
-        TODO("Not yet implemented")
+        s3Client.getObject(
+            GetObjectRequest.builder()
+                .bucket(bucketName)
+                .key(fileId)
+                .build(),
+            ResponseTransformer.toFile(targetPath)
+        )
+        return targetPath
     }
 
     companion object {
