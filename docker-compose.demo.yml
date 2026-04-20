@@ -1,0 +1,85 @@
+services:
+  rabbitMQ:
+    image: rabbitmq:3-management
+    container_name: redo-rabbitmq-demo
+    environment:
+      - RABBITMQ_DEFAULT_USER=root
+      - RABBITMQ_DEFAULT_PASS=example
+    ports:
+      - "5673:5672"
+      - "5051:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  mongoDB:
+    image: mongo:7.0.31
+    container_name: redo-mongodb-demo
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=example
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  rustfs:
+    image: rustfs/rustfs:1.0.0-alpha.90
+    container_name: redo-rustfs-demo
+    environment:
+      - RUSTFS_ACCESS_KEY=root
+      - RUSTFS_SECRET_KEY=example
+    ports:
+      - "9002:9000"
+      - "9003:9001"
+    volumes:
+      - rustfs-data:/data
+
+  scheduler:
+    build:
+      context: .
+      dockerfile: adapter_driving_scheduler_spring/Dockerfile
+    container_name: redo-scheduler-demo
+    environment:
+      - SPRING_RABBITMQ_HOST=rabbitMQ
+      - SPRING_MONGODB_HOST=mongoDB
+      - SCHEDULER_MESSAGING_MODE=rabbitmq
+      - SCHEDULER_PERSISTENCE_MODE=mongodb
+      - SCHEDULER_FILE_STORAGE_MODE=s3
+      - SCHEDULER_FILE_REFERENCE_STORE_MODE=mongodb
+      - SCHEDULER_FILE_STORAGE_S3_ENDPOINT=http://rustfs:9000
+    ports:
+      - "8080:8080"
+    depends_on:
+      rabbitMQ:
+        condition: service_healthy
+      mongoDB:
+        condition: service_healthy
+      rustfs:
+        condition: service_healthy
+
+  runner:
+    build:
+      context: .
+      dockerfile: adapter_driving_runner_spring/Dockerfile
+    container_name: redo-runner-demo
+    environment:
+      - SPRING_RABBITMQ_HOST=rabbitMQ
+    volumes:
+      - ./task_handler_plugins:/app/task_handler_plugins
+    depends_on:
+      rabbitMQ:
+        condition: service_healthy
+      rustfs:
+        condition: service_healthy
+
+volumes:
+  mongo-data:
+  rustfs-data:
