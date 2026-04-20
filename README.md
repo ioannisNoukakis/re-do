@@ -21,10 +21,28 @@ See [Architecture.md](Architecture.md) for conventions on ports, adapters, use c
 
 ## Running locally
 
+Run the full demo stack (builds task plugins, starts scheduler + runner + infrastructure):
+
 ```bash
-docker-compose -f docker-compose.dev.yml up -d
-./gradlew :adapter_driving_scheduler_spring:bootRun
+./demo.sh
 ```
+
+The scheduler API is available at `http://localhost:8080`.
+
+### Testing with the HTTP files
+
+The `.http` files in `adapter_driving_scheduler_spring/src/test/api/` can be run directly from IntelliJ or any HTTP
+client that supports the JetBrains format. Select the `local` environment defined in `http-client.env.json`.
+
+| File                      | Description                                            |
+|---------------------------|--------------------------------------------------------|
+| `schedule_demo_task.http` | Schedule a TEG using the `DemoEchoTask` implementation |
+| `upload_file.http`        | Upload a file to be referenced as task input           |
+
+Please first upload a file and use it in lieu of the current `fileId` in `schedule_demo_task.http`
+to see the full flow of file download, task execution, and artefact generation. Rust FS has a ui at
+`http://localhost:9003` where you can see the uploaded file and its contents along with the generated artefacts.
+Credentials are specified in `docker-compose.demo.yml` as `RUSTFS_ACCESS_KEY` and `RUSTFS_SECRET_KEY`.
 
 ## Notes
 
