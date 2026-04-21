@@ -36,7 +36,6 @@ class FileUploadControllerTest {
                 .header("X-Auth-Roles", IDENTITY_ROLES)
         )
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$.fileId").isNotEmpty)
             .andExpect(jsonPath("$.ref").isNotEmpty)
             .andExpect(jsonPath("$.storedWith").isNotEmpty)
     }

@@ -1,10 +1,22 @@
 package me.noukakis.re_do.adapters.driven.scheduler
 
-import me.noukakis.re_do.scheduler.port.FileStoragePort
-import me.noukakis.re_do.scheduler.port.StoredFileRef
-import java.io.InputStream
+import me.noukakis.re_do.common.port.FileStoragePort
+import me.noukakis.re_do.common.port.StoredFileRef
+import java.nio.file.Path
+import java.util.concurrent.ConcurrentHashMap
+import kotlin.io.path.writeBytes
 
 class InMemoryFileStorageAdapter : FileStoragePort {
-    override fun upload(fileId: String, filename: String, contentType: String, contentLength: Long, stream: InputStream): StoredFileRef =
-        StoredFileRef(ref = fileId, storedWith = "in-memory")
+    private val storage = ConcurrentHashMap<String, ByteArray>()
+
+    override fun upload(ref: String, sourcePath: Path): StoredFileRef {
+        storage[ref] = sourcePath.toFile().readBytes()
+        return StoredFileRef(ref = ref, storedWith = "InMemoryFileStorageAdapter")
+    }
+
+    override fun download(ref: String, targetPath: Path): Path {
+        val contents = storage[ref] ?: throw IllegalStateException("No file with id $ref in storage")
+        targetPath.writeBytes(contents)
+        return targetPath
+    }
 }

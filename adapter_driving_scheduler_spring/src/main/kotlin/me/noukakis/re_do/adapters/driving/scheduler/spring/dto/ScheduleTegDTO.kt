@@ -9,11 +9,13 @@ data class ScheduleTegRequest(
     @field:NotEmpty(message = "Tasks list must not be empty")
     @field:Valid
     val tasks: List<TegTaskDTO>?,
+    @field:Valid
+    val initArtefacts: List<TEGArtefactDTO>?,
 ) {
     fun toCommand(
         sub: String,
         roles: List<String>,
-    ) = ScheduleTEGCommand(Identity(sub, roles), tasks!!.map { it.toDomain() })
+    ) = ScheduleTEGCommand(Identity(sub, roles), tasks!!.map { it.toDomain() }, initArtefacts?.map { it.toDomain() } ?: emptyList())
 }
 
 data class ScheduleTegResponse(

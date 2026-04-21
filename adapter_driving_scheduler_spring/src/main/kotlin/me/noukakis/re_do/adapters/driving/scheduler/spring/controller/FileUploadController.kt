@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestPart
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
+import java.io.File
+import java.nio.file.Files
 
 @RestController
 @RequestMapping("/api/v1/files")
@@ -24,21 +26,24 @@ class FileUploadController(
         @RequestHeader("X-Auth-Roles") roles: List<String>,
         @RequestPart("file") file: MultipartFile,
     ): ResponseEntity<UploadFileResponse> {
-        val result = uploadFileUseCase.execute(
-            UploadFileCommand(
-                identity = Identity(sub, roles),
-                filename = file.originalFilename ?: file.name,
-                contentType = file.contentType ?: "application/octet-stream",
-                contentLength = file.size,
-                stream = file.inputStream,
+        var tmpFile: File? = null
+        try {
+            tmpFile = Files.createTempFile("upload-", null).toFile()
+            file.transferTo(tmpFile)
+            val result = uploadFileUseCase.execute(
+                UploadFileCommand(
+                    identity = Identity(sub, roles),
+                    sourcePath = tmpFile.toPath()
+                )
             )
-        )
-        return ResponseEntity.ok(
-            UploadFileResponse(
-                fileId = result.fileId,
-                ref = result.ref,
-                storedWith = result.storedWith,
+            return ResponseEntity.ok(
+                UploadFileResponse(
+                    ref = result.ref,
+                    storedWith = result.storedWith,
+                )
             )
-        )
+        } finally {
+            tmpFile?.delete()
+        }
     }
 }

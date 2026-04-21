@@ -1,7 +1,7 @@
 package me.noukakis.re_do.common.model
 
+import me.noukakis.re_do.scheduler.model.TEGArtefact
 import me.noukakis.re_do.scheduler.model.TEGArtefactDefinition
-import me.noukakis.re_do.scheduler.model.TEGDependencyKey
 import kotlin.time.Duration
 
 data class TEGTask(
@@ -12,16 +12,13 @@ data class TEGTask(
     val arguments: List<String>,
     val timeout: Duration,
 ) {
-    fun toRunTaskMessageNoArtefacts() = TEGMessageOut.TEGRunTaskMessage(
+    fun toRunTaskMessage(initArtefacts: List<TEGArtefact>) = TEGMessageOut.TEGRunTaskMessage(
         taskName = name,
         implementationName = implementationName,
-        artefacts = emptyList(),
+        artefacts = inputs.map { inputDef ->
+            initArtefacts.find { it.name() == inputDef.name } ?: throw IllegalArgumentException("Missing artefact for input ${inputDef.name}")
+        },
         arguments = arguments,
         timeout = timeout,
-    )
-
-    fun toDependencyKey() = TEGDependencyKey(
-        taskName = name,
-        inputArtefacts = inputs
     )
 }

@@ -1,7 +1,7 @@
 package me.noukakis.re_do.adapters.driving.scheduler.spring.configuration
 
 import me.noukakis.re_do.adapters.common.s3.S3FileStorageAdapter
-import me.noukakis.re_do.scheduler.port.FileStoragePort
+import me.noukakis.re_do.common.port.FileStoragePort
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
