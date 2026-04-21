@@ -8,17 +8,6 @@ artefacts produced by its predecessors.
 The codebase follows hexagonal architecture with a strict boundary between business logic and infrastructure.
 See [Architecture.md](Architecture.md) for conventions on ports, adapters, use cases, and testing.
 
-### Submodules
-
-| Module                             | Description                                            |
-|------------------------------------|--------------------------------------------------------|
-| `core`                             | Domain model, use cases, ports, and in-memory adapters |
-| `adapter_driving_scheduler_spring` | Spring Boot HTTP entry point for the scheduler         |
-| `adapter_driving_runner_spring`    | Spring Boot entry point for task runners               |
-| `adapter_common_mongodb_spring`    | Shared MongoDB-backed driven adapters                  |
-| `adapter_common_rabbitmq_spring`   | Shared RabbitMQ-backed driven adapters                 |
-| `task_impl_demo`                   | Demo task implementation plugin                        |
-
 ## Running locally
 
 Run the full demo stack (builds task plugins, starts scheduler + runner + infrastructure):
