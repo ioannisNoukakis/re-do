@@ -17,11 +17,9 @@ RUN chmod +x gradlew && ./gradlew :adapter_driving_scheduler_spring:bootJar --no
 
 FROM eclipse-temurin:21.0.10_7-jre-alpine-3.22@sha256:b08e4d2ef04cda3786f38cc92f96005c0e32361c353d109a6be0f03c3e9a157f
 
-# Harden the JVM: disable entropy blocking, JNDI codebase loading, Log4j lookups and enforce TLSv1.2+ for outbound connections
+# Harden the JVM: disable entropy blocking, Log4j lookups, and enforce TLSv1.2+ for outbound connections
 ENV JAVA_TOOL_OPTIONS="\
   -Djava.security.egd=file:/dev/./urandom \
-  -Dcom.sun.jndi.rmi.object.trustURLCodebase=false \
-  -Dcom.sun.jndi.cosnaming.object.trustURLCodebase=false \
   -Dlog4j2.formatMsgNoLookups=true \
   -Dhttps.protocols=TLSv1.2,TLSv1.3"
 
