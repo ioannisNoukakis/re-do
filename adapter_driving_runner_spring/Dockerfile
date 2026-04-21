@@ -1,10 +1,10 @@
-FROM eclipse-temurin:25-jdk-alpine AS builder
+FROM eclipse-temurin:21.0.10_7-jdk-alpine-3.22 AS builder
 WORKDIR /build
 
 COPY . .
 RUN chmod +x gradlew && ./gradlew :adapter_driving_runner_spring:bootJar --no-daemon
 
-FROM eclipse-temurin:25-jre-alpine
+FROM eclipse-temurin:21.0.10_7-jre-alpine-3.22
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 WORKDIR /app
 RUN mkdir task_handler_plugins

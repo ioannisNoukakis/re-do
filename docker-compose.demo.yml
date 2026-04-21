@@ -21,7 +21,7 @@ services:
       - MONGO_INITDB_ROOT_USERNAME=root
       - MONGO_INITDB_ROOT_PASSWORD=example
     ports:
-      - "27018:27017"
+      - "27017:27017"
     volumes:
       - mongo-data:/data/db
     healthcheck:
@@ -63,7 +63,7 @@ services:
       mongoDB:
         condition: service_healthy
       rustfs:
-        condition: service_healthy
+        condition: service_started
 
   runner:
     build:
@@ -72,13 +72,14 @@ services:
     container_name: redo-runner-demo
     environment:
       - SPRING_RABBITMQ_HOST=rabbitMQ
+      - RUNNER_FILE_STORAGE_S3_ENDPOINT=http://rustfs:9000
     volumes:
       - ./task_handler_plugins:/app/task_handler_plugins
     depends_on:
       rabbitMQ:
         condition: service_healthy
       rustfs:
-        condition: service_healthy
+        condition: service_started
 
 volumes:
   mongo-data:
