@@ -35,19 +35,19 @@ dependencies {
 }
 
 kotlin {
-    // Set the JVM target to 25 for Kotlin compilation.
-    jvmToolchain(25)
+    // Set the JVM target to 21 for Kotlin compilation.
+    jvmToolchain(21)
 
     compilerOptions {
-        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_25)
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
     }
 }
 
 // Apply a specific Java toolchain to ease working on different environments.
 java {
-    targetCompatibility = JavaVersion.VERSION_25
+    targetCompatibility = JavaVersion.VERSION_21
     toolchain {
-        languageVersion = JavaLanguageVersion.of(25)
+        languageVersion = JavaLanguageVersion.of(21)
     }
 }
 

@@ -43,7 +43,7 @@ Content-Type: application/json
     {
       "name": "finally-awake.mp4",
       "type": "FILE",
-      "ref": "e1388320-1a56-4bba-b722-8513dd438070",
+      "ref": "dd5fa300-77f2-4e4c-aeaa-d1f3de0eca22",
       "storedWith": "s3"
     },
     {
