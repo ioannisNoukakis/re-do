@@ -10,6 +10,8 @@ See [Architecture.md](Architecture.md) for conventions on ports, adapters, use c
 
 ## Running locally
 
+You'll need java 21 sdk and docker (with docker compose plugin) installed to run the demo stack locally.
+
 Run the full demo stack (builds task plugins, starts scheduler + runner + infrastructure):
 
 ```bash
@@ -20,7 +22,7 @@ The scheduler API is available at `http://localhost:8080`.
 
 ### Testing with the HTTP files
 
-The `.http` files in `adapter_driving_scheduler_spring/src/test/api/` can be run directly from IntelliJ or any HTTP
+The `.http` files in `adapter_driving_scheduler_spring/src/test/api` can be run directly from IntelliJ or any HTTP
 client that supports the JetBrains format. Select the `local` environment defined in `http-client.env.json`.
 
 | File                      | Description                                            |
