@@ -1,13 +1,40 @@
-FROM eclipse-temurin:21.0.10_7-jdk-alpine-3.22 AS builder
+FROM eclipse-temurin:21.0.10_7-jdk-alpine-3.22@sha256:45df4ae087e53ba551d35d5142a2ba6837eaa52592882745ee4377b12c1655f2 AS builder
+
 WORKDIR /build
 
-COPY . .
+COPY gradlew .
+COPY gradle/ gradle/
+COPY settings.gradle.kts .
+COPY gradle.properties .
+COPY buildSrc/ buildSrc/
+COPY core/ core/
+COPY adapter_common_mongodb_spring/ adapter_common_mongodb_spring/
+COPY adapter_common_rabbitmq_spring/ adapter_common_rabbitmq_spring/
+COPY adapter_common_s3/ adapter_common_s3/
+COPY adapter_driving_scheduler_spring/ adapter_driving_scheduler_spring/
+
 RUN chmod +x gradlew && ./gradlew :adapter_driving_scheduler_spring:bootJar --no-daemon
 
-FROM eclipse-temurin:21.0.10_7-jre-alpine-3.22
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+FROM eclipse-temurin:21.0.10_7-jre-alpine-3.22@sha256:b08e4d2ef04cda3786f38cc92f96005c0e32361c353d109a6be0f03c3e9a157f
+
+# Harden the JVM: disable entropy blocking, JNDI codebase loading, Log4j lookups and enforce TLSv1.2+ for outbound connections
+ENV JAVA_TOOL_OPTIONS="\
+  -Djava.security.egd=file:/dev/./urandom \
+  -Dcom.sun.jndi.rmi.object.trustURLCodebase=false \
+  -Dcom.sun.jndi.cosnaming.object.trustURLCodebase=false \
+  -Dlog4j2.formatMsgNoLookups=true \
+  -Dhttps.protocols=TLSv1.2,TLSv1.3"
+
 WORKDIR /app
-COPY --from=builder --chown=appuser:appgroup /build/adapter_driving_scheduler_spring/build/libs/*.jar app.jar
+
+# Create a system group
+RUN addgroup -g 10001 -S appgroup && \
+    # System user, Don't assign a password, Don't create a home directory \
+     adduser -S -D -H --uid 10001 -G appgroup appuser
 USER appuser
+
+COPY --from=builder --chown=appuser:appgroup /build/adapter_driving_scheduler_spring/build/libs/*.jar app.jar
+
 EXPOSE 8080
+
 ENTRYPOINT ["java", "-jar", "app.jar"]
