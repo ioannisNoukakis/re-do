@@ -1,5 +1,6 @@
 package me.noukakis.re_do.adapters.common.spring.mongodb
 
+import MONGODB_IMAGE
 import com.mongodb.client.MongoClient
 import com.mongodb.client.MongoClients
 import me.noukakis.re_do.adapters.common.spring.mongodb.migrations._002FileReferenceInitializerChange
@@ -32,7 +33,7 @@ class MongodbFileReferenceStoreAdapterIT {
     private lateinit var sut: MongodbFileReferenceStoreAdapter
 
     @Container
-    private val mongoDbContainer = MongoDBContainer(DockerImageName.parse("mongo:7.0.31"))
+    private val mongoDbContainer = MongoDBContainer(DockerImageName.parse(MONGODB_IMAGE))
         .withStartupTimeout(Duration.ofMinutes(5))
 
     @BeforeEach

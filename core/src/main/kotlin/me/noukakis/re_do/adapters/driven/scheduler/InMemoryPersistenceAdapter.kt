@@ -9,11 +9,16 @@ import kotlin.streams.asStream
 
 class InMemoryPersistenceAdapter : PersistencePort {
     val state = mutableMapOf<String, List<TEGEvent>>()
+    var throwOnPersist: String? = null
+    var throwOnGetEvents: String? = null
 
     override fun saveEvents(
         tegId: String,
         events: List<TEGEvent>
     ) {
+        if (throwOnPersist != null) {
+            throw RuntimeException(throwOnPersist)
+        }
         if (!state.containsKey(tegId)) {
             state[tegId] = mutableListOf()
         }
@@ -24,6 +29,9 @@ class InMemoryPersistenceAdapter : PersistencePort {
         tegId: String,
         filter: TegEventFilter
     ): List<TEGEvent> {
+        if (throwOnGetEvents != null) {
+            throw RuntimeException(throwOnGetEvents)
+        }
         val events = state[tegId] ?: return emptyList()
         return when (filter) {
             TegEventFilter.All -> events

@@ -1,5 +1,6 @@
 package me.noukakis.re_do.adapters.common.spring.mongodb
 
+import MONGODB_IMAGE
 import com.mongodb.client.MongoClient
 import com.mongodb.client.MongoClients
 import me.noukakis.re_do.adapters.common.spring.mongodb.migrations._001TegEventInitializerChange
@@ -37,19 +38,19 @@ class MongodbPersistenceAdapterIT {
     private lateinit var sut: MongodbPersistenceAdapter
 
     @Container
-    private val mongoDbContainer = MongoDBContainer(DockerImageName.parse("mongo:7.0.31"))
+    private val mongoDbContainer = MongoDBContainer(DockerImageName.parse(MONGODB_IMAGE))
         .withStartupTimeout(Duration.ofMinutes(5))
 
     @BeforeEach
     fun setup() {
         mongoClient = MongoClients.create(mongoDbContainer.replicaSetUrl)
         mongoTemplate = MongoTemplate(mongoClient, MONGODB_DB_NAME)
+        runMigrations(mongoClient, mongoTemplate)
         sut = MongodbPersistenceAdapter(
             mongoTemplate,
             cursorBatchSizeForGetAllTegNotEvents = 500,
             tegEventLookbackDuration = Duration.ofDays(365),
         )
-        runMigrations(mongoClient, mongoTemplate)
     }
 
     @AfterEach
