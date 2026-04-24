@@ -12,6 +12,7 @@ import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import java.time.Instant
 import java.util.stream.Stream
+import kotlin.test.assertEquals
 import kotlin.time.Duration.Companion.milliseconds
 
 val NOW_0: Instant = Instant.ofEpochMilli(0)
@@ -846,6 +847,72 @@ class TEGSchedulerTest {
                         outputArtefacts = listOf(
                             TEGArtefact.TEGArtefactStringValue(name = "UnexpectedOutput", value = "result 1"),
                         )
+                    )
+                )
+            }
+
+            sut.thenTheMutualExclusionLockWasCalledAndReleased()
+        }
+    }
+
+    @Nested
+    inner class `Handle uncaught exceptions` {
+
+        val baseEvents = listOf(
+            TEGEvent.Created(
+                TEGTaskBuilder("A").build(),
+                NOW_0,
+            ),
+            TEGEvent.Scheduled(taskName = "A", timestamp = NOW_0),
+        )
+
+        @BeforeEach
+        fun setup() {
+            sut.givenTheExistingEvents(mapOf(TEST_TEG_ID to baseEvents))
+            sut.givenTheDatesToReturn(NOW_1)
+        }
+
+        @Test
+        fun `should mark the TEG as failed when an uncaught exception occurs`() {
+            sut.givenTheGetEventsThrows("Something went wrong internally")
+
+            assertThrows<RuntimeException> {
+                sut.whenGettingTegUpdate(
+                    TEGMessageIn.TEGTaskResultMessage(
+                        taskName = "A",
+                        outputArtefacts = listOf()
+                    )
+                )
+            }
+
+            sut.thenTheTegHasAFailedEventWithReason("Something went wrong internally")
+        }
+
+        @Test
+        fun `should re-throw the exception after marking the TEG as failed`() {
+            sut.givenTheGetEventsThrows("Something went wrong internally")
+
+            val exception = assertThrows<RuntimeException> {
+                sut.whenGettingTegUpdate(
+                    TEGMessageIn.TEGTaskResultMessage(
+                        taskName = "A",
+                        outputArtefacts = listOf()
+                    )
+                )
+            }
+
+            assertEquals("Something went wrong internally", exception.message)
+        }
+
+        @Test
+        fun `the lock should still be released when an uncaught exception occurs`() {
+            sut.givenTheGetEventsThrows("Something went wrong internally")
+
+            assertThrows<RuntimeException> {
+                sut.whenGettingTegUpdate(
+                    TEGMessageIn.TEGTaskResultMessage(
+                        taskName = "A",
+                        outputArtefacts = listOf()
                     )
                 )
             }

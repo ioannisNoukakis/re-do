@@ -48,6 +48,10 @@ class TEGSchedulerSutBuilder {
         persistenceAdapter.throwOnPersist = errorMsg
     }
 
+    fun givenTheGetEventsThrows(errorMsg: String) {
+        persistenceAdapter.throwOnGetEvents = errorMsg
+    }
+
     fun whenSubmittingTheTeg(tasks: List<TEGTask>, initArtefacts: List<TEGArtefact>) {
         createSut()
         scheduleResult = sut!!.scheduleTeg(ScheduleTEGCommand(IDENTITY, tasks, initArtefacts))
@@ -127,6 +131,12 @@ class TEGSchedulerSutBuilder {
     fun thenTheMutualExclusionLockWasCalledAndReleased() {
         assertEquals(listOf(TEST_TEG_ID), mutualExclusionLockAdapter.acquiredLocks)
         assertEquals(listOf(TEST_TEG_ID), mutualExclusionLockAdapter.releasedLocks)
+    }
+
+    fun thenTheTegHasAFailedEventWithReason(reason: String) {
+        val events = persistenceAdapter.state[TEST_TEG_ID] ?: emptyList()
+        val failedEvent = events.filterIsInstance<TEGEvent.TEGFailed>().lastOrNull()
+        assertEquals(reason, failedEvent?.reason, "Expected a TEGFailed event with reason '$reason' but got: $failedEvent")
     }
 
     private fun createSut() {

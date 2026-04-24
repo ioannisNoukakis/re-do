@@ -155,15 +155,25 @@ class TEGScheduler(
         return Unit.right()
     }
 
-    override fun handleTegUpdate(command: TEGUpdateCommand): Either<TegUpdateError, Unit> = try {
+    override fun handleTegUpdate(command: TEGUpdateCommand): Either<TegUpdateError, Unit> {
+        val now = nowPort.now()
+        try {
             mutualExclusionLockPort.lock(command.tegId)
-            return handleTegUpdateCore(command)
+            return handleTegUpdateCore(command, now)
+        } catch (e: Throwable) {
+            persistencePort.saveEvents(
+                command.tegId, listOf(TEGEvent.TEGFailed(
+                    timestamp = now,
+                    reason = e.message ?: "Unknown error occurred while handling TEG update: $e"
+                )
+            ))
+            throw e
         } finally {
             mutualExclusionLockPort.release(command.tegId)
         }
+    }
 
-    private fun handleTegUpdateCore(command: TEGUpdateCommand): Either<TegUpdateError, Unit> = either {
-        val now = nowPort.now()
+    private fun handleTegUpdateCore(command: TEGUpdateCommand, now: Instant): Either<TegUpdateError, Unit> = either {
         logPort.debug(command.tegId, "Handling ${command.message::class.simpleName}")
         when (val msg = command.message) {
             is TEGMessageIn.TEGTaskResultMessage -> handleResultMsg(msg, getStateEvents(command), command, now)
