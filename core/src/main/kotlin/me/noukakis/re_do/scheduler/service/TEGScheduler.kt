@@ -16,6 +16,7 @@ import me.noukakis.re_do.scheduler.model.TegTimeoutCheckError
 import me.noukakis.re_do.scheduler.model.TegUpdateError
 import me.noukakis.re_do.scheduler.port.LogPort
 import me.noukakis.re_do.scheduler.port.MessagingPort
+import me.noukakis.re_do.scheduler.port.MutualExclusionLockPort
 import me.noukakis.re_do.scheduler.port.NowPort
 import me.noukakis.re_do.scheduler.port.PersistencePort
 import me.noukakis.re_do.scheduler.port.TegEventFilter
@@ -38,6 +39,7 @@ class TEGScheduler(
     private val persistencePort: PersistencePort,
     private val uuidPort: UUIDPort,
     private val nowPort: NowPort,
+    private val mutualExclusionLockPort: MutualExclusionLockPort,
     private val maxFailuresBeforeGivingUp: Int,
     private val logPort: LogPort = LogPort.NoOp,
 ) : TegUpdateHandler {
@@ -153,10 +155,14 @@ class TEGScheduler(
         return Unit.right()
     }
 
-    override fun handleTegUpdate(command: TEGUpdateCommand): Either<TegUpdateError, Unit> = either {
-        // FIXME I need an exclusion lock here to avoid race conditions when multiple messages for the same TEG are
-        //  being processed in parallel (e.g. two tasks complete at the same time, or a task completes while another
-        //  one fails and triggers a retry)
+    override fun handleTegUpdate(command: TEGUpdateCommand): Either<TegUpdateError, Unit> = try {
+            mutualExclusionLockPort.lock(command.tegId)
+            return handleTegUpdateCore(command)
+        } finally {
+            mutualExclusionLockPort.release(command.tegId)
+        }
+
+    private fun handleTegUpdateCore(command: TEGUpdateCommand): Either<TegUpdateError, Unit> = either {
         val now = nowPort.now()
         logPort.debug(command.tegId, "Handling ${command.message::class.simpleName}")
         when (val msg = command.message) {

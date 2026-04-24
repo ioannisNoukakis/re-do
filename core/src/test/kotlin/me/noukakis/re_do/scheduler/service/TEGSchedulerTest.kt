@@ -6,6 +6,7 @@ import me.noukakis.re_do.scheduler.model.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
@@ -775,6 +776,81 @@ class TEGSchedulerTest {
         @Test
         fun `should not schedule any tasks`() {
             sut.thenTheScheduledTasksAre()
+        }
+    }
+
+    @Nested
+    inner class `Handle concurrent updates`() {
+
+        val baseEvents = listOf(
+            TEGEvent.Created(
+                TEGTaskBuilder("A")
+                    .withOutputs(
+                        TEGArtefactDefBuilder("AOutput1").build(),
+                    )
+                    .build(),
+                NOW_0,
+            ),
+            TEGEvent.Scheduled(taskName = "A", timestamp = NOW_0),
+            TEGEvent.Created(
+                TEGTaskBuilder("B")
+                    .withInputs(
+                        TEGArtefactDefBuilder("AOutput1").build(),
+                    )
+                    .build(),
+                NOW_0,
+            ),
+        )
+
+        @BeforeEach
+        fun setup() {
+            sut.givenTheExistingEvents(mapOf(TEST_TEG_ID to baseEvents))
+            sut.givenTheDatesToReturn(NOW_1)
+        }
+
+        @Test
+        fun `should have called the mutual exclusion lock`() {
+            sut.whenGettingTegUpdate(
+                TEGMessageIn.TEGTaskResultMessage(
+                    taskName = "A",
+                    outputArtefacts = listOf(
+                        TEGArtefact.TEGArtefactStringValue(name = "AOutput1", value = "result 1"),
+                    )
+                )
+            )
+
+            sut.thenTheMutualExclusionLockWasCalledAndReleased()
+        }
+
+        @Test
+        fun `should an error arise, the lock should still be released`() {
+
+            sut.whenGettingTegUpdate(
+                TEGMessageIn.TEGTaskResultMessage(
+                    taskName = "A",
+                    outputArtefacts = listOf()
+                )
+            )
+
+            sut.thenTheMutualExclusionLockWasCalledAndReleased()
+        }
+
+        @Test
+        fun `should an exception arise, the lock should still be released`() {
+            sut.givenThePersistenceThrows("Kaboom")
+
+            assertThrows<RuntimeException> {
+                sut.whenGettingTegUpdate(
+                    TEGMessageIn.TEGTaskResultMessage(
+                        taskName = "A",
+                        outputArtefacts = listOf(
+                            TEGArtefact.TEGArtefactStringValue(name = "UnexpectedOutput", value = "result 1"),
+                        )
+                    )
+                )
+            }
+
+            sut.thenTheMutualExclusionLockWasCalledAndReleased()
         }
     }
 

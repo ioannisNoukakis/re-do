@@ -6,6 +6,7 @@ import arrow.core.right
 import me.noukakis.re_do.adapters.driven.common.InMemoryMessagingAdapter
 import me.noukakis.re_do.adapters.driven.common.StubUuidAdapter
 import me.noukakis.re_do.adapters.driven.scheduler.InMemoryPersistenceAdapter
+import me.noukakis.re_do.adapters.driven.scheduler.adapter.SpyMutualExclusionLockAdapter
 import me.noukakis.re_do.adapters.driven.scheduler.adapter.StubNowAdapter
 import me.noukakis.re_do.common.model.Identity
 import me.noukakis.re_do.common.model.TEGMessageIn
@@ -28,6 +29,7 @@ class TEGSchedulerSutBuilder {
     val persistenceAdapter = InMemoryPersistenceAdapter()
     val uuidAdapter = StubUuidAdapter(listOf(TEST_TEG_ID))
     val nowAdapter = StubNowAdapter()
+    val mutualExclusionLockAdapter = SpyMutualExclusionLockAdapter()
     var sut: TEGScheduler? = null
 
     lateinit var scheduleResult: Either<TegSchedulingError, String>
@@ -40,6 +42,10 @@ class TEGSchedulerSutBuilder {
 
     fun givenTheDatesToReturn(vararg timestamps: Instant) {
         nowAdapter.toReturn = timestamps.toMutableList()
+    }
+
+    fun givenThePersistenceThrows(errorMsg: String) {
+        persistenceAdapter.throwOnPersist = errorMsg
     }
 
     fun whenSubmittingTheTeg(tasks: List<TEGTask>, initArtefacts: List<TEGArtefact>) {
@@ -118,6 +124,11 @@ class TEGSchedulerSutBuilder {
         )
     }
 
+    fun thenTheMutualExclusionLockWasCalledAndReleased() {
+        assertEquals(listOf(TEST_TEG_ID), mutualExclusionLockAdapter.acquiredLocks)
+        assertEquals(listOf(TEST_TEG_ID), mutualExclusionLockAdapter.releasedLocks)
+    }
+
     private fun createSut() {
         if (sut == null) {
             sut = TEGScheduler(
@@ -125,6 +136,7 @@ class TEGSchedulerSutBuilder {
                 persistenceAdapter,
                 uuidAdapter,
                 nowAdapter,
+                mutualExclusionLockAdapter,
                 3
             )
         }
