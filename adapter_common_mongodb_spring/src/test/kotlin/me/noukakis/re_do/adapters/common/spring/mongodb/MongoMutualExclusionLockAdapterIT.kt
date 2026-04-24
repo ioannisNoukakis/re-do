@@ -5,6 +5,7 @@ import com.mongodb.client.MongoClient
 import com.mongodb.client.MongoClients
 import me.noukakis.re_do.adapters.common.spring.mongodb.migrations._003MutualExclusionLockChange
 import me.noukakis.re_do.adapters.common.spring.mongodb.model.MongodbMutualExclusionLock
+import me.noukakis.re_do.scheduler.port.LockTimeoutException
 import org.bson.Document
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.assertFalse
