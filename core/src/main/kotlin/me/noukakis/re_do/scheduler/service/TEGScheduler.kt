@@ -176,17 +176,85 @@ class TEGScheduler(
         events: List<TEGEvent>,
         command: TEGUpdateCommand,
         now: Instant,
-    ): Either<TegUpdateError, Unit> {
-        val eventsToVerify = events.toMutableList()
-        val newEvents = mutableListOf<TEGEvent>()
-        val completedEvent = TEGEvent.Completed(
+    ): Either<TegUpdateError, Unit> = verifyOutputArtefactsConformToExpected(events, msg).fold(
+        {
+            val failureEvents = createFailureEventsForUnconformingOutputArtefacts(it, msg, now)
+            persistencePort.saveEvents(command.tegId, failureEvents)
+            it.left()
+        },
+        {
+            val eventsToVerify = events.toMutableList()
+            val newEvents = mutableListOf<TEGEvent>()
+            addTaskCompletedEvent(msg, now, eventsToVerify, newEvents, command)
+            addTegCompletedEventIfNoMoreTaskAreToBeScheduled(eventsToVerify, command, now, newEvents)
+            scheduleRemainingTasksIfAny(eventsToVerify, command)
+            persistencePort.saveEvents(command.tegId, newEvents)
+            Unit.right()
+        }
+    )
+
+    private fun verifyOutputArtefactsConformToExpected(
+        events: List<TEGEvent>,
+        msg: TEGMessageIn.TEGTaskResultMessage,
+    ): Either<TegUpdateError.WorkerResultMessageContainsUnexpectedOutput, Unit> {
+        val expectedOutputs = events
+            .asSequence()
+            .filterIsInstance<TEGEvent.Created>()
+            .filter { it.task.name == msg.taskName }
+            .flatMap { it.task.outputs }
+            .map { it.name }
+            .toSet()
+
+        if (msg.outputArtefacts.map { it.name() }.toSet() != expectedOutputs) {
+            return TegUpdateError.WorkerResultMessageContainsUnexpectedOutput(
+                taskName = msg.taskName,
+                expectedOutputArtefacts = expectedOutputs,
+                actualOutputArtefacts = msg.outputArtefacts.map { it.name() }.toSet(),
+            ).left()
+        }
+        return Unit.right()
+    }
+
+    private fun createFailureEventsForUnconformingOutputArtefacts(
+        output: TegUpdateError.WorkerResultMessageContainsUnexpectedOutput,
+        msg: TEGMessageIn.TEGTaskResultMessage,
+        now: Instant
+    ): List<TEGEvent> {
+        val unexpectedOutput = output.actualOutputArtefacts subtract output.expectedOutputArtefacts
+        val failureEvents = listOf(
+            TEGEvent.Failed(
+                taskName = msg.taskName,
+                timestamp = now,
+                reason = "Worker result message contains unexpected output artefact(s): ${unexpectedOutput}. Expected outputs are: ${output.expectedOutputArtefacts}.",
+            ),
+            TEGEvent.TEGFailed(now, "Unexpected output in task ${msg.taskName}")
+        )
+        return failureEvents
+    }
+
+    private fun addTaskCompletedEvent(
+        msg: TEGMessageIn.TEGTaskResultMessage,
+        now: Instant,
+        eventsToVerify: MutableList<TEGEvent>,
+        newEvents: MutableList<TEGEvent>,
+        command: TEGUpdateCommand
+    ) {
+        val taskCompletedEvent = TEGEvent.Completed(
             taskName = msg.taskName,
             timestamp = now,
             outputArtefacts = msg.outputArtefacts,
         )
-        eventsToVerify.add(completedEvent)
-        newEvents.add(completedEvent)
+        eventsToVerify.add(taskCompletedEvent)
+        newEvents.add(taskCompletedEvent)
         logPort.info(command.tegId, "Task '${msg.taskName}' completed")
+    }
+
+    private fun addTegCompletedEventIfNoMoreTaskAreToBeScheduled(
+        eventsToVerify: MutableList<TEGEvent>,
+        command: TEGUpdateCommand,
+        now: Instant,
+        newEvents: MutableList<TEGEvent>
+    ) {
         val allCreatedTasks = eventsToVerify.filterIsInstance<TEGEvent.Created>().map { it.task.name }.toSet()
         val allCompletedTasks = eventsToVerify.filterIsInstance<TEGEvent.Completed>().map { it.taskName }.toSet()
         if (allCreatedTasks.all { allCompletedTasks.contains(it) }) {
@@ -195,6 +263,12 @@ class TEGScheduler(
             eventsToVerify.add(noMoreTasksEvent)
             newEvents.add(noMoreTasksEvent)
         }
+    }
+
+    private fun scheduleRemainingTasksIfAny(
+        eventsToVerify: MutableList<TEGEvent>,
+        command: TEGUpdateCommand
+    ) {
         val completedArtefacts = eventsToVerify.filterIsInstance<TEGEvent.Completed>()
             .flatMap { it.outputArtefacts }
         val tasksThatWereAlreadyScheduled = eventsToVerify.filterIsInstance<TEGEvent.Scheduled>()
@@ -206,9 +280,6 @@ class TEGScheduler(
                         && event.task.inputs.all { input -> completedArtefacts.find { input.name == it.name() } != null }
             }
             .forEach { sendTaskMessage(command.tegId, it, completedArtefacts) }
-
-        persistencePort.saveEvents(command.tegId, newEvents)
-        return Unit.right()
     }
 
     private fun handleFailedMessage(
