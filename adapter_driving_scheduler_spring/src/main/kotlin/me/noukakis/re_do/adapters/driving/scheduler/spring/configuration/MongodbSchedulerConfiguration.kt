@@ -1,5 +1,6 @@
 package me.noukakis.re_do.adapters.driving.scheduler.spring.configuration
 
+import me.noukakis.re_do.adapters.common.spring.mongodb.MongoMutualExclusionLockAdapter
 import me.noukakis.re_do.adapters.common.spring.mongodb.MongodbFileReferenceStoreAdapter
 import me.noukakis.re_do.adapters.common.spring.mongodb.MongodbPersistenceAdapter
 import me.noukakis.re_do.scheduler.port.FileReferenceStorePort
@@ -10,6 +11,7 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.data.mongodb.core.MongoTemplate
 import java.time.Duration
+import java.time.Instant
 
 @Configuration
 class MongodbSchedulerConfiguration {
@@ -33,4 +35,17 @@ class MongodbSchedulerConfiguration {
     fun fileReferenceStorePortBean(
         mongodbTemplate: MongoTemplate,
     ): FileReferenceStorePort = MongodbFileReferenceStoreAdapter(mongodbTemplate)
+
+    @Bean
+    @ConditionalOnProperty("scheduler.mutual-exclusion-lock.mode", havingValue = "mongodb")
+    fun mutualExclusionLockPortBean(
+        mongodbTemplate: MongoTemplate,
+        @Value("\${scheduler.mutual-exclusion-lock.retry-interval:100ms}") lockRetryInterval: Duration,
+        @Value("\${scheduler.mutual-exclusion-lock.timeout:30s}") lockTimeout: Duration,
+    ) = MongoMutualExclusionLockAdapter(
+        mongoTemplate = mongodbTemplate,
+        getNow = { Instant.now() },
+        retryInterval = lockRetryInterval,
+        lockTimeout = lockTimeout,
+    )
 }
