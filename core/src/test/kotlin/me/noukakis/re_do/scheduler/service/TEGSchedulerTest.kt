@@ -703,6 +703,82 @@ class TEGSchedulerTest {
     }
 
     @Nested
+    inner class `Handle worker result message edge cases - unexpected output` {
+        val baseEvents = listOf(
+            TEGEvent.Created(
+                TEGTaskBuilder("A")
+                    .withOutputs(
+                        TEGArtefactDefBuilder("AOutput1").build(),
+                        TEGArtefactDefBuilder("AOutput2").build(),
+                        TEGArtefactDefBuilder("AOutput3").build(),
+                    )
+                    .build(),
+                NOW_0,
+            ),
+            TEGEvent.Scheduled(taskName = "A", timestamp = NOW_0),
+            TEGEvent.Created(
+                TEGTaskBuilder("B")
+                    .withInputs(
+                        TEGArtefactDefBuilder("Haha!").build(),
+                        TEGArtefactDefBuilder("AOutput2").build(),
+                        TEGArtefactDefBuilder("AOutput3").build(),
+                    )
+                    .build(),
+                NOW_0,
+            ),
+        )
+
+        @BeforeEach
+        fun setup() {
+            sut.givenTheExistingEvents(mapOf(TEST_TEG_ID to baseEvents))
+            sut.givenTheDatesToReturn(NOW_1)
+
+            sut.whenGettingTegUpdate(
+                TEGMessageIn.TEGTaskResultMessage(
+                    taskName = "A",
+                    outputArtefacts = listOf(
+                        TEGArtefact.TEGArtefactStringValue(name = "Haha!", value = "result 1"),
+                        TEGArtefact.TEGArtefactStringValue(name = "AOutput2", value = "result 2"),
+                        TEGArtefact.TEGArtefactStringValue(name = "AOutput3", value = "result 3"),
+                    )
+                )
+            )
+        }
+
+        @Test
+        fun `should yield an error`() {
+            sut.thenTheUpdateResultIsAnError(
+                TegUpdateError.WorkerResultMessageContainsUnexpectedOutput(
+                    taskName = "A",
+                    actualOutputArtefacts = setOf("Haha!", "AOutput2", "AOutput3"),
+                    expectedOutputArtefacts = setOf("AOutput1", "AOutput2", "AOutput3"),
+                )
+            )
+        }
+
+        @Test
+        fun `should mark the TEG as failed`() {
+            sut.thenThePersistedEventsShouldBe(
+                mapOf(
+                    TEST_TEG_ID to baseEvents + listOf(
+                        TEGEvent.Failed(
+                            taskName = "A",
+                            timestamp = NOW_1,
+                            reason = "Worker result message contains unexpected output artefact(s): [Haha!]. Expected outputs are: [AOutput1, AOutput2, AOutput3]."
+                        ),
+                        TEGEvent.TEGFailed(timestamp = NOW_1, reason = "Unexpected output in task A")
+                    )
+                )
+            )
+        }
+
+        @Test
+        fun `should not schedule any tasks`() {
+            sut.thenTheScheduledTasksAre()
+        }
+    }
+
+    @Nested
     inner class TegCompletion {
         @Test
         fun `single task`() {

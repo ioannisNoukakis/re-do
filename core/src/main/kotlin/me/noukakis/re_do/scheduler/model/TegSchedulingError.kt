@@ -24,6 +24,11 @@ sealed interface TegUpdateError {
         val tegId: String,
         val taskName: String,
     ) : TegUpdateError
+    data class WorkerResultMessageContainsUnexpectedOutput(
+        val taskName: String,
+        val actualOutputArtefacts: Set<String>,
+        val expectedOutputArtefacts: Set<String>,
+    ) : TegUpdateError
 }
 
 sealed interface TegTimeoutCheckError {
