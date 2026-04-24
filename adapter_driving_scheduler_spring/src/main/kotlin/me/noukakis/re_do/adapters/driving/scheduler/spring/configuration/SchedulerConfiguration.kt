@@ -12,6 +12,7 @@ import me.noukakis.re_do.common.port.FileStoragePort
 import me.noukakis.re_do.common.port.UUIDPort
 import me.noukakis.re_do.scheduler.port.LogPort
 import me.noukakis.re_do.scheduler.port.MessagingPort
+import me.noukakis.re_do.scheduler.port.MutualExclusionLockPort
 import me.noukakis.re_do.scheduler.port.NowPort
 import me.noukakis.re_do.scheduler.port.PersistencePort
 import me.noukakis.re_do.scheduler.service.TEGScheduler
@@ -55,6 +56,7 @@ class SchedulerConfiguration {
         uuidPort: UUIDPort,
         nowPort: NowPort,
         logPort: LogPort,
+        mutualExclusionLockPort: MutualExclusionLockPort,
         @Value("\${scheduler.max-failures-before-giving-up}") maxFailuresBeforeGivingUp: Int
     ): TEGScheduler {
         return TEGScheduler(
@@ -62,6 +64,7 @@ class SchedulerConfiguration {
             persistencePort,
             uuidPort,
             nowPort,
+            mutualExclusionLockPort,
             maxFailuresBeforeGivingUp,
             logPort,
         )
