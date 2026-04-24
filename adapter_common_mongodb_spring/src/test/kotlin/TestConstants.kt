@@ -1,0 +1,1 @@
+const val MONGODB_IMAGE = "mongo:7.0.31"
