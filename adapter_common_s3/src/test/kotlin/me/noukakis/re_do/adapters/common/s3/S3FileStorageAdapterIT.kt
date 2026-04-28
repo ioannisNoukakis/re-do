@@ -12,13 +12,16 @@ import org.testcontainers.junit.jupiter.Testcontainers
 import org.testcontainers.utility.DockerImageName
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
-import software.amazon.awssdk.services.s3.S3Client
+import software.amazon.awssdk.regions.Region
+import software.amazon.awssdk.services.s3.S3AsyncClient
 import software.amazon.awssdk.services.s3.S3Configuration
 import software.amazon.awssdk.services.s3.model.CreateBucketRequest
 import software.amazon.awssdk.services.s3.model.GetObjectRequest
+import software.amazon.awssdk.transfer.s3.S3TransferManager
 import java.net.URI
 import java.nio.file.Path
 import java.time.Duration
+import kotlin.io.path.readText
 
 private const val RUSTFS_PORT = 9000
 private const val ACCESS_KEY = "testadmin"
@@ -38,17 +41,20 @@ class S3FileStorageAdapterIT {
         .withEnv("RUSTFS_SECRET_KEY", SECRET_KEY)
         .withStartupTimeout(Duration.ofMinutes(2))
 
-    private lateinit var s3Client: S3Client
+    private lateinit var s3Client: S3AsyncClient
     private lateinit var sut: S3FileStorageAdapter
     private lateinit var testFile: Path
+    private lateinit var largeTestFile: Path
 
     @BeforeEach
     fun setup(@TempDir tempDir: Path) {
         testFile = tempDir.resolve("report.csv")
         testFile.toFile().createNewFile()
         testFile.toFile().writeText(CONTENTS)
+        largeTestFile = tempDir.resolve("large.bin")
+        largeTestFile.toFile().writeBytes(ByteArray(1024 * 1024) { it.toByte() })
         val endpoint = "http://${rustfsContainer.host}:${rustfsContainer.getMappedPort(RUSTFS_PORT)}"
-        s3Client = S3Client.builder()
+        s3Client = S3AsyncClient.builder()
             .endpointOverride(URI.create(endpoint))
             .credentialsProvider(
                 StaticCredentialsProvider.create(
@@ -60,10 +66,14 @@ class S3FileStorageAdapterIT {
                     .pathStyleAccessEnabled(true)
                     .build()
             )
+            .region(Region.US_EAST_1)
             .build()
 
-        s3Client.createBucket(CreateBucketRequest.builder().bucket(TEST_BUCKET).build())
-        sut = S3FileStorageAdapter(s3Client, TEST_BUCKET)
+        s3Client.createBucket(CreateBucketRequest.builder().bucket(TEST_BUCKET).build()).get()
+        sut = S3FileStorageAdapter(
+            S3TransferManager.builder().s3Client(s3Client).build(),
+            TEST_BUCKET
+        )
     }
 
     @Nested
@@ -80,16 +90,29 @@ class S3FileStorageAdapterIT {
         }
 
         @Test
-        fun `upload stores the file content at the expected key in the bucket`() {
+        fun `upload stores the file content at the expected key in the bucket`(
+            @TempDir tempDir: Path
+        ) {
+            val outputPath = tempDir.resolve("tmp.txt").toAbsolutePath()
             sut.upload(
                 ref = FILE_ID,
                 sourcePath = testFile,
             )
 
-            val stored = s3Client.getObjectAsBytes(
-                GetObjectRequest.builder().bucket(TEST_BUCKET).key(FILE_ID).build()
-            ).asUtf8String()
+            s3Client.getObject(
+                GetObjectRequest.builder().bucket(TEST_BUCKET).key(FILE_ID).build(),
+                outputPath
+            ).get()
+            val stored = outputPath.readText()
             assertEquals(CONTENTS, stored)
+        }
+
+        @Test
+        fun `should only report progress at multiples of ten percent`() {
+            val reported = mutableListOf<Int>()
+            sut.upload(ref = FILE_ID, sourcePath = largeTestFile) { reported.add(it) }
+
+            assertEquals(listOf(0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100), reported)
         }
 
         @Test
@@ -101,7 +124,7 @@ class S3FileStorageAdapterIT {
 
             val metadata = s3Client.headObject {
                 it.bucket(TEST_BUCKET).key(FILE_ID)
-            }
+            }.get()
             assertEquals("text/csv", metadata.contentType())
         }
     }
@@ -133,6 +156,16 @@ class S3FileStorageAdapterIT {
             sut.download(FILE_ID, targetPath)
 
             assertEquals(CONTENTS, targetPath.toFile().readText())
+        }
+
+        @Test
+        fun `should only report progress at multiples of ten percent`(@TempDir tempDir: Path) {
+            sut.upload(ref = FILE_ID, sourcePath = largeTestFile)
+
+            val reported = mutableListOf<Int>()
+            sut.download(FILE_ID, tempDir.resolve("downloaded.bin")) { reported.add(it) }
+
+            assertEquals(listOf(0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100), reported)
         }
     }
 }
