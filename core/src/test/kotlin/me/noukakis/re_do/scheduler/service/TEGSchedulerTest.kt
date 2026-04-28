@@ -1656,7 +1656,8 @@ class TEGSchedulerTest {
             sut.whenGettingTegUpdate(
                 TEGMessageIn.TEGTaskProgressMessage(
                     taskName = "A",
-                    progress = 50
+                    progress = 50,
+                    step = "task_progress",
                 )
             )
 

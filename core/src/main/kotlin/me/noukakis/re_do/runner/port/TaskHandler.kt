@@ -9,7 +9,7 @@ sealed interface TaskImplementationResult {
 }
 
 interface TaskExecutionContext {
-    fun reportProgress(progress: Int)
+    fun reportProgress(progress: Int, step: String)
     fun reportLog(log: String)
     fun workingDir(): Path
 }
