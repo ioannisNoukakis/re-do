@@ -144,6 +144,7 @@ class TaskRunnerSutBuilder {
 
     fun givenAnImplementationThatReportsProgress(
         name: String = TEST_TASK_IMPL_NAME,
+        step: String = "task_progress",
         vararg progressValues: Int,
     ) {
         givenTheImplementation(name, object : TaskHandler {
@@ -152,13 +153,30 @@ class TaskRunnerSutBuilder {
                 arguments: List<String>,
                 context: TaskExecutionContext,
             ): TaskImplementationResult {
-                progressValues.forEach { context.reportProgress(it) }
+                progressValues.forEach { context.reportProgress(it, step) }
                 return TaskImplementationResult.Success(outputArtefacts = emptyList())
             }
 
             override fun implementationName(): String {
                 return name
             }
+        })
+    }
+
+    fun givenAnImplementationThatOutputsLocalFiles(
+        name: String = TEST_TASK_IMPL_NAME,
+        outputFileNames: List<String>,
+    ) {
+        givenTheImplementation(name, object : TaskHandler {
+            override fun run(
+                artefacts: List<LocalTegArtefact>,
+                arguments: List<String>,
+                context: TaskExecutionContext,
+            ): TaskImplementationResult = TaskImplementationResult.Success(
+                outputArtefacts = outputFileNames.map { LocalTegArtefact.LocalTegArtefactFile(it, WORKING_DIR.resolve(it)) }
+            )
+
+            override fun implementationName(): String = name
         })
     }
 

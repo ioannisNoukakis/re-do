@@ -113,6 +113,10 @@ class TaskRunnerTest {
             sut.whenTheTaskIsRun()
 
             sut.thenTheEventsShouldBeEmitted(
+                TEGMessageIn.TEGTaskProgressMessage(taskName = TEST_TASK_NAME, progress = 100, step = "Downloading input.txt"),
+                TEGMessageIn.TEGTaskProgressMessage(taskName = TEST_TASK_NAME, progress = 100, step = "Downloading input2.txt"),
+                TEGMessageIn.TEGTaskProgressMessage(taskName = TEST_TASK_NAME, progress = 100, step = "Uploading input.txt"),
+                TEGMessageIn.TEGTaskProgressMessage(taskName = TEST_TASK_NAME, progress = 100, step = "Uploading input2.txt"),
                 TEGMessageIn.TEGTaskResultMessage(
                     taskName = TEST_TASK_NAME,
                     outputArtefacts = listOf(
@@ -291,10 +295,10 @@ class TaskRunnerTest {
             sut.whenTheTaskIsRun()
 
             sut.thenTheEventsShouldBeEmitted(
-                TEGMessageIn.TEGTaskProgressMessage(taskName = TEST_TASK_NAME, progress = 25),
-                TEGMessageIn.TEGTaskProgressMessage(taskName = TEST_TASK_NAME, progress = 50),
-                TEGMessageIn.TEGTaskProgressMessage(taskName = TEST_TASK_NAME, progress = 75),
-                TEGMessageIn.TEGTaskProgressMessage(taskName = TEST_TASK_NAME, progress = 100),
+                TEGMessageIn.TEGTaskProgressMessage(taskName = TEST_TASK_NAME, progress = 25, step = "task_progress"),
+                TEGMessageIn.TEGTaskProgressMessage(taskName = TEST_TASK_NAME, progress = 50, step = "task_progress"),
+                TEGMessageIn.TEGTaskProgressMessage(taskName = TEST_TASK_NAME, progress = 75, step = "task_progress"),
+                TEGMessageIn.TEGTaskProgressMessage(taskName = TEST_TASK_NAME, progress = 100, step = "task_progress"),
                 TEGMessageIn.TEGTaskResultMessage(taskName = TEST_TASK_NAME, outputArtefacts = emptyList()),
             )
         }
@@ -366,6 +370,82 @@ class TaskRunnerTest {
 
             sut.thenTheTaskShouldFailWith(
                 TaskRunnerError.TaskFailed(TEG_ID, TEST_TASK_NAME, exceptionStackTrace)
+            )
+        }
+    }
+
+    @Nested
+    inner class `Should emit progress events for artefact downloads` {
+        @BeforeEach
+        fun setUp() {
+            sut.givenASuccessfulImplementation()
+            sut.givenTheMessage(
+                TEGMessageOut.TEGRunTaskMessage(
+                    taskName = TEST_TASK_NAME,
+                    implementationName = TEST_TASK_IMPL_NAME,
+                    artefacts = listOf(
+                        TEGArtefact.TEGArtefactFile(
+                            name = "input.txt",
+                            ref = "storage_backend_ref_for_input.txt",
+                            storedWith = "StubFileStorageAdapter",
+                        ),
+                        TEGArtefact.TEGArtefactFile(
+                            name = "input2.txt",
+                            ref = "storage_backend_ref_for_input2.txt",
+                            storedWith = "StubFileStorageAdapter",
+                        ),
+                    ),
+                    arguments = emptyList(),
+                    timeout = Duration.INFINITE,
+                )
+            )
+            sut.givenTheFileInStorage("storage_backend_ref_for_input.txt")
+            sut.givenTheFileInStorage("storage_backend_ref_for_input2.txt")
+        }
+
+        @Test
+        fun `should emit a progress event for each downloaded artefact`() = runTest {
+            sut.whenTheTaskIsRun()
+
+            sut.thenTheEventsShouldBeEmitted(
+                TEGMessageIn.TEGTaskProgressMessage(taskName = TEST_TASK_NAME, progress = 100, step = "Downloading input.txt"),
+                TEGMessageIn.TEGTaskProgressMessage(taskName = TEST_TASK_NAME, progress = 100, step = "Downloading input2.txt"),
+                TEGMessageIn.TEGTaskResultMessage(taskName = TEST_TASK_NAME, outputArtefacts = emptyList()),
+            )
+        }
+    }
+
+    @Nested
+    inner class `Should emit progress events for artefact uploads` {
+        @BeforeEach
+        fun setUp() {
+            sut.givenTheUUidsToReturn("a", "b")
+            sut.givenAnImplementationThatOutputsLocalFiles(outputFileNames = listOf("output1.txt", "output2.txt"))
+            sut.givenTheMessage(
+                TEGMessageOut.TEGRunTaskMessage(
+                    taskName = TEST_TASK_NAME,
+                    implementationName = TEST_TASK_IMPL_NAME,
+                    artefacts = emptyList(),
+                    arguments = emptyList(),
+                    timeout = Duration.INFINITE,
+                )
+            )
+        }
+
+        @Test
+        fun `should emit a progress event for each uploaded artefact`() = runTest {
+            sut.whenTheTaskIsRun()
+
+            sut.thenTheEventsShouldBeEmitted(
+                TEGMessageIn.TEGTaskProgressMessage(taskName = TEST_TASK_NAME, progress = 100, step = "Uploading output1.txt"),
+                TEGMessageIn.TEGTaskProgressMessage(taskName = TEST_TASK_NAME, progress = 100, step = "Uploading output2.txt"),
+                TEGMessageIn.TEGTaskResultMessage(
+                    taskName = TEST_TASK_NAME,
+                    outputArtefacts = listOf(
+                        TEGArtefact.TEGArtefactFile(name = "output1.txt", ref = "a", storedWith = "StubFileStorageAdapter"),
+                        TEGArtefact.TEGArtefactFile(name = "output2.txt", ref = "b", storedWith = "StubFileStorageAdapter"),
+                    ),
+                ),
             )
         }
     }

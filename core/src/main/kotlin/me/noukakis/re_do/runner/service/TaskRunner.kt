@@ -46,12 +46,13 @@ class TaskRunner(
                 val impl = implementations[message.implementationName]
                     ?: return handleMissingImplementation(tegId, message)
                 val context = object : TaskExecutionContext {
-                    override fun reportProgress(progress: Int) {
+                    override fun reportProgress(progress: Int, step: String) {
                         messagingPort.send(
                             tegId,
                             TEGMessageIn.TEGTaskProgressMessage(
                                 taskName = message.taskName,
                                 progress = progress,
+                                step = step,
                             )
                         )
                     }
@@ -71,10 +72,19 @@ class TaskRunner(
 
                 val artefacts = message.artefacts.map {
                     when (it) {
-                        is TEGArtefact.TEGArtefactFile -> LocalTegArtefact.LocalTegArtefactFile(
-                            it.name,
-                            fileStoragePort.download(it.ref, workingDir.path().resolve(it.name()))
-                        )
+                        is TEGArtefact.TEGArtefactFile -> {
+                            val path = fileStoragePort.download(it.ref, workingDir.path().resolve(it.name())) { progress ->
+                                messagingPort.send(
+                                    tegId,
+                                    TEGMessageIn.TEGTaskProgressMessage(
+                                        taskName = message.taskName,
+                                        progress = progress,
+                                        step = "Downloading ${it.name()}",
+                                    )
+                                )
+                            }
+                            LocalTegArtefact.LocalTegArtefactFile(it.name, path)
+                        }
 
                         is TEGArtefact.TEGArtefactStringValue -> LocalTegArtefact.LocalTEGArtefactStringValue(
                             it.name,
@@ -99,7 +109,16 @@ class TaskRunner(
                         val remoteArtefacts = implResult.outputArtefacts.map {
                             when (it) {
                                 is LocalTegArtefact.LocalTegArtefactFile -> {
-                                    val ref = fileStoragePort.upload(uuidPort.next(), it.path)
+                                    val ref = fileStoragePort.upload(uuidPort.next(), it.path) { progress ->
+                                        messagingPort.send(
+                                            tegId,
+                                            TEGMessageIn.TEGTaskProgressMessage(
+                                                taskName = message.taskName,
+                                                progress = progress,
+                                                step = "Uploading ${it.name}",
+                                            )
+                                        )
+                                    }
                                     TEGArtefact.TEGArtefactFile(
                                         it.name,
                                         ref.ref,

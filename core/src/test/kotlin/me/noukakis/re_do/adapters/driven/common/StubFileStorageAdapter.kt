@@ -9,15 +9,17 @@ const val STORED_WITH_STUB = "StubFileStorageAdapter"
 class StubFileStorageAdapter(
     val storage: MutableMap<String, StoredFileRef> = mutableMapOf(),
 ) : FileStoragePort {
-    override fun upload(ref: String, sourcePath: Path): StoredFileRef {
+    override fun upload(ref: String, sourcePath: Path, onProgress: (Int) -> Unit): StoredFileRef {
         val storedRef = StoredFileRef(ref = ref, storedWith = STORED_WITH_STUB)
         storage[ref] = storedRef
+        onProgress(100)
         return storedRef
     }
 
-    override fun download(ref: String, targetPath: Path): Path {
+    override fun download(ref: String, targetPath: Path, onProgress: (Int) -> Unit): Path {
         for (entry in storage.entries) {
             if (entry.key == ref) {
+                onProgress(100)
                 return targetPath
             }
         }

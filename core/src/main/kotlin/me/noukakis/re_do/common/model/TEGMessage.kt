@@ -27,6 +27,7 @@ sealed interface TEGMessageIn {
     data class TEGTaskProgressMessage(
         val taskName: String,
         val progress: Int,
+        val step: String,
     ) : TEGMessageIn
 
     data class TEGTaskLogMessage(
