@@ -10,12 +10,13 @@ See [Architecture.md](Architecture.md) for conventions on ports, adapters, use c
 
 ## Running locally
 
-You'll need java 21 sdk and docker (with docker compose plugin) installed to run the demo stack locally.
+You'll need java 21 sdk and docker (with docker compose plugin) installed to run the demo stack locally along with
+make (4.4.1+) to run the commands below.
 
 Run the full demo stack (builds task plugins, starts scheduler + runner + infrastructure):
 
 ```bash
-./demo.sh
+make all
 ```
 
 The scheduler API is available at `http://localhost:8080`.
