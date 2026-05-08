@@ -128,7 +128,7 @@ class SchedulerMessageListenerTest {
                 outputArtefacts = listOf(TEGArtefact.TEGArtefactStringValue("out", "value")),
             ),
             TEGMessageIn.TEGTaskFailedMessage(taskName = "task", reason = "boom"),
-            TEGMessageIn.TEGTaskProgressMessage(taskName = "task", progress = 50),
+            TEGMessageIn.TEGTaskProgressMessage(taskName = "task", progress = 50, step = "step"),
             TEGMessageIn.TEGTaskLogMessage(taskName = "task", log = "running…"),
         )
     }

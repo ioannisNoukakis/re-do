@@ -8,6 +8,8 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
+import org.springframework.web.bind.MissingRequestHeaderException
+import org.springframework.web.multipart.support.MissingServletRequestPartException
 
 data class ApiError(val cause: String?, val errorId: String? = null)
 
@@ -47,6 +49,14 @@ class ExceptionHandling {
             HttpStatus.BAD_REQUEST
         )
     }
+
+    @ExceptionHandler(MissingRequestHeaderException::class)
+    fun handleMissingRequestHeader(ex: MissingRequestHeaderException): ResponseEntity<ApiError> =
+        ResponseEntity(ApiError("Missing required header: ${ex.headerName}"), HttpStatus.BAD_REQUEST)
+
+    @ExceptionHandler(MissingServletRequestPartException::class)
+    fun handleMissingServletRequestPart(ex: MissingServletRequestPartException): ResponseEntity<ApiError> =
+        ResponseEntity(ApiError("Missing required request part: ${ex.requestPartName}"), HttpStatus.BAD_REQUEST)
 
     @ExceptionHandler(Exception::class)
     fun handleUnexpectedException(ex: Exception): ResponseEntity<ApiError> {
