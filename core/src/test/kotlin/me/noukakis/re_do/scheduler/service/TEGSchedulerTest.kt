@@ -1667,7 +1667,8 @@ class TEGSchedulerTest {
                         TEGEvent.Progress(
                             taskName = "A",
                             timestamp = NOW_1,
-                            progress = 50
+                            progress = 50,
+                            step = "task_progress",
                         )
                     )
                 )

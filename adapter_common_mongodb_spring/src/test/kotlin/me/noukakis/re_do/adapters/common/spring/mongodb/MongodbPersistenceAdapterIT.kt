@@ -317,6 +317,7 @@ class MongodbPersistenceAdapterIT {
         taskName = "task-$secondOffset",
         timestamp = timestamp(secondOffset),
         progress = (secondOffset * 10).toInt(),
+        step = "step-${secondOffset * 10}%",
     )
 
     private fun logEvent(secondOffset: Long) = TEGEvent.Log(

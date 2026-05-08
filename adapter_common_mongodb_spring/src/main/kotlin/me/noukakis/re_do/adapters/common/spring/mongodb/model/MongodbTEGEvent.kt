@@ -78,6 +78,7 @@ sealed class MongodbTEGEvent {
         override val timestamp: Instant,
         val taskName: String,
         val progress: Int,
+        val step: String,
     ) : MongodbTEGEvent()
 
     data class MongodbLog(
@@ -130,6 +131,7 @@ sealed class MongodbTEGEvent {
             taskName = taskName,
             timestamp = timestamp,
             progress = progress,
+            step = step,
         )
 
         is MongodbLog -> TEGEvent.Log(
@@ -198,6 +200,7 @@ fun TEGEvent.toMongoModel(tegId: String, id: String): MongodbTEGEvent = when (th
         taskName = taskName,
         timestamp = timestamp,
         progress = progress,
+        step = step,
     )
 
     is TEGEvent.Log -> MongodbTEGEvent.MongodbLog(

@@ -372,6 +372,7 @@ class TEGScheduler(
             taskName = msg.taskName,
             timestamp = now,
             progress = msg.progress,
+            step = msg.step,
         )
         persistencePort.saveEvents(command.tegId, listOf(progressEvent))
         return Unit.right()
