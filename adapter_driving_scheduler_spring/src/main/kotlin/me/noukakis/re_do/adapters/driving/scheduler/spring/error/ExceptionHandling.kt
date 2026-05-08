@@ -6,6 +6,8 @@ import me.noukakis.re_do.scheduler.model.TegSchedulingError
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.http.converter.HttpMessageNotReadableException
+import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.MissingRequestHeaderException
@@ -57,6 +59,14 @@ class ExceptionHandling {
     @ExceptionHandler(MissingServletRequestPartException::class)
     fun handleMissingServletRequestPart(ex: MissingServletRequestPartException): ResponseEntity<ApiError> =
         ResponseEntity(ApiError("Missing required request part: ${ex.requestPartName}"), HttpStatus.BAD_REQUEST)
+
+    @ExceptionHandler(MethodArgumentNotValidException::class)
+    fun handleMethodArgumentNotValidException(ex: MethodArgumentNotValidException): ResponseEntity<ApiError> =
+        ResponseEntity(ApiError("Validation failed: ${ex.bindingResult.fieldErrors.joinToString("; ") { "${it.field}: ${it.defaultMessage}" }}"), HttpStatus.BAD_REQUEST)
+
+    @ExceptionHandler(HttpMessageNotReadableException::class)
+    fun handleHttpMessageNotReadableException(ex: HttpMessageNotReadableException): ResponseEntity<ApiError> =
+        ResponseEntity(ApiError("Validation failed: ${ex.message}"), HttpStatus.BAD_REQUEST)
 
     @ExceptionHandler(Exception::class)
     fun handleUnexpectedException(ex: Exception): ResponseEntity<ApiError> {
