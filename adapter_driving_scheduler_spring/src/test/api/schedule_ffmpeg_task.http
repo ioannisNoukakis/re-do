@@ -1,0 +1,42 @@
+### @title Get job list no skipping or limiting
+POST {{v1Url}}/teg/schedule
+X-Auth-Principal: "test-user"
+X-Auth-Roles: "admin"
+Content-Type: application/json
+
+{
+  "tasks": [
+    {
+      "name": "convert to mp3",
+      "implementationName": "FFMPEGTask",
+      "inputs": [
+        {
+          "name": "finally-awake.mp4",
+          "type": "FILE"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "finally-awake.mp3",
+          "type": "FILE"
+        }
+      ],
+      "arguments": [
+        "-i finally-awake.mp4 -vn -acodec libmp3lame finally-awake.mp3",
+        "30"
+      ],
+      "timeout": {
+        "amount": 50,
+        "temporalUnit": "SECONDS"
+      }
+    }
+  ],
+  "initArtefacts": [
+    {
+      "name": "finally-awake.mp4",
+      "type": "FILE",
+      "ref": "d88dd07b-04b2-4493-8a1d-dfe05d987984",
+      "storedWith": "s3"
+    }
+  ]
+}

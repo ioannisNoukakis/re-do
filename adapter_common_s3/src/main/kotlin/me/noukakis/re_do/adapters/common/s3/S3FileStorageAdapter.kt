@@ -3,8 +3,7 @@ package me.noukakis.re_do.adapters.common.s3
 import me.noukakis.re_do.common.port.FileStoragePort
 import me.noukakis.re_do.common.port.StoredFileRef
 import org.apache.tika.Tika
-import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
-import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3AsyncClient
 import software.amazon.awssdk.services.s3.S3Configuration
@@ -16,10 +15,28 @@ import java.net.URI
 import java.nio.file.Path
 
 class S3FileStorageAdapter(
-    private val transferManager: S3TransferManager,
+    endpoint: String,
     private val bucketName: String,
+    credentialsProvider: AwsCredentialsProvider,
+    region: String = "us-east-1",
 ) : FileStoragePort {
     private val tika = Tika()
+    private val transferManager: S3TransferManager = run {
+        val s3AsyncClient = S3AsyncClient.builder()
+            .endpointOverride(URI.create(endpoint))
+            .region(Region.of(region))
+            .credentialsProvider(credentialsProvider)
+            .serviceConfiguration(
+                S3Configuration.builder()
+                    .pathStyleAccessEnabled(true)
+                    .build()
+            )
+            .multipartEnabled(false)
+            .build()
+        S3TransferManager.builder()
+            .s3Client(s3AsyncClient)
+            .build()
+    }
 
     override fun upload(ref: String, sourcePath: Path, onProgress: (Int) -> Unit): StoredFileRef {
         val contentType = tika.detect(sourcePath.toFile())
@@ -68,36 +85,6 @@ class S3FileStorageAdapter(
                 lastReportedPercent = 100
                 onProgress(100)
             }
-        }
-    }
-
-    companion object {
-        fun create(
-            endpoint: String,
-            bucket: String,
-            accessKey: String,
-            secretKey: String,
-            region: String = "us-east-1",
-        ): S3FileStorageAdapter {
-            val s3AsyncClient = S3AsyncClient.builder()
-                .endpointOverride(URI.create(endpoint))
-                .region(Region.of(region))
-                .credentialsProvider(
-                    StaticCredentialsProvider.create(
-                        AwsBasicCredentials.create(accessKey, secretKey)
-                    )
-                )
-                .serviceConfiguration(
-                    S3Configuration.builder()
-                        .pathStyleAccessEnabled(true)
-                        .build()
-                )
-                .multipartEnabled(true)
-                .build()
-            val transferManager = S3TransferManager.builder()
-                .s3Client(s3AsyncClient)
-                .build()
-            return S3FileStorageAdapter(transferManager, bucket)
         }
     }
 }
