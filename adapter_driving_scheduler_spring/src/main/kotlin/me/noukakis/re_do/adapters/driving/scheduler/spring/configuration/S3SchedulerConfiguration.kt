@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
 
 @Configuration
 class S3SchedulerConfiguration {
@@ -18,5 +20,12 @@ class S3SchedulerConfiguration {
         @Value("\${scheduler.file-storage.s3.access-key}") accessKey: String,
         @Value("\${scheduler.file-storage.s3.secret-key}") secretKey: String,
         @Value("\${scheduler.file-storage.s3.region:us-east-1}") region: String,
-    ): FileStoragePort = S3FileStorageAdapter.create(endpoint, bucket, accessKey, secretKey, region)
+    ): FileStoragePort = S3FileStorageAdapter(
+        endpoint=endpoint,
+        bucketName = bucket,
+        credentialsProvider = StaticCredentialsProvider.create(
+            AwsBasicCredentials.create(accessKey, secretKey)
+        ),
+        region=region
+    )
 }

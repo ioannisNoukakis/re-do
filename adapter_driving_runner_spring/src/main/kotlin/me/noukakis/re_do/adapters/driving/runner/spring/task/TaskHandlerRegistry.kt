@@ -20,6 +20,9 @@ class TaskHandlerRegistry(
             val logger: Logger = LoggerFactory.getLogger(TaskHandlerRegistry::class.java)!!
             val handlers = loadHandlers(pluginDir)
             logger.info("Loaded ${handlers.size} task handlers from ${pluginDir.absolute()}")
+            for (handler in handlers) {
+                logger.info("Loaded task handler: ${handler.implementationName()} (${handler::class.java.name})")
+            }
             return TaskHandlerRegistry(handlers)
         }
 

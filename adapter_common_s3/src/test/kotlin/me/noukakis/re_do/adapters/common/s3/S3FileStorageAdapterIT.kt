@@ -1,6 +1,7 @@
 package me.noukakis.re_do.adapters.common.s3
 
 import me.noukakis.re_do.common.port.StoredFileRef
+import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
@@ -17,11 +18,12 @@ import software.amazon.awssdk.services.s3.S3AsyncClient
 import software.amazon.awssdk.services.s3.S3Configuration
 import software.amazon.awssdk.services.s3.model.CreateBucketRequest
 import software.amazon.awssdk.services.s3.model.GetObjectRequest
-import software.amazon.awssdk.transfer.s3.S3TransferManager
 import java.net.URI
 import java.nio.file.Path
 import java.time.Duration
+import kotlin.io.path.readBytes
 import kotlin.io.path.readText
+import kotlin.random.Random
 
 private const val RUSTFS_PORT = 9000
 private const val ACCESS_KEY = "testadmin"
@@ -42,6 +44,7 @@ class S3FileStorageAdapterIT {
         .withStartupTimeout(Duration.ofMinutes(2))
 
     private lateinit var s3Client: S3AsyncClient
+    private lateinit var credentialsProvider: StaticCredentialsProvider
     private lateinit var sut: S3FileStorageAdapter
     private lateinit var testFile: Path
     private lateinit var largeTestFile: Path
@@ -54,13 +57,12 @@ class S3FileStorageAdapterIT {
         largeTestFile = tempDir.resolve("large.bin")
         largeTestFile.toFile().writeBytes(ByteArray(1024 * 1024) { it.toByte() })
         val endpoint = "http://${rustfsContainer.host}:${rustfsContainer.getMappedPort(RUSTFS_PORT)}"
+        credentialsProvider = StaticCredentialsProvider.create(
+            AwsBasicCredentials.create(ACCESS_KEY, SECRET_KEY)
+        )
         s3Client = S3AsyncClient.builder()
             .endpointOverride(URI.create(endpoint))
-            .credentialsProvider(
-                StaticCredentialsProvider.create(
-                    AwsBasicCredentials.create(ACCESS_KEY, SECRET_KEY)
-                )
-            )
+            .credentialsProvider(credentialsProvider)
             .serviceConfiguration(
                 S3Configuration.builder()
                     .pathStyleAccessEnabled(true)
@@ -71,8 +73,9 @@ class S3FileStorageAdapterIT {
 
         s3Client.createBucket(CreateBucketRequest.builder().bucket(TEST_BUCKET).build()).get()
         sut = S3FileStorageAdapter(
-            S3TransferManager.builder().s3Client(s3Client).build(),
-            TEST_BUCKET
+            endpoint = endpoint,
+            bucketName = TEST_BUCKET,
+            credentialsProvider = credentialsProvider,
         )
     }
 
@@ -166,6 +169,20 @@ class S3FileStorageAdapterIT {
             sut.download(FILE_ID, tempDir.resolve("downloaded.bin")) { reported.add(it) }
 
             assertEquals(listOf(0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100), reported)
+        }
+
+        @Test
+        fun `downloaded content matches uploaded content for a 50 MB random file`(@TempDir tempDir: Path) {
+            val originalBytes = Random.nextBytes(50 * 1024 * 1024)
+            val uploadPath = tempDir.resolve("50mb.bin")
+            uploadPath.toFile().writeBytes(originalBytes)
+
+            sut.upload(ref = FILE_ID, sourcePath = uploadPath)
+
+            val downloadPath = tempDir.resolve("50mb-downloaded.bin")
+            sut.download(FILE_ID, downloadPath)
+
+            assertArrayEquals(originalBytes, downloadPath.readBytes())
         }
     }
 }
