@@ -47,6 +47,7 @@ sealed interface TEGEvent {
         val taskName: String,
         override val timestamp: Instant,
         val progress: Int,
+        val step: String,
     ) : TEGEvent
 
     data class Log(
