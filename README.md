@@ -46,9 +46,7 @@ You should see the state of the demo TEG in mongodb and the generated artefacts 
 - Support for file artefacts and string values as task inputs/outputs
 - Demo task plugin and HTTP API entry point
 - MongoDB-backed state, RabbitMQ messaging, S3-compatible file storage
-
-### 🚧 In Progress
-- **FFmpeg task plugin** — video/audio processing as a first-class task implementation
+- FFmpeg task plugin — video/audio processing as a first-class task implementation
 
 ### 🔜 Planned
 
