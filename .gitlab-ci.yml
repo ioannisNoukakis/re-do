@@ -42,7 +42,7 @@ notify_alert_failure:
 
 gradle_test:
   stage: test
-  image: gradle:9.3.1-noble
+  image: gradle:9.5.0-jdk21-noble
   services:
     - docker:29.1.3-dind
   before_script:

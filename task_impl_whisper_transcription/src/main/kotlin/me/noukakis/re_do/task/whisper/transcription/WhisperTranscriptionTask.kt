@@ -8,6 +8,7 @@ import me.noukakis.re_do.runner.model.LocalTegArtefact
 import me.noukakis.re_do.runner.port.TaskExecutionContext
 import me.noukakis.re_do.runner.port.TaskHandler
 import me.noukakis.re_do.runner.port.TaskImplementationResult
+import java.nio.file.Files
 
 private const val IMPLEMENTATION_NAME = "WhisperTranscriptionTask"
 
@@ -69,11 +70,14 @@ class WhisperTranscriptionTask(
         context.reportProgress(100, STEP_NAME)
         context.reportLog("Transcription complete: ${text.length} characters")
 
+        val outputFile = context.workingDir().resolve("transcript.txt")
+        Files.writeString(outputFile, text)
+
         return TaskImplementationResult.Success(
             listOf(
-                LocalTegArtefact.LocalTEGArtefactStringValue(
-                    name = "transcript",
-                    value = text,
+                LocalTegArtefact.LocalTegArtefactFile(
+                    name = "transcript.txt",
+                    path = outputFile,
                 )
             )
         )

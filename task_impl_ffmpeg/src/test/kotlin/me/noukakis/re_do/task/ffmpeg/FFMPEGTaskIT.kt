@@ -26,7 +26,7 @@ class FFMPEGTaskIT {
         workingDir = Files.createTempDirectory("ffmpeg-it-working-dir")
         context = SpyTaskExecutionContext(workingDir)
         inputPath = workingDir.resolve(INPUT_NAME)
-        Files.copy(Path.of("src/test/resources/media_samples/cannes.mp4"), inputPath, StandardCopyOption.REPLACE_EXISTING)
+        Files.copy(Path.of("../media_samples/finally_awake_1080p.mp4"), inputPath, StandardCopyOption.REPLACE_EXISTING)
     }
 
     @AfterEach

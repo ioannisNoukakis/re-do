@@ -22,8 +22,14 @@ class WhisperTranscriptionTaskValidationTest {
 
     @Test
     fun `implementationName returns correct name`() {
-        assertEquals("OpenAITranscriptionTask", WhisperTranscriptionTask(apiKey = "test-key").implementationName())
+        assertEquals("WhisperTranscriptionTask", buildSut().implementationName())
     }
+
+    private fun buildSut(apiKey: String = "test-key"): WhisperTranscriptionTask = WhisperTranscriptionTask(
+        apiKey = apiKey,
+        baseUrl = "https://some.url",
+        modelName = "some-model",
+    )
 
     @Nested
     inner class `Returns Failure` {
@@ -31,7 +37,7 @@ class WhisperTranscriptionTaskValidationTest {
         fun `when no artefacts provided`() {
             assertEquals(
                 TaskImplementationResult.Failure("Expected exactly one file artefact, got 0"),
-                WhisperTranscriptionTask(apiKey = "test-key").run(emptyList(), emptyList(), context),
+                buildSut().run(emptyList(), emptyList(), context),
             )
         }
 
@@ -39,7 +45,7 @@ class WhisperTranscriptionTaskValidationTest {
         fun `when more than one file artefact provided`() {
             assertEquals(
                 TaskImplementationResult.Failure("Expected exactly one file artefact, got 2"),
-                WhisperTranscriptionTask(apiKey = "test-key").run(
+                buildSut().run(
                     listOf(audioArtefact("a.mp3"), audioArtefact("b.mp3")),
                     emptyList(),
                     context,
@@ -52,13 +58,13 @@ class WhisperTranscriptionTaskValidationTest {
             val stringArtefact = LocalTegArtefact.LocalTEGArtefactStringValue(name = "text", value = "hello")
             assertEquals(
                 TaskImplementationResult.Failure("Expected exactly one file artefact, got 0"),
-                WhisperTranscriptionTask(apiKey = "test-key").run(listOf(stringArtefact), emptyList(), context),
+                buildSut().run(listOf(stringArtefact), emptyList(), context),
             )
         }
 
         @Test
         fun `when API key is blank`() {
-            assertThrows<IllegalArgumentException> { WhisperTranscriptionTask(apiKey = "") }
+            assertThrows<IllegalArgumentException> { buildSut(apiKey = "") }
         }
     }
 }

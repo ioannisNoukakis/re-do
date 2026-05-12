@@ -1,4 +1,4 @@
-### @title Get job list no skipping or limiting
+### @title Schedule demo task with multiple inputs and outputs
 POST {{v1Url}}/teg/schedule
 X-Auth-Principal: "test-user"
 X-Auth-Roles: "admin,other-role"
