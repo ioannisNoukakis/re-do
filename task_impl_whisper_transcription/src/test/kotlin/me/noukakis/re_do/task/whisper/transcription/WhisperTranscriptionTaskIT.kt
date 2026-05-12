@@ -54,7 +54,7 @@ class WhisperTranscriptionTaskIT {
 
         @Test
         fun `returns Success with a transcript file artefact`() {
-            val result = sut.run(listOf(artefact), emptyList(), context)
+            val result = sut.run(listOf(artefact), listOf("transcript.txt"), context)
 
             assertEquals(
                 TaskImplementationResult.Success(
@@ -71,14 +71,14 @@ class WhisperTranscriptionTaskIT {
 
         @Test
         fun `transcript file exists on disk after transcription`() {
-            sut.run(listOf(artefact), emptyList(), context)
+            sut.run(listOf(artefact), listOf("transcript.txt"), context)
 
             assertTrue(Files.exists(workingDir.resolve("transcript.txt")))
         }
 
         @Test
         fun `transcript file is non-empty`() {
-            sut.run(listOf(artefact), emptyList(), context)
+            sut.run(listOf(artefact), listOf("transcript.txt"), context)
 
             val value = Files.readString(workingDir.resolve("transcript.txt"))
             assertTrue(value.isNotBlank())
@@ -86,7 +86,7 @@ class WhisperTranscriptionTaskIT {
 
         @Test
         fun `reports progress at 0 and 100`() {
-            sut.run(listOf(artefact), emptyList(), context)
+            sut.run(listOf(artefact), listOf("transcript.txt"), context)
 
             assertTrue(context.progressCalls.any { (progress, _) -> progress == 0 })
             assertTrue(context.progressCalls.any { (progress, _) -> progress == 100 })
@@ -94,7 +94,7 @@ class WhisperTranscriptionTaskIT {
 
         @Test
         fun `emits at least one log line`() {
-            sut.run(listOf(artefact), emptyList(), context)
+            sut.run(listOf(artefact), listOf("transcript.txt"), context)
 
             assertTrue(context.logCalls.isNotEmpty())
         }

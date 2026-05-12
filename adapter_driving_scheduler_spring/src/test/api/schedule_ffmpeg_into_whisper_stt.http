@@ -41,11 +41,13 @@ Content-Type: application/json
         ],
         "outputs": [
             {
-            "name": "transcript.txt",
+            "name": "transcription.txt",
             "type": "FILE"
             }
         ],
-        "arguments": [],
+        "arguments": [
+          "transcription.txt"
+        ],
         "timeout": {
             "amount": 300,
             "temporalUnit": "SECONDS"

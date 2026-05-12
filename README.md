@@ -47,11 +47,11 @@ You should see the state of the demo TEG in mongodb and the generated artefacts 
 - Demo task plugin and HTTP API entry point
 - MongoDB-backed state, RabbitMQ messaging, S3-compatible file storage
 - FFmpeg task plugin — video/audio processing as a first-class task implementation
+- **Transcription** — speech-to-text via [Whisper](https://github.com/openai/whisper)
 
 ### 🔜 Planned
 
 #### AI / ML Task Plugins
-- **Transcription** — speech-to-text via [Whisper](https://github.com/openai/whisper)
 - **Translation** — multilingual translation via [Gemma Translate](https://ai.google.dev/gemma)
 - **Summarisation** — text summarisation via [Gemma 4](https://ai.google.dev/gemma)
 

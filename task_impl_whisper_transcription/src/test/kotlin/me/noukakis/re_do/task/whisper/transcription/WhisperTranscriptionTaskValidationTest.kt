@@ -37,7 +37,7 @@ class WhisperTranscriptionTaskValidationTest {
         fun `when no artefacts provided`() {
             assertEquals(
                 TaskImplementationResult.Failure("Expected exactly one file artefact, got 0"),
-                buildSut().run(emptyList(), emptyList(), context),
+                buildSut().run(emptyList(), listOf("output.txt"), context),
             )
         }
 
@@ -47,7 +47,7 @@ class WhisperTranscriptionTaskValidationTest {
                 TaskImplementationResult.Failure("Expected exactly one file artefact, got 2"),
                 buildSut().run(
                     listOf(audioArtefact("a.mp3"), audioArtefact("b.mp3")),
-                    emptyList(),
+                    listOf("output.txt"),
                     context,
                 ),
             )
@@ -58,7 +58,23 @@ class WhisperTranscriptionTaskValidationTest {
             val stringArtefact = LocalTegArtefact.LocalTEGArtefactStringValue(name = "text", value = "hello")
             assertEquals(
                 TaskImplementationResult.Failure("Expected exactly one file artefact, got 0"),
-                buildSut().run(listOf(stringArtefact), emptyList(), context),
+                buildSut().run(listOf(stringArtefact), listOf("output.txt"), context),
+            )
+        }
+
+        @Test
+        fun `when output file argument is missing`() {
+            assertEquals(
+                TaskImplementationResult.Failure("First argument (output file name) is required"),
+                buildSut().run(listOf(audioArtefact()), emptyList(), context),
+            )
+        }
+
+        @Test
+        fun `when output file argument is blank`() {
+            assertEquals(
+                TaskImplementationResult.Failure("First argument (output file name) is required"),
+                buildSut().run(listOf(audioArtefact()), listOf("   "), context),
             )
         }
 

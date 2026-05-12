@@ -53,7 +53,10 @@ class WhisperTranscriptionTask(
         }
         val fileArtefact = fileArtefacts.single()
 
-        val language = arguments.getOrNull(0)?.takeIf { it.isNotBlank() }
+        val outputFileName = arguments.getOrNull(0)?.takeIf { it.isNotBlank() }
+            ?: return TaskImplementationResult.Failure("First argument (output file name) is required")
+
+        val language = arguments.getOrNull(1)?.takeIf { it.isNotBlank() }
 
         context.reportProgress(0, STEP_NAME)
         context.reportLog("Transcribing ${fileArtefact.name} with model $modelName")
@@ -70,13 +73,13 @@ class WhisperTranscriptionTask(
         context.reportProgress(100, STEP_NAME)
         context.reportLog("Transcription complete: ${text.length} characters")
 
-        val outputFile = context.workingDir().resolve("transcript.txt")
+        val outputFile = context.workingDir().resolve(outputFileName)
         Files.writeString(outputFile, text)
 
         return TaskImplementationResult.Success(
             listOf(
                 LocalTegArtefact.LocalTegArtefactFile(
-                    name = "transcript.txt",
+                    name = outputFileName,
                     path = outputFile,
                 )
             )
