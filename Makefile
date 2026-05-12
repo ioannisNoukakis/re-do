@@ -13,7 +13,7 @@ build-plugins:
 	@echo "Building task plugins..."
 	@for module_dir in $(TASK_PLUGIN_DIRS); do \
 		module=$${module_dir%/}; \
-		./gradlew ":$${module}:jar" --no-daemon; \
+		./gradlew ":$${module}:shadowJar" --no-daemon; \
 		cp "$${module}/build/libs/"*.jar task_handler_plugins/; \
 		echo "  -> $${module} copied to task_handler_plugins/"; \
 	done

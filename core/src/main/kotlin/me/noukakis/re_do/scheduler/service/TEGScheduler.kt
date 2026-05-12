@@ -203,7 +203,7 @@ class TEGScheduler(
             val newEvents = mutableListOf<TEGEvent>()
             addTaskCompletedEvent(msg, now, eventsToVerify, newEvents, command)
             addTegCompletedEventIfNoMoreTaskAreToBeScheduled(eventsToVerify, command, now, newEvents)
-            scheduleRemainingTasksIfAny(eventsToVerify, command)
+            newEvents.addAll(scheduleRemainingTasksIfAny(eventsToVerify, command, now))
             persistencePort.saveEvents(command.tegId, newEvents)
             Unit.right()
         }
@@ -283,19 +283,25 @@ class TEGScheduler(
 
     private fun scheduleRemainingTasksIfAny(
         eventsToVerify: MutableList<TEGEvent>,
-        command: TEGUpdateCommand
-    ) {
+        command: TEGUpdateCommand,
+        now: Instant,
+    ): List<TEGEvent> {
         val completedArtefacts = eventsToVerify.filterIsInstance<TEGEvent.Completed>()
             .flatMap { it.outputArtefacts }
         val tasksThatWereAlreadyScheduled = eventsToVerify.filterIsInstance<TEGEvent.Scheduled>()
             .map { it.taskName }
             .toSet()
+        val newEvents = mutableListOf<TEGEvent>()
         eventsToVerify.filterIsInstance<TEGEvent.Created>()
             .filter { event ->
                 !tasksThatWereAlreadyScheduled.contains(event.task.name)
                         && event.task.inputs.all { input -> completedArtefacts.find { input.name == it.name() } != null }
             }
-            .forEach { sendTaskMessage(command.tegId, it, completedArtefacts) }
+            .forEach {
+                sendTaskMessage(command.tegId, it, completedArtefacts)
+                newEvents.add(TEGEvent.Scheduled(it.task.name, now))
+            }
+        return newEvents
     }
 
     private fun handleFailedMessage(

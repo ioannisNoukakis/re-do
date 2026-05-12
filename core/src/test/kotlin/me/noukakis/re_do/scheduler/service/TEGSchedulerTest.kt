@@ -639,6 +639,10 @@ class TEGSchedulerTest {
                                 )
                             ),
                         ),
+                        TEGEvent.Scheduled(
+                            taskName = "B",
+                            timestamp = NOW_1,
+                        ),
                     )
                 )
             )
@@ -781,7 +785,7 @@ class TEGSchedulerTest {
     }
 
     @Nested
-    inner class `Handle concurrent updates`() {
+    inner class `Handle concurrent updates` {
 
         val baseEvents = listOf(
             TEGEvent.Created(
@@ -1154,6 +1158,37 @@ class TEGSchedulerTest {
                         TEGArtefact.TEGArtefactStringValue(name = "AOutput", value = "result of A")
                     )
                     .build(),
+            )
+        }
+
+        @Test
+        fun `when A completes, both B and C are recored as scheduled`() {
+            sut.givenTheExistingEvents(mapOf(TEST_TEG_ID to baseEvents))
+            sut.givenTheDatesToReturn(NOW_1)
+
+            sut.whenGettingTegUpdate(
+                TEGMessageIn.TEGTaskResultMessage(
+                    taskName = "A",
+                    outputArtefacts = listOf(
+                        TEGArtefact.TEGArtefactStringValue(name = "AOutput", value = "result of A")
+                    )
+                )
+            )
+
+            sut.thenThePersistedEventsShouldBe(
+                mapOf(
+                    TEST_TEG_ID to baseEvents + listOf(
+                        TEGEvent.Completed(
+                            taskName = "A",
+                            timestamp = NOW_1,
+                            outputArtefacts = listOf(
+                                TEGArtefact.TEGArtefactStringValue(name = "AOutput", value = "result of A")
+                            )
+                        ),
+                        TEGEvent.Scheduled(taskName = "B", timestamp = NOW_1),
+                        TEGEvent.Scheduled(taskName = "C", timestamp = NOW_1),
+                    )
+                )
             )
         }
 
