@@ -8,7 +8,6 @@ import me.noukakis.re_do.runner.model.LocalTegArtefact
 import me.noukakis.re_do.runner.port.TaskExecutionContext
 import me.noukakis.re_do.runner.port.TaskHandler
 import me.noukakis.re_do.runner.port.TaskImplementationResult
-import org.apache.commons.lang.exception.ExceptionUtils
 
 private const val IMPLEMENTATION_NAME = "WhisperTranscriptionTask"
 
@@ -58,29 +57,25 @@ class WhisperTranscriptionTask(
         context.reportProgress(0, STEP_NAME)
         context.reportLog("Transcribing ${fileArtefact.name} with model $modelName")
 
-        return try {
-            val paramsBuilder = TranscriptionCreateParams.builder()
-                .file(fileArtefact.path)
-                .model(AudioModel.of(modelName))
-            language?.let { paramsBuilder.language(it) }
+        val paramsBuilder = TranscriptionCreateParams.builder()
+            .file(fileArtefact.path)
+            .model(AudioModel.of(modelName))
+        language?.let { paramsBuilder.language(it) }
 
-            val response = client.audio().transcriptions().create(paramsBuilder.build())
-            val text = response.asTranscription()
-                .text()
+        val response = client.audio().transcriptions().create(paramsBuilder.build())
+        val text = response.asTranscription()
+            .text()
 
-            context.reportProgress(100, STEP_NAME)
-            context.reportLog("Transcription complete: ${text.length} characters")
+        context.reportProgress(100, STEP_NAME)
+        context.reportLog("Transcription complete: ${text.length} characters")
 
-            TaskImplementationResult.Success(
-                listOf(
-                    LocalTegArtefact.LocalTEGArtefactStringValue(
-                        name = "transcript",
-                        value = text,
-                    )
+        return TaskImplementationResult.Success(
+            listOf(
+                LocalTegArtefact.LocalTEGArtefactStringValue(
+                    name = "transcript",
+                    value = text,
                 )
             )
-        } catch (e: Exception) {
-            TaskImplementationResult.Failure("OpenAI API error: ${ExceptionUtils.getStackTrace(e)}")
-        }
+        )
     }
 }

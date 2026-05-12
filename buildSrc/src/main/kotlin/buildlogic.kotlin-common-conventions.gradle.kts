@@ -24,7 +24,6 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
     implementation("io.arrow-kt:arrow-core:2.2.1.1")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
-    implementation("commons-lang:commons-lang:2.6")
 
     // Use JUnit Jupiter for testing.
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
