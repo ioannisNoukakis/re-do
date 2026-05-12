@@ -20,4 +20,5 @@ include(
     "adapter_common_s3",
     "task_impl_demo",
     "task_impl_ffmpeg",
+    "task_impl_whisper_transcription",
 )

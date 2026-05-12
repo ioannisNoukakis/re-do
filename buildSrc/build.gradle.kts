@@ -20,4 +20,5 @@ dependencies {
     implementation(libs.sentry.plugin)
 
     implementation(libs.gradle.test.logger.plugin)
+    implementation(libs.shadow.gradle.plugin)
 }

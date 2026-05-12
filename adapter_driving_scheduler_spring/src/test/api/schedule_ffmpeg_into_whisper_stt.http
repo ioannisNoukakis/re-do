@@ -1,4 +1,4 @@
-### @title Schedule FFMPEG task to convert mp4 to mp3
+### @title Get job list no skipping or limiting
 POST {{v1Url}}/teg/schedule
 X-Auth-Principal: "test-user"
 X-Auth-Roles: "admin"
@@ -29,13 +29,36 @@ Content-Type: application/json
         "amount": 50,
         "temporalUnit": "SECONDS"
       }
+    },
+    {
+        "name": "convert to text",
+        "implementationName": "WhisperTranscriptionTask",
+        "inputs": [
+            {
+            "name": "finally-awake.mp3",
+            "type": "FILE"
+            }
+        ],
+        "outputs": [
+            {
+            "name": "transcription.txt",
+            "type": "FILE"
+            }
+        ],
+        "arguments": [
+          "transcription.txt"
+        ],
+        "timeout": {
+            "amount": 300,
+            "temporalUnit": "SECONDS"
+        }
     }
   ],
   "initArtefacts": [
     {
       "name": "finally-awake.mp4",
       "type": "FILE",
-      "ref": "d88dd07b-04b2-4493-8a1d-dfe05d987984",
+      "ref": "b6f7dcca-6de8-45f6-91c9-1cf8c0b83ada",
       "storedWith": "s3"
     }
   ]

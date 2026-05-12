@@ -8,6 +8,7 @@ org-springframework-boot-version = "4.0.2"
 io-spring-dependency-management-version = "1.1.7"
 sentry-plugin-version = "6.2.0"
 test-logger-version = "4.0.0"
+shadow-plugin-version = "9.4.1"
 
 
 [libraries]
@@ -17,3 +18,4 @@ org-springframework-boot-gradle-plugin = { module = "org.springframework.boot:sp
 io-spring-dependency-management-plugin = { module = "io.spring.gradle:dependency-management-plugin", version.ref = "io-spring-dependency-management-version" }
 sentry-plugin = { module = "io.sentry:sentry-android-gradle-plugin", version.ref = "sentry-plugin-version" }
 gradle-test-logger-plugin = { module = "com.adarshr:gradle-test-logger-plugin", version.ref = "test-logger-version" }
+shadow-gradle-plugin = { module = "com.gradleup.shadow:shadow-gradle-plugin", version.ref = "shadow-plugin-version" }

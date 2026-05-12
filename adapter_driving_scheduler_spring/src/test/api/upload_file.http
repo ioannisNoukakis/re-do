@@ -1,4 +1,4 @@
-### @title Get job list no skipping or limiting
+### @title Upload a file to be used in scheduled tasks
 POST {{v1Url}}/files/upload
 X-Auth-Principal: "test-user"
 X-Auth-Roles: "admin,other-role"
@@ -8,6 +8,6 @@ Content-Type: multipart/form-data; boundary=boundary
 Content-Disposition: form-data; name="file"; filename="finally_awake_1080p.mp4"
 Content-Type: video/mp4
 
-< ../resources/media_files/finally_awake_1080p.mp4
+< ../../../../media_samples/finally_awake_1080p.mp4
 
 --boundary--

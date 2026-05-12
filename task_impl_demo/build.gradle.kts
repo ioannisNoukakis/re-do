@@ -3,9 +3,5 @@
  */
 
 plugins {
-    id("buildlogic.kotlin-library-conventions")
-}
-
-dependencies {
-    implementation(project(":core"))
+    id("buildlogic.kotlin-task-plugin-conventions")
 }
