@@ -1,0 +1,54 @@
+### @title Schedule HttpFetch -> FFmpeg pipeline that downloads a media file and converts it to mp3
+POST {{v1Url}}/teg/schedule
+X-Auth-Principal: "test-user"
+X-Auth-Roles: "admin"
+Content-Type: application/json
+
+{
+  "tasks": [
+    {
+      "name": "fetch-source",
+      "implementationName": "HttpFetchTask",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "fetched.mp4",
+          "type": "FILE"
+        }
+      ],
+      "arguments": [
+        "https://download.samplelib.com/mp4/sample-5s.mp4",
+        "fetched.mp4"
+      ],
+      "timeout": {
+        "amount": 120,
+        "temporalUnit": "SECONDS"
+      }
+    },
+    {
+      "name": "convert-to-mp3",
+      "implementationName": "FFMPEGTask",
+      "inputs": [
+        {
+          "name": "fetched.mp4",
+          "type": "FILE"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "fetched.mp3",
+          "type": "FILE"
+        }
+      ],
+      "arguments": [
+        "-i fetched.mp4 -vn -acodec libmp3lame fetched.mp3",
+        "30"
+      ],
+      "timeout": {
+        "amount": 50,
+        "temporalUnit": "SECONDS"
+      }
+    }
+  ],
+  "initArtefacts": []
+}
