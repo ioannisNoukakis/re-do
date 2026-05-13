@@ -5,6 +5,9 @@ import java.net.InetAddress
 import java.net.URI
 import java.net.UnknownHostException
 
+private const val ULA_MASK = 0xFE
+private const  val ULA_PREFIX = 0xFC
+
 internal object HostValidator {
 
     fun resolve(host: String): Array<InetAddress> = InetAddress.getAllByName(host)
@@ -18,7 +21,10 @@ internal object HostValidator {
         if (address is Inet6Address) {
             val raw = address.address
             val first = raw[0].toInt() and 0xFF
-            if ((first and 0xFE) == 0xFC) return true
+            // Java's isSiteLocalAddress() only covers the deprecated fec0::/10 range, not fc00::/7.
+            // Unique Local Addresses (RFC 4193) use the binary prefix 1111 110x, covering fc00:: through fdff::.
+            // The mask 0xFE isolates the top 7 bits, and 0xFC is the expected value for that prefix.
+            if ((first and ULA_MASK) == ULA_PREFIX) return true
         }
         return false
     }
