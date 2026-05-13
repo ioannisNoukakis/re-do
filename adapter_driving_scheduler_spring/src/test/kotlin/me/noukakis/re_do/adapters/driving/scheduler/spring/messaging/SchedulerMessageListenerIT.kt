@@ -45,7 +45,7 @@ private class StubSchedulerUpdateErrorHandlerPort : SchedulerUpdateErrorHandlerP
 
 // ── Tests ──────────────────────────────────────────────────────────────────
 
-class SchedulerMessageListenerTest {
+class SchedulerMessageListenerIT {
 
     private val messageConverter = MessageConverter.new()
     private lateinit var stubHandler: StubTegUpdateHandler
@@ -67,7 +67,7 @@ class SchedulerMessageListenerTest {
     inner class ConvertMessage {
 
         @ParameterizedTest
-        @MethodSource("me.noukakis.re_do.adapters.driving.scheduler.spring.messaging.SchedulerMessageListenerTest#allMessageInTypes")
+        @MethodSource("me.noukakis.re_do.adapters.driving.scheduler.spring.messaging.SchedulerMessageListenerIT#allMessageInTypes")
         fun `convertMessage returns a TEGMessageIn for every valid subtype`(expected: TEGMessageIn) {
             val result = sut.convertMessage(amqpMessage(expected))
 

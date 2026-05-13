@@ -40,7 +40,19 @@ notify_alert_failure:
     - gitleaks_scan
   when: on_failure
 
+gradle_lint:
+  stage: test
+  image: gradle:9.5.0-jdk21-noble
+  script:
+    - gradle spotlessCheck
+
 gradle_test:
+  stage: test
+  image: gradle:9.5.0-jdk21-noble
+  script:
+    - gradle test
+
+gradle_integration_test:
   stage: test
   image: gradle:9.5.0-jdk21-noble
   services:
@@ -48,4 +60,8 @@ gradle_test:
   before_script:
     - apt update && apt install -y ffmpeg
   script:
-    - gradle test
+    - gradle integrationTest
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_TAG
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH

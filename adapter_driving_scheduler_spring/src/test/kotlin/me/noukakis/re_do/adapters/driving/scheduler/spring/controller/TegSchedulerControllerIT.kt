@@ -27,7 +27,7 @@ const val IDENTITY_ROLES = "scheduler-user,role2"
 @SpringBootTest
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @AutoConfigureRestTestClient
-class TegSchedulerControllerTest {
+class TegSchedulerControllerIT {
 
     @Autowired
     private lateinit var restClient: RestTestClient

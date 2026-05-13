@@ -47,7 +47,7 @@ private class StubRunnerErrorHandlerPort : RunnerErrorHandlerPort {
 
 // ── Tests ──────────────────────────────────────────────────────────────────
 
-class RunnerMessageListenerTest {
+class RunnerMessageListenerIT {
 
     private val messageConverter = MessageConverter.new()
     private lateinit var stubService: StubTaskRunnerService

@@ -53,8 +53,28 @@ java {
 }
 
 tasks.named<Test>("test") {
-    // Use JUnit Platform for unit tests.
     useJUnitPlatform()
+    filter {
+        excludeTestsMatching("*IT")
+        isFailOnNoMatchingTests = false
+    }
+}
+
+val integrationTest = tasks.register<Test>("integrationTest") {
+    description = "Runs integration tests (classes ending in IT)."
+    group = "verification"
+    useJUnitPlatform()
+    testClassesDirs = sourceSets["test"].output.classesDirs
+    classpath = sourceSets["test"].runtimeClasspath
+    filter {
+        includeTestsMatching("*IT")
+        isFailOnNoMatchingTests = false
+    }
+    shouldRunAfter("test")
+}
+
+tasks.named("check") {
+    dependsOn(integrationTest)
 }
 
 testlogger {

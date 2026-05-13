@@ -15,7 +15,7 @@ import org.springframework.web.context.WebApplicationContext
 
 @SpringBootTest
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
-class FileUploadControllerTest {
+class FileUploadControllerIT {
 
     @Autowired
     private lateinit var context: WebApplicationContext
