@@ -21,4 +21,5 @@ include(
     "task_impl_demo",
     "task_impl_ffmpeg",
     "task_impl_whisper_transcription",
+    "task_impl_http_fetch",
 )
