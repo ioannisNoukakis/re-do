@@ -6,7 +6,7 @@ import kotlin.reflect.KClass
 
 enum class TegEventFilter {
     All,
-    StateEvent
+    StateEvent,
 }
 
 interface PersistencePort {

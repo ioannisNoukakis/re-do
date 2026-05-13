@@ -20,7 +20,7 @@ fun TEGArtefactDefinition.toMongoModel() = MongodbTEGArtefactDefinition(
     type = type,
 )
 
-data class MongodbTEGTask (
+data class MongodbTEGTask(
     val name: String,
     val implementationName: String,
     val inputs: List<MongodbTEGArtefactDefinition>,

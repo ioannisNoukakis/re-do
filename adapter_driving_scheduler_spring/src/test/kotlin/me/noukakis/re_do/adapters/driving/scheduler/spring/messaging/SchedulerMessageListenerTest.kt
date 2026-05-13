@@ -11,7 +11,9 @@ import me.noukakis.re_do.scheduler.model.TegUpdateError
 import me.noukakis.re_do.scheduler.port.SchedulerUpdateErrorHandlerPort
 import me.noukakis.re_do.scheduler.service.TEGUpdateCommand
 import me.noukakis.re_do.scheduler.service.TegUpdateHandler
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -36,7 +38,9 @@ private class StubSchedulerUpdateErrorHandlerPort : SchedulerUpdateErrorHandlerP
     val updateErrors = mutableListOf<TegUpdateError>()
     override fun onMissingTegId() = Unit
     override fun onUnreadableMessage(rawBody: ByteArray) = Unit
-    override fun onUpdateError(error: TegUpdateError) { updateErrors += error }
+    override fun onUpdateError(error: TegUpdateError) {
+        updateErrors += error
+    }
 }
 
 // ── Tests ──────────────────────────────────────────────────────────────────
@@ -117,8 +121,7 @@ class SchedulerMessageListenerTest {
 
     // ── Helpers ────────────────────────────────────────────────────────────
 
-    private fun amqpMessage(payload: TEGMessageIn): Message =
-        messageConverter.toMessage(payload, MessageProperties())
+    private fun amqpMessage(payload: TEGMessageIn): Message = messageConverter.toMessage(payload, MessageProperties())
 
     companion object {
         @JvmStatic

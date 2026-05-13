@@ -1,19 +1,19 @@
 plugins {
-	id("buildlogic.kotlin-spring-common-conventions")
+    id("buildlogic.kotlin-spring-common-conventions")
 }
 
 repositories {
-	mavenCentral()
+    mavenCentral()
 }
 
 dependencies {
-	implementation(project(":core"))
-	implementation(project(":adapter_common_rabbitmq_spring"))
-	implementation(project(":adapter_common_mongodb_spring"))
-	implementation(project(":adapter_common_s3"))
-	implementation("org.springframework.boot:spring-boot-starter-webmvc")
-	implementation("org.springframework.boot:spring-boot-starter-validation")
-	implementation("software.amazon.awssdk:s3:2.42.30")
+    implementation(project(":core"))
+    implementation(project(":adapter_common_rabbitmq_spring"))
+    implementation(project(":adapter_common_mongodb_spring"))
+    implementation(project(":adapter_common_s3"))
+    implementation("org.springframework.boot:spring-boot-starter-webmvc")
+    implementation("org.springframework.boot:spring-boot-starter-validation")
+    implementation("software.amazon.awssdk:s3:2.42.30")
 
-	testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
+    testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
 }

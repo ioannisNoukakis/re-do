@@ -7,9 +7,9 @@ import me.noukakis.re_do.adapters.driven.scheduler.InMemoryFileReferenceStoreAda
 import me.noukakis.re_do.adapters.driven.scheduler.InMemoryFileStorageAdapter
 import me.noukakis.re_do.adapters.driven.scheduler.InMemoryPersistenceAdapter
 import me.noukakis.re_do.adapters.driven.scheduler.StdLibNowAdapter
-import me.noukakis.re_do.scheduler.port.FileReferenceStorePort
 import me.noukakis.re_do.common.port.FileStoragePort
 import me.noukakis.re_do.common.port.UUIDPort
+import me.noukakis.re_do.scheduler.port.FileReferenceStorePort
 import me.noukakis.re_do.scheduler.port.LogPort
 import me.noukakis.re_do.scheduler.port.MessagingPort
 import me.noukakis.re_do.scheduler.port.MutualExclusionLockPort
@@ -26,25 +26,17 @@ import org.springframework.context.annotation.Configuration
 class SchedulerConfiguration {
     @Bean
     @ConditionalOnProperty(name = ["scheduler.messaging.mode"], havingValue = "in-memory")
-    fun messagingPortInMemoryBean(): MessagingPort {
-        return InMemoryMessagingAdapter()
-    }
+    fun messagingPortInMemoryBean(): MessagingPort = InMemoryMessagingAdapter()
 
     @Bean
     @ConditionalOnProperty(name = ["scheduler.persistence.mode"], havingValue = "in-memory")
-    fun persistencePortBean(): PersistencePort {
-        return InMemoryPersistenceAdapter()
-    }
+    fun persistencePortBean(): PersistencePort = InMemoryPersistenceAdapter()
 
     @Bean
-    fun nowPort(): NowPort {
-        return StdLibNowAdapter()
-    }
+    fun nowPort(): NowPort = StdLibNowAdapter()
 
     @Bean
-    fun uuidPort(): UUIDPort {
-        return StdLibUuidAdapter()
-    }
+    fun uuidPort(): UUIDPort = StdLibUuidAdapter()
 
     @Bean
     fun logPort(): LogPort = Slf4jLogAdapter()
@@ -57,18 +49,16 @@ class SchedulerConfiguration {
         nowPort: NowPort,
         logPort: LogPort,
         mutualExclusionLockPort: MutualExclusionLockPort,
-        @Value("\${scheduler.max-failures-before-giving-up}") maxFailuresBeforeGivingUp: Int
-    ): TEGScheduler {
-        return TEGScheduler(
-            messagingPort,
-            persistencePort,
-            uuidPort,
-            nowPort,
-            mutualExclusionLockPort,
-            maxFailuresBeforeGivingUp,
-            logPort,
-        )
-    }
+        @Value("\${scheduler.max-failures-before-giving-up}") maxFailuresBeforeGivingUp: Int,
+    ): TEGScheduler = TEGScheduler(
+        messagingPort,
+        persistencePort,
+        uuidPort,
+        nowPort,
+        mutualExclusionLockPort,
+        maxFailuresBeforeGivingUp,
+        logPort,
+    )
 
     @Bean
     @ConditionalOnProperty(name = ["scheduler.file-storage.mode"], havingValue = "in-memory")

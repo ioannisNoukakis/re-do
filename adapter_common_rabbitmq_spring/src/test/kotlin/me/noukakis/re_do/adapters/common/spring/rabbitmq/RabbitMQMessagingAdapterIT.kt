@@ -84,8 +84,7 @@ class RabbitMQMessagingAdapterIT {
             assertMessageReceived(failedMessage)
         }
 
-        private fun assertMessageReceived(expectedMessage: TEGMessageIn) =
-            receiveFromQueue(expectedMessage, REPLY_QUEUE)
+        private fun assertMessageReceived(expectedMessage: TEGMessageIn) = receiveFromQueue(expectedMessage, REPLY_QUEUE)
     }
 
     @Nested
@@ -111,16 +110,15 @@ class RabbitMQMessagingAdapterIT {
                 TEGArtefact.TEGArtefactFile(
                     name = "input.txt",
                     ref = "/path/to/input.txt",
-                    storedWith = "S3"
+                    storedWith = "S3",
                 ),
-                TEGArtefact.TEGArtefactStringValue(name = "config", value = "some configuration value")
+                TEGArtefact.TEGArtefactStringValue(name = "config", value = "some configuration value"),
             ),
             arguments = listOf("arg1", "arg2"),
             timeout = 5.minutes,
         )
 
-        private fun assertMessageReceived(expectedMessage: TEGMessageOut) =
-            receiveFromQueue(expectedMessage, SCHEDULING_QUEUE)
+        private fun assertMessageReceived(expectedMessage: TEGMessageOut) = receiveFromQueue(expectedMessage, SCHEDULING_QUEUE)
     }
 
     private fun receiveFromQueue(expectedMessage: Any, queueName: String) {
@@ -141,9 +139,7 @@ class RabbitMQMessagingAdapterIT {
             BindingBuilder
                 .bind(Queue(queue))
                 .to(TopicExchange(exchange))
-                .with(routingKey)
+                .with(routingKey),
         )
     }
 }
-
-

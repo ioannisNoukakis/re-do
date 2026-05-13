@@ -12,7 +12,7 @@ sealed interface TegSchedulingError {
     data class TasksProduceSameArtefactName(
         val taskNames: List<String>,
         val artefactName: String,
-    ): TegSchedulingError
+    ) : TegSchedulingError
     data class NotAllProducedArtefactsAreConsumed(
         val artefactName: String,
         val producingTaskName: String,

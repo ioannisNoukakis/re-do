@@ -20,7 +20,6 @@ import org.springframework.test.annotation.DirtiesContext
 import org.springframework.test.web.servlet.client.RestTestClient
 import org.springframework.test.web.servlet.client.expectBody
 
-
 const val IDENTITY_SUB = "user-123"
 const val IDENTITY_ROLES = "scheduler-user,role2"
 
@@ -43,8 +42,8 @@ class TegSchedulerControllerTest {
                     outputs = listOf(
                         TegArtefactDefinitionDTO(
                             name = "output1",
-                            type = TegArtefactTypeDTO.STRING_VALUE
-                        )
+                            type = TegArtefactTypeDTO.STRING_VALUE,
+                        ),
                     )
                 },
                 tegTaskDTO {
@@ -52,8 +51,8 @@ class TegSchedulerControllerTest {
                     inputs = listOf(
                         TegArtefactDefinitionDTO(
                             name = "output1",
-                            type = TegArtefactTypeDTO.STRING_VALUE
-                        )
+                            type = TegArtefactTypeDTO.STRING_VALUE,
+                        ),
                     )
                 },
             ),
@@ -84,8 +83,8 @@ class TegSchedulerControllerTest {
                     inputs = listOf(
                         TegArtefactDefinitionDTO(
                             name = "input1",
-                            type = TegArtefactTypeDTO.STRING_VALUE
-                        )
+                            type = TegArtefactTypeDTO.STRING_VALUE,
+                        ),
                     )
                 },
             ),
@@ -227,12 +226,14 @@ class TegSchedulerControllerTest {
     @Test
     fun `should return bad request when timeout amount is null`() {
         val request = ScheduleTegRequest(
-            tasks = listOf(tegTaskDTO {
-                timeout = DurationDTO(
-                    amount = null,
-                    temporalUnit = TemporalUnitDTO.SECONDS
-                )
-            }),
+            tasks = listOf(
+                tegTaskDTO {
+                    timeout = DurationDTO(
+                        amount = null,
+                        temporalUnit = TemporalUnitDTO.SECONDS,
+                    )
+                },
+            ),
             initArtefacts = null,
         )
 
@@ -249,12 +250,14 @@ class TegSchedulerControllerTest {
     @Test
     fun `should return bad request when timeout temporal unit is null`() {
         val request = ScheduleTegRequest(
-            tasks = listOf(tegTaskDTO {
-                timeout = DurationDTO(
-                    amount = 30,
-                    temporalUnit = null,
-                )
-            }),
+            tasks = listOf(
+                tegTaskDTO {
+                    timeout = DurationDTO(
+                        amount = 30,
+                        temporalUnit = null,
+                    )
+                },
+            ),
             initArtefacts = null,
         )
 
@@ -276,10 +279,10 @@ class TegSchedulerControllerTest {
                     inputs = listOf(
                         TegArtefactDefinitionDTO(
                             name = "",
-                            type = TegArtefactTypeDTO.STRING_VALUE
-                        )
+                            type = TegArtefactTypeDTO.STRING_VALUE,
+                        ),
                     )
-                }
+                },
             ),
             initArtefacts = null,
         )
@@ -302,10 +305,10 @@ class TegSchedulerControllerTest {
                     inputs = listOf(
                         TegArtefactDefinitionDTO(
                             name = null,
-                            type = TegArtefactTypeDTO.STRING_VALUE
-                        )
+                            type = TegArtefactTypeDTO.STRING_VALUE,
+                        ),
                     )
-                }
+                },
             ),
             initArtefacts = null,
         )
@@ -320,7 +323,6 @@ class TegSchedulerControllerTest {
             .expectStatus().isBadRequest
     }
 
-
     @Test
     fun `should return bad request when artefact type is null`() {
         val request = ScheduleTegRequest(
@@ -329,10 +331,10 @@ class TegSchedulerControllerTest {
                     inputs = listOf(
                         TegArtefactDefinitionDTO(
                             name = "input1",
-                            type = null
-                        )
+                            type = null,
+                        ),
                     )
-                }
+                },
             ),
             initArtefacts = null,
         )
@@ -353,7 +355,7 @@ class TegSchedulerControllerTest {
             tasks = listOf(
                 tegTaskDTO {
                     inputs = null
-                }
+                },
             ),
             initArtefacts = null,
         )
@@ -374,7 +376,7 @@ class TegSchedulerControllerTest {
             tasks = listOf(
                 tegTaskDTO {
                     outputs = null
-                }
+                },
             ),
             initArtefacts = null,
         )
@@ -397,9 +399,9 @@ class TegSchedulerControllerTest {
                 tegTaskDTO {
                     timeout = DurationDTO(
                         amount = 30,
-                        temporalUnit = temporalUnit
+                        temporalUnit = temporalUnit,
                     )
-                }
+                },
             ),
             initArtefacts = null,
         )
@@ -486,8 +488,8 @@ class TegSchedulerControllerTest {
                     outputs = listOf(
                         TegArtefactDefinitionDTO(
                             name = "output1",
-                            type = TegArtefactTypeDTO.FILE
-                        )
+                            type = TegArtefactTypeDTO.FILE,
+                        ),
                     )
                 },
                 tegTaskDTO {
@@ -495,10 +497,10 @@ class TegSchedulerControllerTest {
                     inputs = listOf(
                         TegArtefactDefinitionDTO(
                             name = "output1",
-                            type = TegArtefactTypeDTO.FILE
-                        )
+                            type = TegArtefactTypeDTO.FILE,
+                        ),
                     )
-                }
+                },
             ),
             initArtefacts = null,
         )
@@ -520,9 +522,9 @@ class TegSchedulerControllerTest {
                 tegTaskDTO {
                     timeout = DurationDTO(
                         amount = 0,
-                        temporalUnit = TemporalUnitDTO.SECONDS
+                        temporalUnit = TemporalUnitDTO.SECONDS,
                     )
-                }
+                },
             ),
             initArtefacts = null,
         )
@@ -544,9 +546,9 @@ class TegSchedulerControllerTest {
                 tegTaskDTO {
                     timeout = DurationDTO(
                         amount = -1,
-                        temporalUnit = TemporalUnitDTO.SECONDS
+                        temporalUnit = TemporalUnitDTO.SECONDS,
                     )
-                }
+                },
             ),
             initArtefacts = null,
         )
@@ -569,7 +571,7 @@ class TegSchedulerControllerTest {
         )
 
         restClient.post()
-        .uri("/api/v1/teg/schedule")
+            .uri("/api/v1/teg/schedule")
             .contentType(MediaType.APPLICATION_JSON)
             .body(request)
             .exchange()
@@ -584,7 +586,7 @@ class TegSchedulerControllerTest {
         )
 
         restClient.post()
-        .uri("/api/v1/teg/schedule")
+            .uri("/api/v1/teg/schedule")
             .contentType(MediaType.APPLICATION_JSON)
             .header("X-Auth-Principal", IDENTITY_SUB)
             .body(request)
@@ -601,11 +603,11 @@ class TegSchedulerControllerTest {
                 tegTaskDTO {
                     name = "task1"
                     inputs = listOf(TegArtefactDefinitionDTO(name = "init-value", type = TegArtefactTypeDTO.STRING_VALUE))
-                }
+                },
             ),
             initArtefacts = listOf(
-                TEGArtefactDTO.StringValueDTO(name = "init-value", value = "hello")
-            )
+                TEGArtefactDTO.StringValueDTO(name = "init-value", value = "hello"),
+            ),
         )
 
         restClient.post()
@@ -625,11 +627,11 @@ class TegSchedulerControllerTest {
                 tegTaskDTO {
                     name = "task1"
                     inputs = listOf(TegArtefactDefinitionDTO(name = "init-file", type = TegArtefactTypeDTO.FILE))
-                }
+                },
             ),
             initArtefacts = listOf(
-                TEGArtefactDTO.FileDTO(name = "init-file", ref = "s3://bucket/key", storedWith = "s3")
-            )
+                TEGArtefactDTO.FileDTO(name = "init-file", ref = "s3://bucket/key", storedWith = "s3"),
+            ),
         )
 
         restClient.post()
@@ -646,7 +648,7 @@ class TegSchedulerControllerTest {
     fun `should return bad request when STRING_VALUE init artefact name is blank`() {
         val request = ScheduleTegRequest(
             tasks = listOf(tegTaskDTO {}),
-            initArtefacts = listOf(TEGArtefactDTO.StringValueDTO(name = "", value = "hello"))
+            initArtefacts = listOf(TEGArtefactDTO.StringValueDTO(name = "", value = "hello")),
         )
 
         restClient.post()
@@ -663,7 +665,7 @@ class TegSchedulerControllerTest {
     fun `should return bad request when STRING_VALUE init artefact name is null`() {
         val request = ScheduleTegRequest(
             tasks = listOf(tegTaskDTO {}),
-            initArtefacts = listOf(TEGArtefactDTO.StringValueDTO(name = null, value = "hello"))
+            initArtefacts = listOf(TEGArtefactDTO.StringValueDTO(name = null, value = "hello")),
         )
 
         restClient.post()
@@ -680,7 +682,7 @@ class TegSchedulerControllerTest {
     fun `should return bad request when STRING_VALUE init artefact value is blank`() {
         val request = ScheduleTegRequest(
             tasks = listOf(tegTaskDTO {}),
-            initArtefacts = listOf(TEGArtefactDTO.StringValueDTO(name = "init-value", value = ""))
+            initArtefacts = listOf(TEGArtefactDTO.StringValueDTO(name = "init-value", value = "")),
         )
 
         restClient.post()
@@ -697,7 +699,7 @@ class TegSchedulerControllerTest {
     fun `should return bad request when STRING_VALUE init artefact value is null`() {
         val request = ScheduleTegRequest(
             tasks = listOf(tegTaskDTO {}),
-            initArtefacts = listOf(TEGArtefactDTO.StringValueDTO(name = "init-value", value = null))
+            initArtefacts = listOf(TEGArtefactDTO.StringValueDTO(name = "init-value", value = null)),
         )
 
         restClient.post()
@@ -714,7 +716,7 @@ class TegSchedulerControllerTest {
     fun `should return bad request when FILE init artefact name is blank`() {
         val request = ScheduleTegRequest(
             tasks = listOf(tegTaskDTO {}),
-            initArtefacts = listOf(TEGArtefactDTO.FileDTO(name = "", ref = "s3://bucket/key", storedWith = "s3"))
+            initArtefacts = listOf(TEGArtefactDTO.FileDTO(name = "", ref = "s3://bucket/key", storedWith = "s3")),
         )
 
         restClient.post()
@@ -731,7 +733,7 @@ class TegSchedulerControllerTest {
     fun `should return bad request when FILE init artefact ref is blank`() {
         val request = ScheduleTegRequest(
             tasks = listOf(tegTaskDTO {}),
-            initArtefacts = listOf(TEGArtefactDTO.FileDTO(name = "init-file", ref = "", storedWith = "s3"))
+            initArtefacts = listOf(TEGArtefactDTO.FileDTO(name = "init-file", ref = "", storedWith = "s3")),
         )
 
         restClient.post()
@@ -748,7 +750,7 @@ class TegSchedulerControllerTest {
     fun `should return bad request when FILE init artefact ref is null`() {
         val request = ScheduleTegRequest(
             tasks = listOf(tegTaskDTO {}),
-            initArtefacts = listOf(TEGArtefactDTO.FileDTO(name = "init-file", ref = null, storedWith = "s3"))
+            initArtefacts = listOf(TEGArtefactDTO.FileDTO(name = "init-file", ref = null, storedWith = "s3")),
         )
 
         restClient.post()
@@ -765,7 +767,7 @@ class TegSchedulerControllerTest {
     fun `should return bad request when FILE init artefact storedWith is blank`() {
         val request = ScheduleTegRequest(
             tasks = listOf(tegTaskDTO {}),
-            initArtefacts = listOf(TEGArtefactDTO.FileDTO(name = "init-file", ref = "s3://bucket/key", storedWith = ""))
+            initArtefacts = listOf(TEGArtefactDTO.FileDTO(name = "init-file", ref = "s3://bucket/key", storedWith = "")),
         )
 
         restClient.post()
@@ -782,7 +784,7 @@ class TegSchedulerControllerTest {
     fun `should return bad request when FILE init artefact storedWith is null`() {
         val request = ScheduleTegRequest(
             tasks = listOf(tegTaskDTO {}),
-            initArtefacts = listOf(TEGArtefactDTO.FileDTO(name = "init-file", ref = "s3://bucket/key", storedWith = null))
+            initArtefacts = listOf(TEGArtefactDTO.FileDTO(name = "init-file", ref = "s3://bucket/key", storedWith = null)),
         )
 
         restClient.post()
@@ -851,7 +853,4 @@ class TegTaskDTOBuilder {
     )
 }
 
-fun tegTaskDTO(block: TegTaskDTOBuilder.() -> Unit = {}): TegTaskDTO =
-    TegTaskDTOBuilder().apply(block).build()
-
-
+fun tegTaskDTO(block: TegTaskDTOBuilder.() -> Unit = {}): TegTaskDTO = TegTaskDTOBuilder().apply(block).build()

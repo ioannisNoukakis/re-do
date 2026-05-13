@@ -4,10 +4,18 @@ import arrow.core.Either
 import arrow.core.left
 import arrow.core.right
 import me.noukakis.re_do.common.port.MessageListenerErrorPort
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertArrayEquals
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.springframework.amqp.core.*
+import org.springframework.amqp.core.BindingBuilder
+import org.springframework.amqp.core.Message
+import org.springframework.amqp.core.MessageProperties
+import org.springframework.amqp.core.Queue
+import org.springframework.amqp.core.TopicExchange
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory
 import org.springframework.amqp.rabbit.core.RabbitAdmin
 import org.springframework.amqp.rabbit.core.RabbitTemplate
@@ -27,8 +35,8 @@ private const val DEAD_LETTER_QUEUE = "test.common.dead-letter.queue"
 private class StubTEGMessageHandler : TEGMessageHandler<String, String> {
     var convertResult: String? = "payload"
     var handleResult: Either<String, Unit> = Unit.right()
-    val handledCalls = mutableListOf<Pair<String, String>>()   // tegId → message
-    val errorCalls = mutableListOf<Pair<String, String>>()     // tegId → error
+    val handledCalls = mutableListOf<Pair<String, String>>() // tegId → message
+    val errorCalls = mutableListOf<Pair<String, String>>() // tegId → error
 
     override fun convertMessage(raw: Message): String? = convertResult
     override fun handleMessage(tegId: String, message: String): Either<String, Unit> {
@@ -43,8 +51,12 @@ private class StubTEGMessageHandler : TEGMessageHandler<String, String> {
 private class StubMessageListenerErrorPort : MessageListenerErrorPort {
     var missingTegIdCount = 0
     val unreadableMessages = mutableListOf<ByteArray>()
-    override fun onMissingTegId() { missingTegIdCount++ }
-    override fun onUnreadableMessage(rawBody: ByteArray) { unreadableMessages += rawBody }
+    override fun onMissingTegId() {
+        missingTegIdCount++
+    }
+    override fun onUnreadableMessage(rawBody: ByteArray) {
+        unreadableMessages += rawBody
+    }
 }
 
 // ── IT ─────────────────────────────────────────────────────────────────────
@@ -84,7 +96,7 @@ class TEGMessageListenerIT {
             BindingBuilder
                 .bind(Queue(DEAD_LETTER_QUEUE))
                 .to(TopicExchange(DEAD_LETTER_EXCHANGE))
-                .with(DEAD_LETTER_ROUTING_KEY)
+                .with(DEAD_LETTER_ROUTING_KEY),
         )
     }
 
@@ -108,7 +120,6 @@ class TEGMessageListenerIT {
         stubHandler.handleResult = "domain-error".left()
 
         sut.onMessage(rawMessage(tegId = TEG_ID))
-
 
         assertEquals(listOf(TEG_ID to "payload"), stubHandler.handledCalls)
         assertEquals(listOf(TEG_ID to "domain-error"), stubHandler.errorCalls)
@@ -166,4 +177,3 @@ class TEGMessageListenerIT {
         )
     }
 }
-

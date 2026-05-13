@@ -30,7 +30,7 @@ class TaskRunnerTest {
                     artefacts = emptyList(),
                     arguments = listOf("arg1", "arg2"),
                     timeout = Duration.INFINITE,
-                )
+                ),
             )
         }
 
@@ -49,7 +49,7 @@ class TaskRunnerTest {
                 TEGMessageIn.TEGTaskResultMessage(
                     taskName = TEST_TASK_NAME,
                     outputArtefacts = emptyList(),
-                )
+                ),
             )
         }
     }
@@ -77,7 +77,7 @@ class TaskRunnerTest {
                     ),
                     arguments = listOf("arg1", "arg2"),
                     timeout = Duration.INFINITE,
-                )
+                ),
             )
             sut.givenTheFileInStorage(
                 fileId = "storage_backend_ref_for_input.txt",
@@ -93,7 +93,7 @@ class TaskRunnerTest {
                 expectedFileRefsPaths = listOf(
                     WORKING_DIR.resolve("input.txt"),
                     WORKING_DIR.resolve("input2.txt"),
-                )
+                ),
             )
 
             sut.whenTheTaskIsRun()
@@ -107,7 +107,7 @@ class TaskRunnerTest {
                 expectedFileRefsPaths = listOf(
                     WORKING_DIR.resolve("input.txt"),
                     WORKING_DIR.resolve("input2.txt"),
-                )
+                ),
             )
 
             sut.whenTheTaskIsRun()
@@ -131,7 +131,7 @@ class TaskRunnerTest {
                             storedWith = "StubFileStorageAdapter",
                         ),
                     ),
-                )
+                ),
             )
         }
 
@@ -172,7 +172,7 @@ class TaskRunnerTest {
                     ),
                     arguments = emptyList(),
                     timeout = Duration.INFINITE,
-                )
+                ),
             )
             // intentionally NOT adding the file to storage so download throws
             sut.givenTheArtefactDownloadWillFail("storage_backend_ref_for_input.txt")
@@ -210,7 +210,7 @@ class TaskRunnerTest {
                     artefacts = emptyList(),
                     arguments = emptyList(),
                     timeout = Duration.INFINITE,
-                )
+                ),
             )
         }
 
@@ -219,7 +219,7 @@ class TaskRunnerTest {
             sut.whenTheTaskIsRun()
 
             sut.thenTheTaskShouldFailWith(
-                TaskRunnerError.ImplementationNotFound(TEG_ID, TEST_TASK_IMPL_NAME)
+                TaskRunnerError.ImplementationNotFound(TEG_ID, TEST_TASK_IMPL_NAME),
             )
         }
 
@@ -231,7 +231,7 @@ class TaskRunnerTest {
                 TEGMessageIn.TEGTaskFailedMessage(
                     taskName = TEST_TASK_NAME,
                     reason = "No implementation found for: $TEST_TASK_IMPL_NAME",
-                )
+                ),
             )
         }
     }
@@ -248,7 +248,7 @@ class TaskRunnerTest {
                     artefacts = emptyList(),
                     arguments = emptyList(),
                     timeout = Duration.INFINITE,
-                )
+                ),
             )
         }
 
@@ -257,7 +257,7 @@ class TaskRunnerTest {
             sut.whenTheTaskIsRun()
 
             sut.thenTheTaskShouldFailWith(
-                TaskRunnerError.TaskFailed(TEG_ID, TEST_TASK_NAME, "Something went wrong")
+                TaskRunnerError.TaskFailed(TEG_ID, TEST_TASK_NAME, "Something went wrong"),
             )
         }
 
@@ -269,7 +269,7 @@ class TaskRunnerTest {
                 TEGMessageIn.TEGTaskFailedMessage(
                     taskName = TEST_TASK_NAME,
                     reason = "Something went wrong",
-                )
+                ),
             )
         }
     }
@@ -286,7 +286,7 @@ class TaskRunnerTest {
                     artefacts = emptyList(),
                     arguments = emptyList(),
                     timeout = Duration.INFINITE,
-                )
+                ),
             )
         }
 
@@ -316,7 +316,7 @@ class TaskRunnerTest {
                     artefacts = emptyList(),
                     arguments = emptyList(),
                     timeout = Duration.INFINITE,
-                )
+                ),
             )
         }
 
@@ -339,7 +339,7 @@ class TaskRunnerTest {
         @BeforeEach
         fun setUp() {
             exceptionStackTrace = sut.givenAnImplementationThatThrowsAnException(
-                exception = RuntimeException("Unexpected crash!")
+                exception = RuntimeException("Unexpected crash!"),
             )
             sut.givenTheMessage(
                 TEGMessageOut.TEGRunTaskMessage(
@@ -348,7 +348,7 @@ class TaskRunnerTest {
                     artefacts = emptyList(),
                     arguments = emptyList(),
                     timeout = Duration.INFINITE,
-                )
+                ),
             )
         }
 
@@ -360,7 +360,7 @@ class TaskRunnerTest {
                 TEGMessageIn.TEGTaskFailedMessage(
                     taskName = TEST_TASK_NAME,
                     reason = exceptionStackTrace,
-                )
+                ),
             )
         }
 
@@ -369,7 +369,7 @@ class TaskRunnerTest {
             sut.whenTheTaskIsRun()
 
             sut.thenTheTaskShouldFailWith(
-                TaskRunnerError.TaskFailed(TEG_ID, TEST_TASK_NAME, exceptionStackTrace)
+                TaskRunnerError.TaskFailed(TEG_ID, TEST_TASK_NAME, exceptionStackTrace),
             )
         }
     }
@@ -397,7 +397,7 @@ class TaskRunnerTest {
                     ),
                     arguments = emptyList(),
                     timeout = Duration.INFINITE,
-                )
+                ),
             )
             sut.givenTheFileInStorage("storage_backend_ref_for_input.txt")
             sut.givenTheFileInStorage("storage_backend_ref_for_input2.txt")
@@ -428,7 +428,7 @@ class TaskRunnerTest {
                     artefacts = emptyList(),
                     arguments = emptyList(),
                     timeout = Duration.INFINITE,
-                )
+                ),
             )
         }
 
@@ -463,7 +463,7 @@ class TaskRunnerTest {
                     artefacts = emptyList(),
                     arguments = emptyList(),
                     timeout = Duration.parseOrNull("10s")!!,
-                )
+                ),
             )
         }
 
@@ -472,7 +472,7 @@ class TaskRunnerTest {
             sut.whenTheTaskIsRun()
 
             sut.thenTheTaskShouldFailWith(
-                TaskRunnerError.TaskTimedOut(TEG_ID, TEST_TASK_NAME)
+                TaskRunnerError.TaskTimedOut(TEG_ID, TEST_TASK_NAME),
             )
         }
 
@@ -484,7 +484,7 @@ class TaskRunnerTest {
                 TEGMessageIn.TEGTaskFailedMessage(
                     taskName = TEST_TASK_NAME,
                     reason = "Task timed out",
-                )
+                ),
             )
         }
     }

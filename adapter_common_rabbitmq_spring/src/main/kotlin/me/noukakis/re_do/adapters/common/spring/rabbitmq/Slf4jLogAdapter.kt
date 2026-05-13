@@ -12,4 +12,3 @@ class Slf4jLogAdapter : LogPort {
     override fun debug(tegId: String, message: String) = logger.debug("[{}] {}", tegId, message)
     override fun error(tegId: String, message: String) = logger.error("[{}] {}", tegId, message)
 }
-

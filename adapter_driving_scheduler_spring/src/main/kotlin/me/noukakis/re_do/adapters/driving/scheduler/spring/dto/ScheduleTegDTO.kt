@@ -21,4 +21,3 @@ data class ScheduleTegRequest(
 data class ScheduleTegResponse(
     val tegId: String? = null,
 )
-

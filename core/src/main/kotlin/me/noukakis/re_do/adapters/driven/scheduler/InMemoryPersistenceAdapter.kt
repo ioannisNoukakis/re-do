@@ -14,7 +14,7 @@ class InMemoryPersistenceAdapter : PersistencePort {
 
     override fun saveEvents(
         tegId: String,
-        events: List<TEGEvent>
+        events: List<TEGEvent>,
     ) {
         if (throwOnPersist != null) {
             throw RuntimeException(throwOnPersist)
@@ -27,7 +27,7 @@ class InMemoryPersistenceAdapter : PersistencePort {
 
     override fun getEventsForTeg(
         tegId: String,
-        filter: TegEventFilter
+        filter: TegEventFilter,
     ): List<TEGEvent> {
         if (throwOnGetEvents != null) {
             throw RuntimeException(throwOnGetEvents)
@@ -35,18 +35,17 @@ class InMemoryPersistenceAdapter : PersistencePort {
         val events = state[tegId] ?: return emptyList()
         return when (filter) {
             TegEventFilter.All -> events
+
             TegEventFilter.StateEvent -> events.filter {
                 !(it is TEGEvent.Log || it is TEGEvent.Progress)
             }
         }
     }
 
-    override fun getTegsThatDontHaveEvents(klass: List<KClass<out TEGEvent>>): Stream<Pair<String, List<TEGEvent>>> {
-        return state.entries.asSequence()
-            .filter { entry ->
-                entry.value.none { klass.contains(it::class) }
-            }
-            .map { entry -> entry.key to entry.value }
-            .asStream()
-    }
+    override fun getTegsThatDontHaveEvents(klass: List<KClass<out TEGEvent>>): Stream<Pair<String, List<TEGEvent>>> = state.entries.asSequence()
+        .filter { entry ->
+            entry.value.none { klass.contains(it::class) }
+        }
+        .map { entry -> entry.key to entry.value }
+        .asStream()
 }

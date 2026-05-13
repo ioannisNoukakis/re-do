@@ -59,7 +59,7 @@ class HttpFetchTask(
         val headerPairs = arguments.drop(2)
         if (headerPairs.size % 2 != 0) {
             return TaskImplementationResult.Failure(
-                "Header arguments must be name/value pairs (got ${headerPairs.size} after url and filename)"
+                "Header arguments must be name/value pairs (got ${headerPairs.size} after url and filename)",
             )
         }
         val headers = headerPairs.chunked(2).associate { (name, value) -> name to value }
@@ -108,7 +108,7 @@ class HttpFetchTask(
         while (true) {
             if (!visited.add(currentUri)) {
                 return TaskImplementationResult.Failure(
-                    "Redirect loop detected at ${currentUri.maskUserInfo()}"
+                    "Redirect loop detected at ${currentUri.maskUserInfo()}",
                 )
             }
             val request = buildRequest(currentUri, headers, defaultReadTimeout)
@@ -124,7 +124,7 @@ class HttpFetchTask(
                 }
                 if (redirectCount >= defaultMaxRedirects) {
                     return TaskImplementationResult.Failure(
-                        "Exceeded maximum redirects ($defaultMaxRedirects)"
+                        "Exceeded maximum redirects ($defaultMaxRedirects)",
                     )
                 }
                 val next = try {
@@ -157,7 +157,7 @@ class HttpFetchTask(
         if (contentLength in 1..Long.MAX_VALUE && contentLength > defaultMaxDownloadBytes) {
             response.body().use { it.drain() }
             return TaskImplementationResult.Failure(
-                "Content-Length $contentLength exceeds maximum allowed size of $defaultMaxDownloadBytes bytes"
+                "Content-Length $contentLength exceeds maximum allowed size of $defaultMaxDownloadBytes bytes",
             )
         }
 
@@ -168,7 +168,7 @@ class HttpFetchTask(
         context.reportProgress(100, STEP_DOWNLOAD)
         context.reportLog("Downloaded $bytesWritten bytes to $filename")
         return TaskImplementationResult.Success(
-            listOf(LocalTegArtefact.LocalTegArtefactFile(name = filename, path = outputPath))
+            listOf(LocalTegArtefact.LocalTegArtefactFile(name = filename, path = outputPath)),
         )
     }
 
@@ -192,7 +192,7 @@ class HttpFetchTask(
                         out.flush()
                         Files.deleteIfExists(target)
                         throw DownloadTooLargeException(
-                            "Download exceeded maximum allowed size of $maxBytes bytes"
+                            "Download exceeded maximum allowed size of $maxBytes bytes",
                         )
                     }
                     out.write(buffer, 0, n)
@@ -227,8 +227,7 @@ class HttpFetchTask(
         return builder.build()
     }
 
-    private fun isRestrictedHeader(name: String): Boolean =
-        name.lowercase(Locale.ROOT) in RESTRICTED_HEADERS
+    private fun isRestrictedHeader(name: String): Boolean = name.lowercase(Locale.ROOT) in RESTRICTED_HEADERS
 
     private fun readBodyForFailure(stream: InputStream): String {
         val out = ByteArray(FAILURE_BODY_MAX)
@@ -249,7 +248,7 @@ class HttpFetchTask(
         val scheme = uri.scheme?.lowercase(Locale.ROOT)
         if (scheme != "http" && scheme != "https") {
             return TaskImplementationResult.Failure(
-                "URL scheme must be http or https; got '${uri.scheme ?: ""}'"
+                "URL scheme must be http or https; got '${uri.scheme ?: ""}'",
             )
         }
         if (uri.host.isNullOrBlank()) {
@@ -263,7 +262,7 @@ class HttpFetchTask(
         val host = uri.host ?: return null
         val privateAddress = HostValidator.firstPrivateAddress(uri) ?: return null
         return TaskImplementationResult.Failure(
-            "Host '$host' resolves to a private/internal address (${privateAddress.hostAddress}); blocked by default"
+            "Host '$host' resolves to a private/internal address (${privateAddress.hostAddress}); blocked by default",
         )
     }
 

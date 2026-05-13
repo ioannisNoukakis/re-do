@@ -12,14 +12,20 @@ import me.noukakis.re_do.common.model.Identity
 import me.noukakis.re_do.common.model.TEGMessageIn
 import me.noukakis.re_do.common.model.TEGMessageOut
 import me.noukakis.re_do.common.model.TEGTask
-import me.noukakis.re_do.scheduler.model.*
+import me.noukakis.re_do.scheduler.model.TEGArtefact
+import me.noukakis.re_do.scheduler.model.TEGArtefactDefinition
+import me.noukakis.re_do.scheduler.model.TEGArtefactType
+import me.noukakis.re_do.scheduler.model.TEGEvent
+import me.noukakis.re_do.scheduler.model.TegSchedulingError
+import me.noukakis.re_do.scheduler.model.TegTimeoutCheckError
+import me.noukakis.re_do.scheduler.model.TegUpdateError
 import org.junit.jupiter.api.Assertions.assertEquals
 import java.time.Instant
 import kotlin.time.Duration
 
 val IDENTITY = Identity(
     sub = "user-123",
-    roles = listOf("scheduler-user")
+    roles = listOf("scheduler-user"),
 )
 
 const val TEST_TEG_ID = "test-teg-id"
@@ -62,8 +68,8 @@ class TEGSchedulerSutBuilder {
         updateResult = sut!!.handleTegUpdate(
             TEGUpdateCommand(
                 tegId = TEST_TEG_ID,
-                message = message
-            )
+                message = message,
+            ),
         )
     }
 
@@ -147,7 +153,7 @@ class TEGSchedulerSutBuilder {
                 uuidAdapter,
                 nowAdapter,
                 mutualExclusionLockAdapter,
-                3
+                3,
             )
         }
     }
@@ -160,7 +166,7 @@ val TEG_TASK_ARGUMENTS = listOf<String>()
 val TEG_TASK_TIMEOUT = Duration.parseOrNull("100d")!!
 
 class TEGTaskBuilder(
-    private val name: String
+    private val name: String,
 ) {
     private var implementationName: String = TEST_TASK_IMPL_NAME
     private var inputs: List<TEGArtefactDefinition> = TEG_TASK_INPUTS
@@ -193,24 +199,20 @@ class TEGTaskBuilder(
         return this
     }
 
-    fun build(): TEGTask {
-        return TEGTask(
-            name = this.name,
-            implementationName = this.implementationName,
-            inputs = this.inputs,
-            outputs = this.outputs,
-            arguments = this.arguments,
-            timeout = this.timeout,
-        )
-    }
+    fun build(): TEGTask = TEGTask(
+        name = this.name,
+        implementationName = this.implementationName,
+        inputs = this.inputs,
+        outputs = this.outputs,
+        arguments = this.arguments,
+        timeout = this.timeout,
+    )
 }
 
 class TEGMessageBuilder(
-    private val taskName: String
+    private val taskName: String,
 ) {
-    fun asRunType(): RunTaskTEGMessageBuilder {
-        return RunTaskTEGMessageBuilder(taskName)
-    }
+    fun asRunType(): RunTaskTEGMessageBuilder = RunTaskTEGMessageBuilder(taskName)
 }
 
 class RunTaskTEGMessageBuilder(
@@ -240,28 +242,24 @@ class RunTaskTEGMessageBuilder(
         return this
     }
 
-    fun build(): TEGMessageOut.TEGRunTaskMessage {
-        return TEGMessageOut.TEGRunTaskMessage(
-            taskName = this.taskName,
-            implementationName = this.implementationName,
-            artefacts = this.artefacts,
-            arguments = this.arguments,
-            timeout = this.timeout,
-        )
-    }
+    fun build(): TEGMessageOut.TEGRunTaskMessage = TEGMessageOut.TEGRunTaskMessage(
+        taskName = this.taskName,
+        implementationName = this.implementationName,
+        artefacts = this.artefacts,
+        arguments = this.arguments,
+        timeout = this.timeout,
+    )
 }
 
 val TEST_ARTEFACT_TYPE = TEGArtefactType.STRING_VALUE
 
 class TEGArtefactDefBuilder(
     private val name: String,
-    private var type: TEGArtefactType = TEST_ARTEFACT_TYPE
+    private var type: TEGArtefactType = TEST_ARTEFACT_TYPE,
 ) {
 
-    fun build(): TEGArtefactDefinition {
-        return TEGArtefactDefinition(
-            name = this.name,
-            type = this.type,
-        )
-    }
+    fun build(): TEGArtefactDefinition = TEGArtefactDefinition(
+        name = this.name,
+        type = this.type,
+    )
 }

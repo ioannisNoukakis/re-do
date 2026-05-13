@@ -31,7 +31,7 @@ class UploadFileUseCase(
                 ref = storageRef.ref,
                 storedWith = storageRef.storedWith,
                 uploadedBy = command.identity,
-            )
+            ),
         )
         return UploadFileResult(
             ref = storageRef.ref,

@@ -32,7 +32,6 @@ class WhisperTranscriptionTask(
             throw IllegalArgumentException("$ENV_API_KEY environment variable is not set")
         }
 
-
         val clientBuilder = OpenAIOkHttpClient.builder().apiKey(apiKey)
         baseUrl?.let { clientBuilder.baseUrl(it) }
         client = clientBuilder.build()
@@ -48,7 +47,7 @@ class WhisperTranscriptionTask(
         val fileArtefacts = artefacts.filterIsInstance<LocalTegArtefact.LocalTegArtefactFile>()
         if (fileArtefacts.size != 1) {
             return TaskImplementationResult.Failure(
-                "Expected exactly one file artefact, got ${fileArtefacts.size}"
+                "Expected exactly one file artefact, got ${fileArtefacts.size}",
             )
         }
         val fileArtefact = fileArtefacts.single()
@@ -81,8 +80,8 @@ class WhisperTranscriptionTask(
                 LocalTegArtefact.LocalTegArtefactFile(
                     name = outputFileName,
                     path = outputFile,
-                )
-            )
+                ),
+            ),
         )
     }
 }

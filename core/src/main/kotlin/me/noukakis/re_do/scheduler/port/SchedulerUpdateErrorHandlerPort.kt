@@ -6,4 +6,3 @@ import me.noukakis.re_do.scheduler.model.TegUpdateError
 interface SchedulerUpdateErrorHandlerPort : MessageListenerErrorPort {
     fun onUpdateError(error: TegUpdateError)
 }
-

@@ -1,3 +1,5 @@
+@file:Suppress("ktlint:standard:class-naming")
+
 package me.noukakis.re_do.adapters.common.spring.mongodb.migrations
 
 import io.mongock.api.annotations.ChangeUnit
@@ -11,7 +13,7 @@ import org.springframework.data.mongodb.core.index.Index
 import org.springframework.data.mongodb.core.indexOps
 import java.util.concurrent.TimeUnit
 
-@ChangeUnit(id="teg-event-initializer", order = "001", author = "Ioannis Noukakis")
+@ChangeUnit(id = "teg-event-initializer", order = "001", author = "Ioannis Noukakis")
 class _001TegEventInitializerChange(
     private val mongoTemplate: MongoTemplate,
 ) {
@@ -22,7 +24,7 @@ class _001TegEventInitializerChange(
             createIndex(Index().on(MongodbTEGEvent::tegId.name, Sort.Direction.ASC))
             createIndex(
                 Index().on(MongodbTEGEvent::timestamp.name, Sort.Direction.ASC)
-                    .expire(30, TimeUnit.DAYS)
+                    .expire(30, TimeUnit.DAYS),
             )
         }
     }

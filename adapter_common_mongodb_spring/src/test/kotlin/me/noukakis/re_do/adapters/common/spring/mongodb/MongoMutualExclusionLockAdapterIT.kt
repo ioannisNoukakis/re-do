@@ -7,9 +7,13 @@ import me.noukakis.re_do.adapters.common.spring.mongodb.migrations._003MutualExc
 import me.noukakis.re_do.adapters.common.spring.mongodb.model.MongodbMutualExclusionLock
 import me.noukakis.re_do.scheduler.port.LockTimeoutException
 import org.bson.Document
-import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import org.junit.jupiter.api.assertThrows
 import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.data.mongodb.core.collectionExists
 import org.springframework.data.mongodb.core.getCollectionName
@@ -32,18 +36,17 @@ class MongoMutualExclusionLockAdapterIT {
     private lateinit var mongoTemplate: MongoTemplate
     private lateinit var sut: MongoMutualExclusionLockAdapter
 
-    private val NOW = Instant.now().truncatedTo(ChronoUnit.SECONDS)
+    private val now = Instant.now().truncatedTo(ChronoUnit.SECONDS)
 
     @Container
     private val mongoDbContainer = MongoDBContainer(DockerImageName.parse(MONGODB_IMAGE))
         .withStartupTimeout(Duration.ofMinutes(5))
 
-
     @BeforeEach
     fun setup() {
         mongoClient = MongoClients.create(mongoDbContainer.replicaSetUrl)
         mongoTemplate = MongoTemplate(mongoClient, MONGODB_DB_NAME)
-        sut = MongoMutualExclusionLockAdapter(mongoTemplate, getNow = { NOW })
+        sut = MongoMutualExclusionLockAdapter(mongoTemplate, getNow = { now })
         runMigrations(mongoClient, mongoTemplate)
     }
 
@@ -92,10 +95,10 @@ class MongoMutualExclusionLockAdapterIT {
                 listOf(
                     MongodbMutualExclusionLock(
                         id = TEG_ID,
-                        acquiredAt = NOW
-                    )
+                        acquiredAt = now,
+                    ),
                 ),
-                mongoTemplate.findAll(MongodbMutualExclusionLock::class.java)
+                mongoTemplate.findAll(MongodbMutualExclusionLock::class.java),
             )
         }
 
@@ -106,7 +109,7 @@ class MongoMutualExclusionLockAdapterIT {
 
             assertEquals(
                 emptyList(),
-                mongoTemplate.findAll(MongodbMutualExclusionLock::class.java)
+                mongoTemplate.findAll(MongodbMutualExclusionLock::class.java),
             )
         }
 

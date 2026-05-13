@@ -17,8 +17,7 @@ class WhisperTranscriptionTaskValidationTest {
         context = SpyTaskExecutionContext(Files.createTempDirectory("openai-validation-test-"))
     }
 
-    private fun audioArtefact(name: String = "audio.mp3") =
-        LocalTegArtefact.LocalTegArtefactFile(name = name, path = context.workingDir().resolve(name))
+    private fun audioArtefact(name: String = "audio.mp3") = LocalTegArtefact.LocalTegArtefactFile(name = name, path = context.workingDir().resolve(name))
 
     @Test
     fun `implementationName returns correct name`() {

@@ -6,15 +6,11 @@ import java.nio.file.Path
 
 class FakeTempWorkingDirAdapter(private val dirPath: Path) : TempWorkingDirPort {
     var wasClosed = false
-    override fun create(): AutoClosablePath {
-        return object : AutoClosablePath {
-            override fun path(): Path {
-                return dirPath
-            }
+    override fun create(): AutoClosablePath = object : AutoClosablePath {
+        override fun path(): Path = dirPath
 
-            override fun close() {
-                wasClosed = true
-            }
+        override fun close() {
+            wasClosed = true
         }
     }
 }

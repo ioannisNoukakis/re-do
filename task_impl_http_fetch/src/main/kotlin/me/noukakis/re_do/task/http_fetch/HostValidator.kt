@@ -6,7 +6,7 @@ import java.net.URI
 import java.net.UnknownHostException
 
 private const val ULA_MASK = 0xFE
-private const  val ULA_PREFIX = 0xFC
+private const val ULA_PREFIX = 0xFC
 
 internal object HostValidator {
 

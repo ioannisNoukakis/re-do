@@ -58,7 +58,7 @@ class S3FileStorageAdapterIT {
         largeTestFile.toFile().writeBytes(ByteArray(1024 * 1024) { it.toByte() })
         val endpoint = "http://${rustfsContainer.host}:${rustfsContainer.getMappedPort(RUSTFS_PORT)}"
         credentialsProvider = StaticCredentialsProvider.create(
-            AwsBasicCredentials.create(ACCESS_KEY, SECRET_KEY)
+            AwsBasicCredentials.create(ACCESS_KEY, SECRET_KEY),
         )
         s3Client = S3AsyncClient.builder()
             .endpointOverride(URI.create(endpoint))
@@ -66,7 +66,7 @@ class S3FileStorageAdapterIT {
             .serviceConfiguration(
                 S3Configuration.builder()
                     .pathStyleAccessEnabled(true)
-                    .build()
+                    .build(),
             )
             .region(Region.US_EAST_1)
             .build()
@@ -94,7 +94,7 @@ class S3FileStorageAdapterIT {
 
         @Test
         fun `upload stores the file content at the expected key in the bucket`(
-            @TempDir tempDir: Path
+            @TempDir tempDir: Path,
         ) {
             val outputPath = tempDir.resolve("tmp.txt").toAbsolutePath()
             sut.upload(
@@ -104,7 +104,7 @@ class S3FileStorageAdapterIT {
 
             s3Client.getObject(
                 GetObjectRequest.builder().bucket(TEST_BUCKET).key(FILE_ID).build(),
-                outputPath
+                outputPath,
             ).get()
             val stored = outputPath.readText()
             assertEquals(CONTENTS, stored)

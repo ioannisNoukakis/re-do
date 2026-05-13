@@ -21,4 +21,3 @@ interface TEGMessageHandler<M : Any, E> {
     /** Called when [handleMessage] returns a [Either.Left]. */
     fun onHandlingError(tegId: String, error: E)
 }
-

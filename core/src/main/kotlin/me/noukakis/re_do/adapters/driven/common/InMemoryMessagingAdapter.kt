@@ -4,7 +4,9 @@ import me.noukakis.re_do.common.model.TEGMessageIn
 import me.noukakis.re_do.common.model.TEGMessageOut
 import me.noukakis.re_do.scheduler.port.MessagingPort
 
-class InMemoryMessagingAdapter : MessagingPort, me.noukakis.re_do.runner.port.MessagingPort {
+class InMemoryMessagingAdapter :
+    MessagingPort,
+    me.noukakis.re_do.runner.port.MessagingPort {
     private val _outgoingMessages = mutableListOf<Pair<String, TEGMessageOut>>()
     private val _incomingMessages = mutableListOf<Pair<String, TEGMessageIn>>()
 
