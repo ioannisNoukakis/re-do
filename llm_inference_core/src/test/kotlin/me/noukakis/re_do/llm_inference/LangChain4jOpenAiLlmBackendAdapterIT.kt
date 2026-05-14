@@ -74,5 +74,12 @@ class LangChain4jOpenAiLlmBackendAdapterIT {
 
             assertTrue(tokens > 0)
         }
+
+        @Test
+        fun `falls back to a known tokenizer when the requested model is unknown`() {
+            val tokens = sut.countTokens("hello world", "translategemma:4b")
+
+            assertTrue(tokens > 0)
+        }
     }
 }

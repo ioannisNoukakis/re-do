@@ -6,7 +6,7 @@ class ChunkingLlmInferenceClient(
     private val backend: LlmBackendPort,
 ) : LlmInferenceClient {
 
-    override fun complete(request: LlmRequest): LlmResponse {
+    override fun execute(request: LlmRequest): LlmResponse {
         val budget = request.contextWindowTokens - request.maxTokens
         val systemTokens = backend.countTokens(request.systemPrompt, request.model)
         if (systemTokens >= budget) {

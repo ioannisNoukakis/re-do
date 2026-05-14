@@ -23,4 +23,6 @@ include(
     "task_impl_ffmpeg",
     "task_impl_whisper_transcription",
     "task_impl_http_fetch",
+    "task_impl_llm_summarise",
+    "task_impl_llm_translate",
 )

@@ -15,6 +15,8 @@ private const val ENV_BASE_URL = "LLM_BASE_URL"
 private const val ENV_DEFAULT_MODEL = "LLM_DEFAULT_MODEL"
 private const val ENV_DEBUG_LOGGING = "LLM_DEBUG_LOGGING"
 
+private const val FALLBACK_TOKEN_COUNT_MODEL = "gpt-4o-mini"
+
 class LangChain4jOpenAiLlmBackendAdapter(
     private val apiKey: String? = System.getenv(ENV_API_KEY),
     private val baseUrl: String? = System.getenv(ENV_BASE_URL),
@@ -74,8 +76,18 @@ class LangChain4jOpenAiLlmBackendAdapter(
 
     override fun countTokens(text: String, model: String): Int {
         val effectiveModel = model.ifBlank { defaultModel ?: error("No model and $ENV_DEFAULT_MODEL is not set") }
-        return estimators.computeIfAbsent(effectiveModel) { OpenAiTokenCountEstimator(it) }
-            .estimateTokenCountInText(text)
+        val estimator = estimators.computeIfAbsent(effectiveModel) { name ->
+            runCatching { OpenAiTokenCountEstimator(name) }
+                .getOrElse {
+                    log.warn(
+                        "Model '{}' is unknown to the tokenizer; falling back to '{}' for token estimation",
+                        name,
+                        FALLBACK_TOKEN_COUNT_MODEL,
+                    )
+                    OpenAiTokenCountEstimator(FALLBACK_TOKEN_COUNT_MODEL)
+                }
+        }
+        return estimator.estimateTokenCountInText(text)
     }
 
     private fun mapFinishReason(reason: FinishReason?): String = when (reason) {

@@ -32,7 +32,7 @@ class ChunkingLlmInferenceClientTest {
             }
             val sut = ChunkingLlmInferenceClient(backend)
 
-            val result = sut.complete(baseRequest(userContent = "abcdef"))
+            val result = sut.execute(baseRequest(userContent = "abcdef"))
 
             assertEquals(
                 LlmResponse(content = "OUT", finishReason = "stop", promptTokens = 5, completionTokens = 3),
@@ -47,7 +47,7 @@ class ChunkingLlmInferenceClientTest {
             }
             val sut = ChunkingLlmInferenceClient(backend)
 
-            sut.complete(baseRequest(userContent = "abcdef"))
+            sut.execute(baseRequest(userContent = "abcdef"))
 
             assertEquals(listOf(baseRequest(userContent = "abcdef")), backend.calls)
         }
@@ -63,7 +63,7 @@ class ChunkingLlmInferenceClientTest {
             }
             val sut = ChunkingLlmInferenceClient(backend)
 
-            val result = sut.complete(
+            val result = sut.execute(
                 baseRequest(
                     systemPrompt = "s",
                     userContent = "alpha bravo charlie delta",
@@ -90,7 +90,7 @@ class ChunkingLlmInferenceClientTest {
             }
             val sut = ChunkingLlmInferenceClient(backend)
 
-            sut.complete(
+            sut.execute(
                 baseRequest(
                     systemPrompt = "s",
                     userContent = "aa bb cc dd ee ff gg hh",
@@ -112,7 +112,7 @@ class ChunkingLlmInferenceClientTest {
             }
             val sut = ChunkingLlmInferenceClient(backend)
 
-            sut.complete(
+            sut.execute(
                 baseRequest(
                     systemPrompt = "s",
                     userContent = "unsplittableleft bravo",
@@ -134,7 +134,7 @@ class ChunkingLlmInferenceClientTest {
             }
             val sut = ChunkingLlmInferenceClient(backend)
 
-            sut.complete(
+            sut.execute(
                 baseRequest(
                     systemPrompt = "s",
                     userContent = "alpha unsplittableright",
@@ -156,7 +156,7 @@ class ChunkingLlmInferenceClientTest {
             }
             val sut = ChunkingLlmInferenceClient(backend)
 
-            sut.complete(
+            sut.execute(
                 baseRequest(
                     systemPrompt = "s",
                     userContent = "alpha\tbravo\tcharlie\tdelta",
@@ -181,7 +181,7 @@ class ChunkingLlmInferenceClientTest {
             }
             val sut = ChunkingLlmInferenceClient(backend)
 
-            val result = sut.complete(
+            val result = sut.execute(
                 baseRequest(
                     systemPrompt = "s",
                     userContent = "alpha bravo charlie delta",
@@ -203,7 +203,7 @@ class ChunkingLlmInferenceClientTest {
             }
             val sut = ChunkingLlmInferenceClient(backend)
 
-            val result = sut.complete(
+            val result = sut.execute(
                 baseRequest(
                     systemPrompt = "s",
                     userContent = "alpha bravo charlie delta",
@@ -222,7 +222,7 @@ class ChunkingLlmInferenceClientTest {
             }
             val sut = ChunkingLlmInferenceClient(backend)
 
-            sut.complete(
+            sut.execute(
                 baseRequest(
                     systemPrompt = "s",
                     userContent = "aaa bb cccc",
@@ -249,7 +249,7 @@ class ChunkingLlmInferenceClientTest {
             val sut = ChunkingLlmInferenceClient(backend)
 
             assertThrows<LlmBackendException> {
-                sut.complete(
+                sut.execute(
                     baseRequest(
                         systemPrompt = "s",
                         userContent = "unsplittable",
@@ -268,7 +268,7 @@ class ChunkingLlmInferenceClientTest {
             val sut = ChunkingLlmInferenceClient(backend)
 
             assertThrows<LlmBackendException> {
-                sut.complete(
+                sut.execute(
                     baseRequest(
                         systemPrompt = "",
                         userContent = "  a  ",
@@ -292,7 +292,7 @@ class ChunkingLlmInferenceClientTest {
             val sut = ChunkingLlmInferenceClient(backend)
 
             val ex = assertThrows<LlmBackendException> {
-                sut.complete(
+                sut.execute(
                     baseRequest(
                         systemPrompt = systemPrompt,
                         userContent = "x",

@@ -18,7 +18,7 @@ data class LlmResponse(
 )
 
 interface LlmInferenceClient {
-    fun complete(request: LlmRequest): LlmResponse
+    fun execute(request: LlmRequest): LlmResponse
 }
 
 interface LlmBackendPort {
@@ -26,5 +26,5 @@ interface LlmBackendPort {
     fun countTokens(text: String, model: String): Int
 }
 
-sealed class LlmException(message: String, cause: Throwable? = null) : RuntimeException(message, cause)
+sealed class LlmException(message: String, cause: Throwable? = null) : Exception(message, cause)
 class LlmBackendException(message: String, cause: Throwable? = null) : LlmException(message, cause)
