@@ -29,7 +29,7 @@ class S3FileStorageAdapter(
             .serviceConfiguration(
                 S3Configuration.builder()
                     .pathStyleAccessEnabled(true)
-                    .build()
+                    .build(),
             )
             .multipartEnabled(false)
             .build()
@@ -51,7 +51,7 @@ class S3FileStorageAdapter(
                 }
                 .source(sourcePath)
                 .addTransferListener(progressListener(onProgress))
-                .build()
+                .build(),
         ).completionFuture().join()
         return StoredFileRef(ref = ref, storedWith = "s3")
     }
@@ -62,7 +62,7 @@ class S3FileStorageAdapter(
                 .getObjectRequest { req -> req.bucket(bucketName).key(ref) }
                 .destination(targetPath)
                 .addTransferListener(progressListener(onProgress))
-                .build()
+                .build(),
         ).completionFuture().join()
         return targetPath
     }

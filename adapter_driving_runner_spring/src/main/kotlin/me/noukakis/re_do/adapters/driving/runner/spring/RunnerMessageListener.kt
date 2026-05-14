@@ -19,8 +19,7 @@ class RunnerMessageListener(
 
     private val logger = LoggerFactory.getLogger(RunnerMessageListener::class.java)
 
-    override fun convertMessage(raw: Message): TEGMessageOut.TEGRunTaskMessage? =
-        messageConverter.fromMessage(raw) as? TEGMessageOut.TEGRunTaskMessage
+    override fun convertMessage(raw: Message): TEGMessageOut.TEGRunTaskMessage? = messageConverter.fromMessage(raw) as? TEGMessageOut.TEGRunTaskMessage
 
     override fun handleMessage(tegId: String, message: TEGMessageOut.TEGRunTaskMessage): Either<TaskRunnerError, Unit> {
         logger.info("Received task message: taskName={}, implementation={}", message.taskName, message.implementationName)

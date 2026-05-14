@@ -14,7 +14,9 @@ import me.noukakis.re_do.scheduler.model.TEGEvent
 import me.noukakis.re_do.scheduler.port.TegEventFilter
 import org.bson.Document
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -115,7 +117,7 @@ class MongodbPersistenceAdapterIT {
 
                 assertEquals(
                     expectedEvents.sortedBy { it.javaClass.name },
-                    mongoTemplate.findAll<MongodbTEGEvent>().map { it.toModel() }.sortedBy { it.javaClass.name }
+                    mongoTemplate.findAll<MongodbTEGEvent>().map { it.toModel() }.sortedBy { it.javaClass.name },
                 )
             }
         }
@@ -141,7 +143,7 @@ class MongodbPersistenceAdapterIT {
 
                 assertEquals(
                     expectedEvents.sortedBy { it.javaClass.name },
-                    actualEvents.sortedBy { it.javaClass.name }
+                    actualEvents.sortedBy { it.javaClass.name },
                 )
             }
 
@@ -157,7 +159,7 @@ class MongodbPersistenceAdapterIT {
 
                 assertEquals(
                     expectedEvents.sortedBy { it.javaClass.name },
-                    actualEvents.sortedBy { it.javaClass.name }
+                    actualEvents.sortedBy { it.javaClass.name },
                 )
             }
         }
@@ -206,14 +208,13 @@ class MongodbPersistenceAdapterIT {
                 )
             }
 
-            private fun sortResult(result: List<Pair<String, List<TEGEvent>>>): List<Pair<String, List<TEGEvent>>> =
-                result.map { r -> r.first to r.second.sortedBy { it.timestamp } }.sortedBy { it.first }
+            private fun sortResult(result: List<Pair<String, List<TEGEvent>>>): List<Pair<String, List<TEGEvent>>> = result.map { r -> r.first to r.second.sortedBy { it.timestamp } }.sortedBy { it.first }
         }
 
         @Nested
         inner class GettingTegsThatDontHaveEventLookback {
 
-            private val NOW = Instant.ofEpochMilli(0)
+            private val now = Instant.ofEpochMilli(0)
             private lateinit var lookbackSut: MongodbPersistenceAdapter
 
             @BeforeEach
@@ -222,14 +223,14 @@ class MongodbPersistenceAdapterIT {
                     mongodbTemplate = mongoTemplate,
                     cursorBatchSizeForGetAllTegNotEvents = 500,
                     tegEventLookbackDuration = Duration.ofDays(30),
-                    getNow = { NOW }
+                    getNow = { now },
                 )
             }
 
             @Test
             fun `does not consider tegs whose events fall outside the lookback window`() {
-                val withinWindow = NOW.minus(Duration.ofDays(30))
-                val outsideWindow = NOW.minus(Duration.ofDays(31))
+                val withinWindow = now.minus(Duration.ofDays(30))
+                val outsideWindow = now.minus(Duration.ofDays(31))
 
                 sut.saveEvents("recent-teg", listOf(TEGEvent.Created(task = sampleTask("t"), timestamp = withinWindow)))
                 sut.saveEvents("old-teg", listOf(TEGEvent.Created(task = sampleTask("t"), timestamp = outsideWindow)))

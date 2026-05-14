@@ -17,4 +17,3 @@ import me.noukakis.re_do.scheduler.model.TEGArtefact
     JsonSubTypes.Type(value = TEGArtefact.TEGArtefactStringValue::class, name = "string"),
 )
 abstract class TEGArtefactMixin
-

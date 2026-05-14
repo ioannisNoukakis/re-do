@@ -18,7 +18,7 @@ class RunWithTimeoutAdapterIT {
     fun `zero timeout should timeout immediately`() = runTest {
         val result = adapter.execute(
             supplier = { "result" },
-            timeout = 0.milliseconds
+            timeout = 0.milliseconds,
         )
 
         assertEquals(TaskTimedOut.left(), result)
@@ -28,7 +28,7 @@ class RunWithTimeoutAdapterIT {
     fun `task that completes within the timeout should return its result`() = runTest {
         val result = adapter.execute(
             supplier = { "done" },
-            timeout = 1.seconds
+            timeout = 1.seconds,
         )
 
         assertEquals("done".right(), result)
@@ -37,8 +37,11 @@ class RunWithTimeoutAdapterIT {
     @Test
     fun `task that takes longer than the timeout should return TaskTimedOut`() = runTest {
         val result = adapter.execute(
-            supplier = { delay(500.milliseconds); "too late" },
-            timeout = 10.milliseconds
+            supplier = {
+                delay(500.milliseconds)
+                "too late"
+            },
+            timeout = 10.milliseconds,
         )
 
         assertEquals(TaskTimedOut.left(), result)

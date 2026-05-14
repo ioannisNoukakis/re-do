@@ -9,11 +9,9 @@ import java.util.ServiceLoader
 import kotlin.io.path.absolute
 
 class TaskHandlerRegistry(
-    val handlers: List<TaskHandler>
+    val handlers: List<TaskHandler>,
 ) {
-    fun toMap(): Map<String, TaskHandler> {
-        return handlers.associateBy { it.implementationName() }
-    }
+    fun toMap(): Map<String, TaskHandler> = handlers.associateBy { it.implementationName() }
 
     companion object {
         fun new(pluginDir: Path): TaskHandlerRegistry {

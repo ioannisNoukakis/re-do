@@ -1,3 +1,5 @@
+@file:Suppress("ktlint:standard:class-naming")
+
 package me.noukakis.re_do.adapters.common.spring.mongodb.migrations
 
 import io.mongock.api.annotations.ChangeUnit
@@ -21,7 +23,7 @@ class _003MutualExclusionLockChange(
         mongoTemplate.indexOps<MongodbMutualExclusionLock>().createIndex(
             Index()
                 .on(MongodbMutualExclusionLock::acquiredAt.name, Sort.Direction.ASC)
-                .expire(5, TimeUnit.MINUTES)
+                .expire(5, TimeUnit.MINUTES),
         )
     }
 

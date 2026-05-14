@@ -22,6 +22,7 @@ sealed class MongodbTEGArtefact {
             ref = ref,
             storedWith = storedWith,
         )
+
         is MongoTEGArtefactStringValue -> TEGArtefact.TEGArtefactStringValue(
             name = name,
             value = value,
@@ -35,6 +36,7 @@ fun TEGArtefact.toMongoModel(): MongodbTEGArtefact = when (this) {
         ref = ref,
         storedWith = storedWith,
     )
+
     is TEGArtefact.TEGArtefactStringValue -> MongodbTEGArtefact.MongoTEGArtefactStringValue(
         name = name,
         value = value,

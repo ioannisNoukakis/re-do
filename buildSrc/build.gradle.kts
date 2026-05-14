@@ -21,4 +21,5 @@ dependencies {
 
     implementation(libs.gradle.test.logger.plugin)
     implementation(libs.shadow.gradle.plugin)
+    implementation(libs.spotless)
 }

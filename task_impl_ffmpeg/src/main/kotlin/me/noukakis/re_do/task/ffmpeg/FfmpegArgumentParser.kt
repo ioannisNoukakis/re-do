@@ -18,8 +18,7 @@ internal object FfmpegArgumentParser {
         "-shortest",
     )
 
-    fun tokenize(rawArgs: String): List<String> =
-        rawArgs.split(Regex("""\s+""")).filter { it.isNotEmpty() }
+    fun tokenize(rawArgs: String): List<String> = rawArgs.split(Regex("""\s+""")).filter { it.isNotEmpty() }
 
     fun inputFilenames(tokens: List<String>): List<String> {
         val inputs = mutableListOf<String>()
@@ -43,8 +42,11 @@ internal object FfmpegArgumentParser {
             val token = tokens[i]
             when {
                 token in NO_ARG_FLAGS -> i += 1
+
                 token.startsWith("-") -> i += 2
+
                 token in inputSet -> i++
+
                 else -> {
                     outputs += token
                     i++

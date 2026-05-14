@@ -1,3 +1,5 @@
+@file:Suppress("ktlint:standard:class-naming")
+
 package me.noukakis.re_do.adapters.common.spring.mongodb.migrations
 
 import io.mongock.api.annotations.ChangeUnit

@@ -11,13 +11,17 @@ class DemoEchoTask : TaskHandler {
     override fun run(
         artefacts: List<LocalTegArtefact>,
         arguments: List<String>,
-        context: TaskExecutionContext
+        context: TaskExecutionContext,
     ): TaskImplementationResult {
         print("Echoing artefacts: ${artefacts.joinToString(", ") { it.name() }} and arguments: ${arguments.joinToString(", ")}")
-        return TaskImplementationResult.Success(outputArtefacts = artefacts.map { when (it) {
-            is LocalTegArtefact.LocalTegArtefactFile -> LocalTegArtefact.LocalTegArtefactFile("${it.name}-processed", it.path)
-            is LocalTegArtefact.LocalTEGArtefactStringValue -> LocalTegArtefact.LocalTEGArtefactStringValue("${it.name}-processed", it.value)
-        } })
+        return TaskImplementationResult.Success(
+            outputArtefacts = artefacts.map {
+                when (it) {
+                    is LocalTegArtefact.LocalTegArtefactFile -> LocalTegArtefact.LocalTegArtefactFile("${it.name}-processed", it.path)
+                    is LocalTegArtefact.LocalTEGArtefactStringValue -> LocalTegArtefact.LocalTEGArtefactStringValue("${it.name}-processed", it.value)
+                }
+            },
+        )
     }
 
     override fun implementationName(): String = IMPLEMENTATION_NAME

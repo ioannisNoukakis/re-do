@@ -10,7 +10,10 @@ import me.noukakis.re_do.runner.port.RunnerErrorHandlerPort
 import me.noukakis.re_do.runner.service.TaskRunnerService
 import me.noukakis.re_do.scheduler.model.TEGArtefact
 import me.noukakis.re_do.scheduler.model.TaskRunnerError
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -44,7 +47,7 @@ private class StubRunnerErrorHandlerPort : RunnerErrorHandlerPort {
 
 // ── Tests ──────────────────────────────────────────────────────────────────
 
-class RunnerMessageListenerTest {
+class RunnerMessageListenerIT {
 
     private val messageConverter = MessageConverter.new()
     private lateinit var stubService: StubTaskRunnerService
@@ -126,6 +129,5 @@ class RunnerMessageListenerTest {
         timeout = 5.minutes,
     )
 
-    private fun amqpMessage(payload: TEGMessageOut): Message =
-        messageConverter.toMessage(payload, MessageProperties())
+    private fun amqpMessage(payload: TEGMessageOut): Message = messageConverter.toMessage(payload, MessageProperties())
 }

@@ -49,7 +49,7 @@ class FFMPEGTaskIT {
 
             assertEquals(
                 TaskImplementationResult.Success(
-                    listOf(LocalTegArtefact.LocalTegArtefactFile("output.wav", workingDir.resolve("output.wav")))
+                    listOf(LocalTegArtefact.LocalTegArtefactFile("output.wav", workingDir.resolve("output.wav"))),
                 ),
                 result,
             )
@@ -73,28 +73,28 @@ class FFMPEGTaskIT {
     @Nested
     inner class `Failure cases` {
         private lateinit var corruptPath: Path
-        private val CORRUPT_INPUT_NAME = "corrupt.mp4"
+        private val corruptInputName = "corrupt.mp4"
 
         @BeforeEach
         fun setUp() {
-            corruptPath = workingDir.resolve(CORRUPT_INPUT_NAME)
+            corruptPath = workingDir.resolve(corruptInputName)
             Files.write(corruptPath, ByteArray(16) { 0 })
         }
 
         @Test
         fun `returns Failure when ffmpeg exits with non-zero`() {
-            val artefact = LocalTegArtefact.LocalTegArtefactFile(CORRUPT_INPUT_NAME, corruptPath)
+            val artefact = LocalTegArtefact.LocalTegArtefactFile(corruptInputName, corruptPath)
 
-            val result = sut.run(listOf(artefact), listOf("-i $CORRUPT_INPUT_NAME output.wav", "30"), context)
+            val result = sut.run(listOf(artefact), listOf("-i $corruptInputName output.wav", "30"), context)
 
             assertTrue(result is TaskImplementationResult.Failure)
         }
 
         @Test
         fun `returns Failure with exit code message when ffmpeg exits with non-zero`() {
-            val artefact = LocalTegArtefact.LocalTegArtefactFile(CORRUPT_INPUT_NAME, corruptPath)
+            val artefact = LocalTegArtefact.LocalTegArtefactFile(corruptInputName, corruptPath)
 
-            val result = sut.run(listOf(artefact), listOf("-i $CORRUPT_INPUT_NAME output.wav", "30"), context)
+            val result = sut.run(listOf(artefact), listOf("-i $corruptInputName output.wav", "30"), context)
 
             assertTrue((result as TaskImplementationResult.Failure).reason.contains("FFmpeg exited with code"))
         }

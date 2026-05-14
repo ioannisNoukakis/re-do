@@ -24,7 +24,7 @@ class FFMPEGTaskValidationTest {
         fun `when arguments list is empty`() {
             assertEquals(
                 TaskImplementationResult.Failure(
-                    "Expected at least 2 arguments: ffmpeg args string and timeout in seconds"
+                    "Expected at least 2 arguments: ffmpeg args string and timeout in seconds",
                 ),
                 sut.run(emptyList(), emptyList(), context),
             )
@@ -42,7 +42,7 @@ class FFMPEGTaskValidationTest {
         fun `when input file referenced in args has no matching artefact`() {
             assertEquals(
                 TaskImplementationResult.Failure(
-                    "Input file 'input.wav' referenced in arguments but not provided as an artefact"
+                    "Input file 'input.wav' referenced in arguments but not provided as an artefact",
                 ),
                 sut.run(emptyList(), listOf("-i input.wav output.wav", "10"), context),
             )
@@ -56,7 +56,7 @@ class FFMPEGTaskValidationTest {
             )
             assertEquals(
                 TaskImplementationResult.Failure(
-                    "Artefact 'extra.wav' provided but not referenced in ffmpeg arguments"
+                    "Artefact 'extra.wav' provided but not referenced in ffmpeg arguments",
                 ),
                 sut.run(listOf(artefact), listOf("-f null -", "10"), context),
             )

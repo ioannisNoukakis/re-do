@@ -19,4 +19,3 @@ import me.noukakis.re_do.common.model.TEGMessageIn
     JsonSubTypes.Type(value = TEGMessageIn.TEGTaskLogMessage::class, name = "task_log"),
 )
 abstract class TEGMessageInMixin
-

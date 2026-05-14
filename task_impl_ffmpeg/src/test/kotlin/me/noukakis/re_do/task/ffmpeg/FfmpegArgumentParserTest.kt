@@ -97,8 +97,8 @@ class FfmpegArgumentParserTest {
                         "-ar",
                         "16000",
                         "out.wav",
-                    )
-                )
+                    ),
+                ),
             )
         }
 
@@ -115,8 +115,8 @@ class FfmpegArgumentParserTest {
                         "-acodec",
                         "libmp3lame",
                         "out.wav",
-                    )
-                )
+                    ),
+                ),
             )
         }
     }
