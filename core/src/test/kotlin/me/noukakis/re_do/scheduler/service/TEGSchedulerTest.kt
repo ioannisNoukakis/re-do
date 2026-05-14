@@ -2,7 +2,13 @@ package me.noukakis.re_do.scheduler.service
 
 import me.noukakis.re_do.common.model.TEGMessageIn
 import me.noukakis.re_do.common.model.TEGTask
-import me.noukakis.re_do.scheduler.model.*
+import me.noukakis.re_do.scheduler.model.TEGArtefact
+import me.noukakis.re_do.scheduler.model.TEGArtefactDefinition
+import me.noukakis.re_do.scheduler.model.TEGArtefactType
+import me.noukakis.re_do.scheduler.model.TEGEvent
+import me.noukakis.re_do.scheduler.model.TegSchedulingError
+import me.noukakis.re_do.scheduler.model.TegTimeoutCheckError
+import me.noukakis.re_do.scheduler.model.TegUpdateError
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -65,7 +71,7 @@ class TEGSchedulerTest {
             sut.whenSubmittingTheTeg(
                 listOf(
                     TEGTaskBuilder("A")
-                        .build()
+                        .build(),
                 ),
                 listOf(),
             )
@@ -84,9 +90,9 @@ class TEGSchedulerTest {
                         .build(),
                     TEGTaskBuilder("B")
                         .withInputs(TEGArtefactDefBuilder("AOutput").build())
-                        .build()
+                        .build(),
                 ),
-                listOf()
+                listOf(),
             )
 
             sut.thenTheScheduledTasksAre(
@@ -107,9 +113,9 @@ class TEGSchedulerTest {
                         .build(),
                     TEGTaskBuilder("B")
                         .withInputs(TEGArtefactDefBuilder("AOutput").build())
-                        .build()
+                        .build(),
                 ),
-                listOf()
+                listOf(),
             )
 
             sut.thenThePersistedEventsShouldBe(
@@ -121,8 +127,8 @@ class TEGSchedulerTest {
                                 .withOutputs(
                                     TEGArtefactDefinition(
                                         name = "AOutput",
-                                        type = TEGArtefactType.STRING_VALUE
-                                    )
+                                        type = TEGArtefactType.STRING_VALUE,
+                                    ),
                                 )
                                 .build(),
                             NOW_0,
@@ -136,14 +142,14 @@ class TEGSchedulerTest {
                                 .withInputs(
                                     TEGArtefactDefinition(
                                         name = "AOutput",
-                                        type = TEGArtefactType.STRING_VALUE
-                                    )
+                                        type = TEGArtefactType.STRING_VALUE,
+                                    ),
                                 )
                                 .build(),
                             NOW_0,
                         ),
-                    )
-                )
+                    ),
+                ),
             )
         }
 
@@ -155,11 +161,12 @@ class TEGSchedulerTest {
                         .withInputs(TEGArtefactDefBuilder("AOutput").build())
                         .withOutputs(TEGArtefactDefBuilder("AOutput").build())
                         .build(),
-                ), listOf()
+                ),
+                listOf(),
             )
 
             sut.thenTheResultIsAnError(
-                TegSchedulingError.NoStartingTaskFound
+                TegSchedulingError.NoStartingTaskFound,
             )
         }
 
@@ -175,15 +182,16 @@ class TEGSchedulerTest {
                             TEGArtefactDefBuilder("NonExistentOutput").build(),
                             TEGArtefactDefBuilder("AOutput").build(),
                         )
-                        .build()
-                ), listOf()
+                        .build(),
+                ),
+                listOf(),
             )
 
             sut.thenTheResultIsAnError(
                 TegSchedulingError.MissingArtefactProducer(
                     taskName = "B",
-                    artefactName = "NonExistentOutput"
-                )
+                    artefactName = "NonExistentOutput",
+                ),
             )
         }
 
@@ -204,9 +212,9 @@ class TEGSchedulerTest {
                 listOf(
                     TEGArtefact.TEGArtefactStringValue(
                         name = "init-value",
-                        value = "Some existing value"
-                    )
-                )
+                        value = "Some existing value",
+                    ),
+                ),
             )
 
             sut.thenTheResultIsASuccess()
@@ -216,8 +224,8 @@ class TEGSchedulerTest {
                     .withArtefacts(
                         TEGArtefact.TEGArtefactStringValue(
                             name = "init-value",
-                            value = "Some existing value"
-                        )
+                            value = "Some existing value",
+                        ),
                     )
                     .build(),
             )
@@ -227,7 +235,7 @@ class TEGSchedulerTest {
         @MethodSource("me.noukakis.re_do.scheduler.service.TEGSchedulerTest#cycleProvider")
         fun `should detect any cycle in the task execution graph and error out`(
             tasks: List<TEGTask>,
-            expectedError: TegSchedulingError.CyclicDependencyDetected
+            expectedError: TegSchedulingError.CyclicDependencyDetected,
         ) {
             sut.whenSubmittingTheTeg(tasks, listOf())
 
@@ -243,14 +251,15 @@ class TEGSchedulerTest {
                         .build(),
                     TEGTaskBuilder("A")
                         .withInputs(TEGArtefactDefBuilder("AOutput").build())
-                        .build()
-                ), listOf()
+                        .build(),
+                ),
+                listOf(),
             )
 
             sut.thenTheResultIsAnError(
                 TegSchedulingError.TasksHaveTheSameName(
                     taskName = "A",
-                )
+                ),
             )
         }
 
@@ -263,15 +272,16 @@ class TEGSchedulerTest {
                         .build(),
                     TEGTaskBuilder("B")
                         .withOutputs(TEGArtefactDefBuilder("CommonOutput").build())
-                        .build()
-                ), listOf()
+                        .build(),
+                ),
+                listOf(),
             )
 
             sut.thenTheResultIsAnError(
                 TegSchedulingError.TasksProduceSameArtefactName(
                     taskNames = listOf("A", "B"),
                     artefactName = "CommonOutput",
-                )
+                ),
             )
         }
 
@@ -291,8 +301,9 @@ class TEGSchedulerTest {
                         .build(),
                     TEGTaskBuilder("C")
                         .withInputs(TEGArtefactDefBuilder("AOutput2").build())
-                        .build()
-                ), listOf()
+                        .build(),
+                ),
+                listOf(),
             )
 
             sut.thenTheResultIsASuccess()
@@ -318,8 +329,9 @@ class TEGSchedulerTest {
                             TEGArtefactDefBuilder("AOutput").build(),
                             TEGArtefactDefBuilder("BOutput").build(),
                         )
-                        .build()
-                ), listOf()
+                        .build(),
+                ),
+                listOf(),
             )
 
             sut.thenTheResultIsASuccess()
@@ -348,8 +360,9 @@ class TEGSchedulerTest {
                             TEGArtefactDefBuilder("AOutput").build(),
                             TEGArtefactDefBuilder("BOutput").build(),
                         )
-                        .build()
-                ), listOf()
+                        .build(),
+                ),
+                listOf(),
             )
 
             sut.thenThePersistedEventsShouldBe(
@@ -379,8 +392,8 @@ class TEGSchedulerTest {
                                 .build(),
                             NOW_0,
                         ),
-                    )
-                )
+                    ),
+                ),
             )
         }
 
@@ -405,8 +418,9 @@ class TEGSchedulerTest {
                             TEGArtefactDefBuilder("BOutput").build(),
                             TEGArtefactDefBuilder("COutput").build(),
                         )
-                        .build()
-                ), listOf()
+                        .build(),
+                ),
+                listOf(),
             )
 
             sut.thenTheResultIsASuccess()
@@ -444,8 +458,8 @@ class TEGSchedulerTest {
                         .build(),
                 ),
                 TegSchedulingError.CyclicDependencyDetected(
-                    listOf("A", "B", "C", "A")
-                )
+                    listOf("A", "B", "C", "A"),
+                ),
             ),
             // Test case 2: Simple 2-node cycle (A -> B -> A)
             Arguments.of(
@@ -456,7 +470,7 @@ class TEGSchedulerTest {
                     TEGTaskBuilder("A")
                         .withInputs(
                             TEGArtefactDefBuilder("INOutput").build(),
-                            TEGArtefactDefBuilder("BOutput").build()
+                            TEGArtefactDefBuilder("BOutput").build(),
                         )
                         .withOutputs(TEGArtefactDefBuilder("AOutput").build())
                         .build(),
@@ -466,8 +480,8 @@ class TEGSchedulerTest {
                         .build(),
                 ),
                 TegSchedulingError.CyclicDependencyDetected(
-                    listOf("A", "B", "A")
-                )
+                    listOf("A", "B", "A"),
+                ),
             ),
             // Test case 4: Longer cycle (A -> B -> C -> D -> A)
             Arguments.of(
@@ -496,8 +510,8 @@ class TEGSchedulerTest {
                         .build(),
                 ),
                 TegSchedulingError.CyclicDependencyDetected(
-                    listOf("A", "B", "C", "D", "A")
-                )
+                    listOf("A", "B", "C", "D", "A"),
+                ),
             ),
             // Test case 5: Multiple cycles (A -> B -> A and C -> D -> C)
             Arguments.of(
@@ -529,8 +543,8 @@ class TEGSchedulerTest {
                         .build(),
                 ),
                 TegSchedulingError.CyclicDependencyDetected(
-                    listOf("A", "B", "A")
-                )
+                    listOf("A", "B", "A"),
+                ),
             ),
             // Test case 6: Complex cycle with branching (A -> B -> C -> D -> B)
             Arguments.of(
@@ -559,8 +573,8 @@ class TEGSchedulerTest {
                         .build(),
                 ),
                 TegSchedulingError.CyclicDependencyDetected(
-                    listOf("B", "C", "D", "B")
-                )
+                    listOf("B", "C", "D", "B"),
+                ),
             ),
         )
     }
@@ -577,8 +591,8 @@ class TEGSchedulerTest {
                         .withOutputs(
                             TEGArtefactDefinition(
                                 name = "AOutput",
-                                type = TEGArtefactType.STRING_VALUE
-                            )
+                                type = TEGArtefactType.STRING_VALUE,
+                            ),
                         )
                         .build(),
                     NOW_0,
@@ -592,8 +606,8 @@ class TEGSchedulerTest {
                         .withInputs(
                             TEGArtefactDefinition(
                                 name = "AOutput",
-                                type = TEGArtefactType.STRING_VALUE
-                            )
+                                type = TEGArtefactType.STRING_VALUE,
+                            ),
                         )
                         .build(),
                     NOW_0,
@@ -606,9 +620,9 @@ class TEGSchedulerTest {
                 TEGMessageIn.TEGTaskResultMessage(
                     taskName = "A",
                     listOf(
-                        TEGArtefact.TEGArtefactStringValue(name = "AOutput", value = "result of A")
-                    )
-                )
+                        TEGArtefact.TEGArtefactStringValue(name = "AOutput", value = "result of A"),
+                    ),
+                ),
             )
         }
 
@@ -618,9 +632,9 @@ class TEGSchedulerTest {
                 TEGMessageBuilder("B")
                     .asRunType()
                     .withArtefacts(
-                        TEGArtefact.TEGArtefactStringValue(name = "AOutput", value = "result of A")
+                        TEGArtefact.TEGArtefactStringValue(name = "AOutput", value = "result of A"),
                     )
-                    .build()
+                    .build(),
             )
         }
 
@@ -635,16 +649,16 @@ class TEGSchedulerTest {
                             outputArtefacts = listOf(
                                 TEGArtefact.TEGArtefactStringValue(
                                     name = "AOutput",
-                                    value = "result of A"
-                                )
+                                    value = "result of A",
+                                ),
                             ),
                         ),
                         TEGEvent.Scheduled(
                             taskName = "B",
                             timestamp = NOW_1,
                         ),
-                    )
-                )
+                    ),
+                ),
             )
         }
     }
@@ -687,8 +701,8 @@ class TEGSchedulerTest {
                     outputArtefacts = listOf(
                         TEGArtefact.TEGArtefactStringValue(name = "AOutput1", value = "result 1"),
                         TEGArtefact.TEGArtefactStringValue(name = "AOutput2", value = "result 2"),
-                    )
-                )
+                    ),
+                ),
             )
 
             sut.thenTheScheduledTasksAre(
@@ -746,8 +760,8 @@ class TEGSchedulerTest {
                         TEGArtefact.TEGArtefactStringValue(name = "Haha!", value = "result 1"),
                         TEGArtefact.TEGArtefactStringValue(name = "AOutput2", value = "result 2"),
                         TEGArtefact.TEGArtefactStringValue(name = "AOutput3", value = "result 3"),
-                    )
-                )
+                    ),
+                ),
             )
         }
 
@@ -758,7 +772,7 @@ class TEGSchedulerTest {
                     taskName = "A",
                     actualOutputArtefacts = setOf("Haha!", "AOutput2", "AOutput3"),
                     expectedOutputArtefacts = setOf("AOutput1", "AOutput2", "AOutput3"),
-                )
+                ),
             )
         }
 
@@ -770,11 +784,11 @@ class TEGSchedulerTest {
                         TEGEvent.Failed(
                             taskName = "A",
                             timestamp = NOW_1,
-                            reason = "Worker result message contains unexpected output artefact(s): [Haha!]. Expected outputs are: [AOutput1, AOutput2, AOutput3]."
+                            reason = "Worker result message contains unexpected output artefact(s): [Haha!]. Expected outputs are: [AOutput1, AOutput2, AOutput3].",
                         ),
-                        TEGEvent.TEGFailed(timestamp = NOW_1, reason = "Unexpected output in task A")
-                    )
-                )
+                        TEGEvent.TEGFailed(timestamp = NOW_1, reason = "Unexpected output in task A"),
+                    ),
+                ),
             )
         }
 
@@ -820,8 +834,8 @@ class TEGSchedulerTest {
                     taskName = "A",
                     outputArtefacts = listOf(
                         TEGArtefact.TEGArtefactStringValue(name = "AOutput1", value = "result 1"),
-                    )
-                )
+                    ),
+                ),
             )
 
             sut.thenTheMutualExclusionLockWasCalledAndReleased()
@@ -829,12 +843,11 @@ class TEGSchedulerTest {
 
         @Test
         fun `should an error arise, the lock should still be released`() {
-
             sut.whenGettingTegUpdate(
                 TEGMessageIn.TEGTaskResultMessage(
                     taskName = "A",
-                    outputArtefacts = listOf()
-                )
+                    outputArtefacts = listOf(),
+                ),
             )
 
             sut.thenTheMutualExclusionLockWasCalledAndReleased()
@@ -850,8 +863,8 @@ class TEGSchedulerTest {
                         taskName = "A",
                         outputArtefacts = listOf(
                             TEGArtefact.TEGArtefactStringValue(name = "UnexpectedOutput", value = "result 1"),
-                        )
-                    )
+                        ),
+                    ),
                 )
             }
 
@@ -884,8 +897,8 @@ class TEGSchedulerTest {
                 sut.whenGettingTegUpdate(
                     TEGMessageIn.TEGTaskResultMessage(
                         taskName = "A",
-                        outputArtefacts = listOf()
-                    )
+                        outputArtefacts = listOf(),
+                    ),
                 )
             }
 
@@ -900,8 +913,8 @@ class TEGSchedulerTest {
                 sut.whenGettingTegUpdate(
                     TEGMessageIn.TEGTaskResultMessage(
                         taskName = "A",
-                        outputArtefacts = listOf()
-                    )
+                        outputArtefacts = listOf(),
+                    ),
                 )
             }
 
@@ -916,8 +929,8 @@ class TEGSchedulerTest {
                 sut.whenGettingTegUpdate(
                     TEGMessageIn.TEGTaskResultMessage(
                         taskName = "A",
-                        outputArtefacts = listOf()
-                    )
+                        outputArtefacts = listOf(),
+                    ),
                 )
             }
 
@@ -941,16 +954,16 @@ class TEGSchedulerTest {
                             taskName = "A",
                             NOW_0,
                         ),
-                    )
-                )
+                    ),
+                ),
             )
             sut.givenTheDatesToReturn(NOW_1)
 
             sut.whenGettingTegUpdate(
                 TEGMessageIn.TEGTaskResultMessage(
                     taskName = "A",
-                    outputArtefacts = listOf()
-                )
+                    outputArtefacts = listOf(),
+                ),
             )
 
             sut.thenThePersistedEventsShouldBe(
@@ -972,9 +985,9 @@ class TEGSchedulerTest {
                         ),
                         TEGEvent.NoMoreTasksToSchedule(
                             timestamp = NOW_1,
-                        )
-                    )
-                )
+                        ),
+                    ),
+                ),
             )
         }
 
@@ -1002,7 +1015,7 @@ class TEGSchedulerTest {
                         TEGEvent.Failed(
                             taskName = "A",
                             timestamp = NOW_1,
-                            reason = "Worker crashed"
+                            reason = "Worker crashed",
                         ),
                         TEGEvent.Scheduled(
                             taskName = "A",
@@ -1014,24 +1027,24 @@ class TEGSchedulerTest {
                             outputArtefacts = listOf(
                                 TEGArtefact.TEGArtefactStringValue(
                                     name = "AOutput",
-                                    value = "result of A"
-                                )
+                                    value = "result of A",
+                                ),
                             ),
                         ),
                         TEGEvent.Scheduled(
                             taskName = "B",
                             NOW_2,
                         ),
-                    )
-                )
+                    ),
+                ),
             )
             sut.givenTheDatesToReturn(NOW_3)
 
             sut.whenGettingTegUpdate(
                 TEGMessageIn.TEGTaskResultMessage(
                     taskName = "B",
-                    outputArtefacts = listOf()
-                )
+                    outputArtefacts = listOf(),
+                ),
             )
 
             sut.thenThePersistedEventsShouldBe(
@@ -1056,7 +1069,7 @@ class TEGSchedulerTest {
                         TEGEvent.Failed(
                             taskName = "A",
                             timestamp = NOW_1,
-                            reason = "Worker crashed"
+                            reason = "Worker crashed",
                         ),
                         TEGEvent.Scheduled(
                             taskName = "A",
@@ -1068,8 +1081,8 @@ class TEGSchedulerTest {
                             outputArtefacts = listOf(
                                 TEGArtefact.TEGArtefactStringValue(
                                     name = "AOutput",
-                                    value = "result of A"
-                                )
+                                    value = "result of A",
+                                ),
                             ),
                         ),
                         TEGEvent.Scheduled(
@@ -1083,9 +1096,9 @@ class TEGSchedulerTest {
                         ),
                         TEGEvent.NoMoreTasksToSchedule(
                             timestamp = NOW_3,
-                        )
-                    )
-                )
+                        ),
+                    ),
+                ),
             )
         }
     }
@@ -1140,22 +1153,22 @@ class TEGSchedulerTest {
                 TEGMessageIn.TEGTaskResultMessage(
                     taskName = "A",
                     outputArtefacts = listOf(
-                        TEGArtefact.TEGArtefactStringValue(name = "AOutput", value = "result of A")
-                    )
-                )
+                        TEGArtefact.TEGArtefactStringValue(name = "AOutput", value = "result of A"),
+                    ),
+                ),
             )
 
             sut.thenTheScheduledTasksAre(
                 TEGMessageBuilder("B")
                     .asRunType()
                     .withArtefacts(
-                        TEGArtefact.TEGArtefactStringValue(name = "AOutput", value = "result of A")
+                        TEGArtefact.TEGArtefactStringValue(name = "AOutput", value = "result of A"),
                     )
                     .build(),
                 TEGMessageBuilder("C")
                     .asRunType()
                     .withArtefacts(
-                        TEGArtefact.TEGArtefactStringValue(name = "AOutput", value = "result of A")
+                        TEGArtefact.TEGArtefactStringValue(name = "AOutput", value = "result of A"),
                     )
                     .build(),
             )
@@ -1170,9 +1183,9 @@ class TEGSchedulerTest {
                 TEGMessageIn.TEGTaskResultMessage(
                     taskName = "A",
                     outputArtefacts = listOf(
-                        TEGArtefact.TEGArtefactStringValue(name = "AOutput", value = "result of A")
-                    )
-                )
+                        TEGArtefact.TEGArtefactStringValue(name = "AOutput", value = "result of A"),
+                    ),
+                ),
             )
 
             sut.thenThePersistedEventsShouldBe(
@@ -1182,13 +1195,13 @@ class TEGSchedulerTest {
                             taskName = "A",
                             timestamp = NOW_1,
                             outputArtefacts = listOf(
-                                TEGArtefact.TEGArtefactStringValue(name = "AOutput", value = "result of A")
-                            )
+                                TEGArtefact.TEGArtefactStringValue(name = "AOutput", value = "result of A"),
+                            ),
                         ),
                         TEGEvent.Scheduled(taskName = "B", timestamp = NOW_1),
                         TEGEvent.Scheduled(taskName = "C", timestamp = NOW_1),
-                    )
-                )
+                    ),
+                ),
             )
         }
 
@@ -1199,8 +1212,8 @@ class TEGSchedulerTest {
                     taskName = "A",
                     timestamp = NOW_1,
                     outputArtefacts = listOf(
-                        TEGArtefact.TEGArtefactStringValue(name = "AOutput", value = "result of A")
-                    )
+                        TEGArtefact.TEGArtefactStringValue(name = "AOutput", value = "result of A"),
+                    ),
                 ),
                 TEGEvent.Scheduled(taskName = "B", timestamp = NOW_1),
                 TEGEvent.Scheduled(taskName = "C", timestamp = NOW_1),
@@ -1212,9 +1225,9 @@ class TEGSchedulerTest {
                 TEGMessageIn.TEGTaskResultMessage(
                     taskName = "B",
                     outputArtefacts = listOf(
-                        TEGArtefact.TEGArtefactStringValue(name = "BOutput", value = "result of B")
-                    )
-                )
+                        TEGArtefact.TEGArtefactStringValue(name = "BOutput", value = "result of B"),
+                    ),
+                ),
             )
 
             sut.thenTheScheduledTasksAre()
@@ -1227,8 +1240,8 @@ class TEGSchedulerTest {
                     taskName = "A",
                     timestamp = NOW_1,
                     outputArtefacts = listOf(
-                        TEGArtefact.TEGArtefactStringValue(name = "AOutput", value = "result of A")
-                    )
+                        TEGArtefact.TEGArtefactStringValue(name = "AOutput", value = "result of A"),
+                    ),
                 ),
                 TEGEvent.Scheduled(taskName = "B", timestamp = NOW_1),
                 TEGEvent.Scheduled(taskName = "C", timestamp = NOW_1),
@@ -1236,8 +1249,8 @@ class TEGSchedulerTest {
                     taskName = "B",
                     timestamp = NOW_2,
                     outputArtefacts = listOf(
-                        TEGArtefact.TEGArtefactStringValue(name = "BOutput", value = "result of B")
-                    )
+                        TEGArtefact.TEGArtefactStringValue(name = "BOutput", value = "result of B"),
+                    ),
                 ),
             )
             sut.givenTheExistingEvents(mapOf(TEST_TEG_ID to eventsAfterBCompleted))
@@ -1247,9 +1260,9 @@ class TEGSchedulerTest {
                 TEGMessageIn.TEGTaskResultMessage(
                     taskName = "C",
                     outputArtefacts = listOf(
-                        TEGArtefact.TEGArtefactStringValue(name = "COutput", value = "result of C")
-                    )
-                )
+                        TEGArtefact.TEGArtefactStringValue(name = "COutput", value = "result of C"),
+                    ),
+                ),
             )
 
             sut.thenTheScheduledTasksAre(
@@ -1270,8 +1283,8 @@ class TEGSchedulerTest {
                     taskName = "A",
                     timestamp = NOW_1,
                     outputArtefacts = listOf(
-                        TEGArtefact.TEGArtefactStringValue(name = "AOutput", value = "result of A")
-                    )
+                        TEGArtefact.TEGArtefactStringValue(name = "AOutput", value = "result of A"),
+                    ),
                 ),
                 TEGEvent.Scheduled(taskName = "B", timestamp = NOW_1),
                 TEGEvent.Scheduled(taskName = "C", timestamp = NOW_1),
@@ -1279,15 +1292,15 @@ class TEGSchedulerTest {
                     taskName = "B",
                     timestamp = NOW_2,
                     outputArtefacts = listOf(
-                        TEGArtefact.TEGArtefactStringValue(name = "BOutput", value = "result of B")
-                    )
+                        TEGArtefact.TEGArtefactStringValue(name = "BOutput", value = "result of B"),
+                    ),
                 ),
                 TEGEvent.Completed(
                     taskName = "C",
                     timestamp = NOW_2,
                     outputArtefacts = listOf(
-                        TEGArtefact.TEGArtefactStringValue(name = "COutput", value = "result of C")
-                    )
+                        TEGArtefact.TEGArtefactStringValue(name = "COutput", value = "result of C"),
+                    ),
                 ),
                 TEGEvent.Scheduled(taskName = "D", timestamp = NOW_2),
             )
@@ -1297,8 +1310,8 @@ class TEGSchedulerTest {
             sut.whenGettingTegUpdate(
                 TEGMessageIn.TEGTaskResultMessage(
                     taskName = "D",
-                    outputArtefacts = listOf()
-                )
+                    outputArtefacts = listOf(),
+                ),
             )
 
             sut.thenThePersistedEventsShouldBe(
@@ -1307,11 +1320,11 @@ class TEGSchedulerTest {
                         TEGEvent.Completed(
                             taskName = "D",
                             timestamp = NOW_3,
-                            outputArtefacts = listOf()
+                            outputArtefacts = listOf(),
                         ),
-                        TEGEvent.NoMoreTasksToSchedule(timestamp = NOW_3)
-                    )
-                )
+                        TEGEvent.NoMoreTasksToSchedule(timestamp = NOW_3),
+                    ),
+                ),
             )
         }
     }
@@ -1328,8 +1341,8 @@ class TEGSchedulerTest {
                         .withOutputs(
                             TEGArtefactDefinition(
                                 name = "AOutput",
-                                type = TEGArtefactType.STRING_VALUE
-                            )
+                                type = TEGArtefactType.STRING_VALUE,
+                            ),
                         )
                         .build(),
                     NOW_0,
@@ -1343,8 +1356,8 @@ class TEGSchedulerTest {
                         .withInputs(
                             TEGArtefactDefinition(
                                 name = "AOutput",
-                                type = TEGArtefactType.STRING_VALUE
-                            )
+                                type = TEGArtefactType.STRING_VALUE,
+                            ),
                         )
                         .build(),
                     NOW_0,
@@ -1364,8 +1377,8 @@ class TEGSchedulerTest {
             sut.whenGettingTegUpdate(
                 TEGMessageIn.TEGTaskFailedMessage(
                     taskName = "A",
-                    reason = "Third failure"
-                )
+                    reason = "Third failure",
+                ),
             )
 
             sut.thenThePersistedEventsShouldBe(
@@ -1374,14 +1387,14 @@ class TEGSchedulerTest {
                         TEGEvent.Failed(
                             taskName = "A",
                             timestamp = NOW_3,
-                            reason = "Third failure"
+                            reason = "Third failure",
                         ),
                         TEGEvent.TEGFailed(
                             timestamp = NOW_3,
-                            reason = "Max retries exceeded for task A"
-                        )
-                    )
-                )
+                            reason = "Max retries exceeded for task A",
+                        ),
+                    ),
+                ),
             )
         }
     }
@@ -1398,8 +1411,8 @@ class TEGSchedulerTest {
                         .withOutputs(
                             TEGArtefactDefinition(
                                 name = "AOutput",
-                                type = TEGArtefactType.STRING_VALUE
-                            )
+                                type = TEGArtefactType.STRING_VALUE,
+                            ),
                         )
                         .build(),
                     NOW_0,
@@ -1419,15 +1432,15 @@ class TEGSchedulerTest {
             sut.whenGettingTegUpdate(
                 TEGMessageIn.TEGTaskFailedMessage(
                     taskName = "A",
-                    reason = "Worker crashed"
-                )
+                    reason = "Worker crashed",
+                ),
             )
 
             sut.thenTheUpdateResultIsASuccess()
             sut.thenTheScheduledTasksAre(
                 TEGMessageBuilder("A")
                     .asRunType()
-                    .build()
+                    .build(),
             )
         }
 
@@ -1438,8 +1451,8 @@ class TEGSchedulerTest {
             sut.whenGettingTegUpdate(
                 TEGMessageIn.TEGTaskFailedMessage(
                     taskName = "A",
-                    reason = "Worker crashed"
-                )
+                    reason = "Worker crashed",
+                ),
             )
 
             sut.thenTheUpdateResultIsASuccess()
@@ -1454,9 +1467,9 @@ class TEGSchedulerTest {
                         TEGEvent.Scheduled(
                             taskName = "A",
                             timestamp = NOW_3,
-                        )
-                    )
-                )
+                        ),
+                    ),
+                ),
             )
         }
 
@@ -1473,12 +1486,12 @@ class TEGSchedulerTest {
             sut.whenGettingTegUpdate(
                 TEGMessageIn.TEGTaskFailedMessage(
                     taskName = "A",
-                    reason = "Third failure"
-                )
+                    reason = "Third failure",
+                ),
             )
 
             sut.thenTheUpdateResultIsAnError(
-                TegUpdateError.MaxRetriesExceeded(tegId = TEST_TEG_ID, taskName = "A")
+                TegUpdateError.MaxRetriesExceeded(tegId = TEST_TEG_ID, taskName = "A"),
             )
         }
 
@@ -1495,8 +1508,8 @@ class TEGSchedulerTest {
             sut.whenGettingTegUpdate(
                 TEGMessageIn.TEGTaskFailedMessage(
                     taskName = "A",
-                    reason = "Third failure"
-                )
+                    reason = "Third failure",
+                ),
             )
 
             sut.thenTheScheduledTasksAre()
@@ -1515,8 +1528,8 @@ class TEGSchedulerTest {
             sut.whenGettingTegUpdate(
                 TEGMessageIn.TEGTaskFailedMessage(
                     taskName = "A",
-                    reason = "Third failure"
-                )
+                    reason = "Third failure",
+                ),
             )
 
             sut.thenThePersistedEventsShouldBe(
@@ -1525,14 +1538,14 @@ class TEGSchedulerTest {
                         TEGEvent.Failed(
                             taskName = "A",
                             timestamp = NOW_3,
-                            reason = "Third failure"
+                            reason = "Third failure",
                         ),
                         TEGEvent.TEGFailed(
                             timestamp = NOW_3,
-                            reason = "Max retries exceeded for task A"
-                        )
-                    )
-                )
+                            reason = "Max retries exceeded for task A",
+                        ),
+                    ),
+                ),
             )
         }
 
@@ -1543,17 +1556,17 @@ class TEGSchedulerTest {
                     taskName = "A",
                     timestamp = NOW_1,
                     outputArtefacts = listOf(
-                        TEGArtefact.TEGArtefactStringValue(name = "AOutput", value = "result of A")
-                    )
-                )
+                        TEGArtefact.TEGArtefactStringValue(name = "AOutput", value = "result of A"),
+                    ),
+                ),
             )
             sut.givenTheExistingEvents(mapOf(TEST_TEG_ID to eventsWithCompletedTask))
 
             sut.whenGettingTegUpdate(
                 TEGMessageIn.TEGTaskFailedMessage(
                     taskName = "A",
-                    reason = "Late failure message for already completed task"
-                )
+                    reason = "Late failure message for already completed task",
+                ),
             )
 
             sut.thenTheUpdateResultIsASuccess()
@@ -1564,10 +1577,10 @@ class TEGSchedulerTest {
                         TEGEvent.Failed(
                             taskName = "A",
                             timestamp = NOW_3,
-                            reason = "Late failure message for already completed task"
+                            reason = "Late failure message for already completed task",
                         ),
-                    )
-                )
+                    ),
+                ),
             )
         }
 
@@ -1582,7 +1595,7 @@ class TEGSchedulerTest {
                 TEGEvent.Completed(
                     taskName = "A",
                     timestamp = NOW_3,
-                    outputArtefacts = listOf()
+                    outputArtefacts = listOf(),
                 ),
             )
             sut.givenTheExistingEvents(mapOf(TEST_TEG_ID to eventsWithTwoFailures))
@@ -1590,8 +1603,8 @@ class TEGSchedulerTest {
             sut.whenGettingTegUpdate(
                 TEGMessageIn.TEGTaskFailedMessage(
                     taskName = "A",
-                    reason = "Third failure after completion"
-                )
+                    reason = "Third failure after completion",
+                ),
             )
 
             sut.thenTheUpdateResultIsASuccess()
@@ -1602,10 +1615,10 @@ class TEGSchedulerTest {
                         TEGEvent.Failed(
                             taskName = "A",
                             timestamp = NOW_4,
-                            reason = "Third failure after completion"
+                            reason = "Third failure after completion",
                         ),
-                    )
-                )
+                    ),
+                ),
             )
         }
     }
@@ -1622,8 +1635,8 @@ class TEGSchedulerTest {
                         .withOutputs(
                             TEGArtefactDefinition(
                                 name = "AOutput",
-                                type = TEGArtefactType.STRING_VALUE
-                            )
+                                type = TEGArtefactType.STRING_VALUE,
+                            ),
                         )
                         .build(),
                     NOW_0,
@@ -1636,8 +1649,8 @@ class TEGSchedulerTest {
                     taskName = "A",
                     timestamp = NOW_1,
                     outputArtefacts = listOf(
-                        TEGArtefact.TEGArtefactStringValue(name = "AOutput", value = "result of A")
-                    )
+                        TEGArtefact.TEGArtefactStringValue(name = "AOutput", value = "result of A"),
+                    ),
                 ),
                 TEGEvent.Created(
                     TEGTaskBuilder("B")
@@ -1645,8 +1658,8 @@ class TEGSchedulerTest {
                         .withInputs(
                             TEGArtefactDefinition(
                                 name = "AOutput",
-                                type = TEGArtefactType.STRING_VALUE
-                            )
+                                type = TEGArtefactType.STRING_VALUE,
+                            ),
                         )
                         .build(),
                     NOW_0,
@@ -1662,8 +1675,8 @@ class TEGSchedulerTest {
             sut.whenGettingTegUpdate(
                 TEGMessageIn.TEGTaskFailedMessage(
                     taskName = "B",
-                    reason = "Worker crashed"
-                )
+                    reason = "Worker crashed",
+                ),
             )
 
             sut.thenTheUpdateResultIsASuccess()
@@ -1672,9 +1685,9 @@ class TEGSchedulerTest {
                     .asRunType()
                     .withArguments("arg1", "arg2")
                     .withArtefacts(
-                        TEGArtefact.TEGArtefactStringValue(name = "AOutput", value = "result of A")
+                        TEGArtefact.TEGArtefactStringValue(name = "AOutput", value = "result of A"),
                     )
-                    .build()
+                    .build(),
             )
         }
     }
@@ -1693,7 +1706,7 @@ class TEGSchedulerTest {
                     taskName = "A",
                     progress = 50,
                     step = "task_progress",
-                )
+                ),
             )
 
             sut.thenThePersistedEventsShouldBe(
@@ -1704,9 +1717,9 @@ class TEGSchedulerTest {
                             timestamp = NOW_1,
                             progress = 50,
                             step = "task_progress",
-                        )
-                    )
-                )
+                        ),
+                    ),
+                ),
             )
         }
 
@@ -1715,8 +1728,8 @@ class TEGSchedulerTest {
             sut.whenGettingTegUpdate(
                 TEGMessageIn.TEGTaskLogMessage(
                     taskName = "A",
-                    log = "This is a log message"
-                )
+                    log = "This is a log message",
+                ),
             )
 
             sut.thenThePersistedEventsShouldBe(
@@ -1725,10 +1738,10 @@ class TEGSchedulerTest {
                         TEGEvent.Log(
                             taskName = "A",
                             timestamp = NOW_1,
-                            log = "This is a log message"
-                        )
-                    )
-                )
+                            log = "This is a log message",
+                        ),
+                    ),
+                ),
             )
         }
     }
@@ -1745,8 +1758,8 @@ class TEGSchedulerTest {
                         .withOutputs(
                             TEGArtefactDefinition(
                                 name = "AOutput",
-                                type = TEGArtefactType.STRING_VALUE
-                            )
+                                type = TEGArtefactType.STRING_VALUE,
+                            ),
                         )
                         .withTimeout(5.milliseconds)
                         .build(),
@@ -1778,9 +1791,9 @@ class TEGSchedulerTest {
                         TEGEvent.Scheduled(
                             taskName = "A",
                             timestamp = NOW_6,
-                        )
-                    )
-                )
+                        ),
+                    ),
+                ),
             )
         }
 
@@ -1790,12 +1803,12 @@ class TEGSchedulerTest {
                 TEGEvent.Failed(
                     taskName = "A",
                     timestamp = NOW_1,
-                    reason = "Some reason"
+                    reason = "Some reason",
                 ),
                 TEGEvent.TEGFailed(
                     timestamp = NOW_1,
-                    reason = "Task A failed, so the whole TEG is marked as failed"
-                )
+                    reason = "Task A failed, so the whole TEG is marked as failed",
+                ),
             )
             sut.givenTheDatesToReturn(NOW_2)
             sut.givenTheExistingEvents(mapOf(TEST_TEG_ID to testBase))
@@ -1819,7 +1832,7 @@ class TEGSchedulerTest {
                 TEGMessageBuilder("A")
                     .asRunType()
                     .withTimeout(5.milliseconds)
-                    .build()
+                    .build(),
             )
         }
 
@@ -1858,7 +1871,6 @@ class TEGSchedulerTest {
 
             sut.whenTheTimeoutCheckerRuns()
 
-
             sut.thenTheTimeoutCheckResultIsASuccess()
             sut.thenTheScheduledTasksAre(
                 TEGMessageBuilder("A")
@@ -1885,8 +1897,8 @@ class TEGSchedulerTest {
                             reason = "Task timed out after 5ms (started at 1970-01-01T00:00:00Z)",
                         ),
                         TEGEvent.Scheduled(taskName = "B", timestamp = NOW_6),
-                    )
-                )
+                    ),
+                ),
             )
         }
 
@@ -1942,10 +1954,10 @@ class TEGSchedulerTest {
                         ),
                         TEGEvent.TEGFailed(
                             timestamp = Instant.ofEpochMilli(18),
-                            reason = "Max retries exceeded for task A"
-                        )
-                    )
-                )
+                            reason = "Max retries exceeded for task A",
+                        ),
+                    ),
+                ),
             )
         }
     }
@@ -1973,12 +1985,12 @@ class TEGSchedulerTest {
                 TEGEvent.Failed(
                     taskName = "A",
                     timestamp = NOW_1,
-                    reason = "Worker crashed"
+                    reason = "Worker crashed",
                 ),
                 TEGEvent.TEGFailed(
                     timestamp = NOW_1,
-                    reason = "Task A failed, so the whole TEG is marked as failed"
-                )
+                    reason = "Task A failed, so the whole TEG is marked as failed",
+                ),
             )
             sut.givenTheExistingEvents(mapOf(TEST_TEG_ID to baseEvents))
 
@@ -2008,7 +2020,7 @@ class TEGSchedulerTest {
                 ),
                 TEGEvent.NoMoreTasksToSchedule(
                     timestamp = NOW_1,
-                )
+                ),
             )
             sut.givenTheExistingEvents(mapOf(TEST_TEG_ID to baseEvents))
 
@@ -2024,14 +2036,14 @@ class TEGSchedulerTest {
                 TEGEvent.Scheduled(
                     taskName = "A",
                     timestamp = NOW_0,
-                )
+                ),
             )
             sut.givenTheExistingEvents(mapOf(TEST_TEG_ID to baseEvents))
 
             sut.whenTheTimeoutCheckerRuns()
 
             sut.thenTheTimeoutCheckResultIsAnError(
-                TegTimeoutCheckError.ScheduledEventWithoutCreatedTask(tegId = TEST_TEG_ID, taskName = "A")
+                TegTimeoutCheckError.ScheduledEventWithoutCreatedTask(tegId = TEST_TEG_ID, taskName = "A"),
             )
         }
     }

@@ -2,10 +2,10 @@ package me.noukakis.re_do.adapters.common.spring.rabbitmq.configuration
 
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
-import kotlin.time.Duration
 import me.noukakis.re_do.common.model.TEGMessageOut
 import tools.jackson.databind.annotation.JsonDeserialize
 import tools.jackson.databind.annotation.JsonSerialize
+import kotlin.time.Duration
 
 /**
  * Jackson mixin for [TEGMessageOut].

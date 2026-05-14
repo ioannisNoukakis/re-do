@@ -8,7 +8,12 @@ import me.noukakis.re_do.common.model.TEGMessageOut
 import me.noukakis.re_do.common.port.FileStoragePort
 import me.noukakis.re_do.common.port.UUIDPort
 import me.noukakis.re_do.runner.model.LocalTegArtefact
-import me.noukakis.re_do.runner.port.*
+import me.noukakis.re_do.runner.port.MessagingPort
+import me.noukakis.re_do.runner.port.RunWithTimeoutPort
+import me.noukakis.re_do.runner.port.TaskExecutionContext
+import me.noukakis.re_do.runner.port.TaskHandler
+import me.noukakis.re_do.runner.port.TaskImplementationResult
+import me.noukakis.re_do.runner.port.TempWorkingDirPort
 import me.noukakis.re_do.scheduler.model.TEGArtefact
 import me.noukakis.re_do.scheduler.model.TaskRunnerError
 import java.nio.file.Path
@@ -25,21 +30,18 @@ class TaskRunner(
     private val uuidPort: UUIDPort,
     private val implementations: Map<String, TaskHandler> = emptyMap(),
 ) : TaskRunnerService {
-    override suspend fun execute(tegId: String, message: TEGMessageOut): Either<TaskRunnerError, Unit> =
-        when (message) {
-            is TEGMessageOut.TEGRunTaskMessage -> runTask(tegId, message)
-        }
+    override suspend fun execute(tegId: String, message: TEGMessageOut): Either<TaskRunnerError, Unit> = when (message) {
+        is TEGMessageOut.TEGRunTaskMessage -> runTask(tegId, message)
+    }
 
     private suspend fun runTask(
         tegId: String,
-        message: TEGMessageOut.TEGRunTaskMessage
-    ): Either<TaskRunnerError, Unit> {
-        return runTaskBase(message, tegId).onLeft { sendErrorMessage(it, tegId, message) }
-    }
+        message: TEGMessageOut.TEGRunTaskMessage,
+    ): Either<TaskRunnerError, Unit> = runTaskBase(message, tegId).onLeft { sendErrorMessage(it, tegId, message) }
 
     private suspend fun runTaskBase(
         message: TEGMessageOut.TEGRunTaskMessage,
-        tegId: String
+        tegId: String,
     ): Either<TaskRunnerError, Unit> {
         try {
             tempWorkingDirPort.create().use { workingDir ->
@@ -53,7 +55,7 @@ class TaskRunner(
                                 taskName = message.taskName,
                                 progress = progress,
                                 step = step,
-                            )
+                            ),
                         )
                     }
 
@@ -63,7 +65,7 @@ class TaskRunner(
                             TEGMessageIn.TEGTaskLogMessage(
                                 taskName = message.taskName,
                                 log = log,
-                            )
+                            ),
                         )
                     }
 
@@ -80,7 +82,7 @@ class TaskRunner(
                                         taskName = message.taskName,
                                         progress = progress,
                                         step = "Downloading ${it.name()}",
-                                    )
+                                    ),
                                 )
                             }
                             LocalTegArtefact.LocalTegArtefactFile(it.name, path)
@@ -88,20 +90,20 @@ class TaskRunner(
 
                         is TEGArtefact.TEGArtefactStringValue -> LocalTegArtefact.LocalTEGArtefactStringValue(
                             it.name,
-                            it.value
+                            it.value,
                         )
                     }
                 }
 
                 val implResult = runWithTimeoutPort.execute(
                     supplier = { impl.run(artefacts, message.arguments, context) },
-                    timeout = message.timeout
+                    timeout = message.timeout,
                 )
                     .fold(
                         ifLeft = {
                             return TaskRunnerError.TaskTimedOut(tegId, message.taskName).left()
                         },
-                        ifRight = { it }
+                        ifRight = { it },
                     )
 
                 return when (implResult) {
@@ -116,19 +118,19 @@ class TaskRunner(
                                                 taskName = message.taskName,
                                                 progress = progress,
                                                 step = "Uploading ${it.name}",
-                                            )
+                                            ),
                                         )
                                     }
                                     TEGArtefact.TEGArtefactFile(
                                         it.name,
                                         ref.ref,
-                                        ref.storedWith
+                                        ref.storedWith,
                                     )
                                 }
 
                                 is LocalTegArtefact.LocalTEGArtefactStringValue -> TEGArtefact.TEGArtefactStringValue(
                                     it.name,
-                                    it.value
+                                    it.value,
                                 )
                             }
                         }
@@ -137,7 +139,7 @@ class TaskRunner(
                             TEGMessageIn.TEGTaskResultMessage(
                                 taskName = message.taskName,
                                 outputArtefacts = remoteArtefacts,
-                            )
+                            ),
                         )
                         Unit.right()
                     }
@@ -145,7 +147,7 @@ class TaskRunner(
                     is TaskImplementationResult.Failure -> TaskRunnerError.TaskFailed(
                         tegId,
                         message.taskName,
-                        implResult.reason
+                        implResult.reason,
                     ).left()
                 }
             }
@@ -154,7 +156,7 @@ class TaskRunner(
             return TaskRunnerError.TaskFailed(
                 tegId,
                 message.taskName,
-                stackTrace
+                stackTrace,
             ).left()
         }
     }
@@ -162,7 +164,7 @@ class TaskRunner(
     private fun sendErrorMessage(
         error: TaskRunnerError,
         tegId: String,
-        message: TEGMessageOut.TEGRunTaskMessage
+        message: TEGMessageOut.TEGRunTaskMessage,
     ) {
         when (error) {
             is TaskRunnerError.TaskTimedOut ->
@@ -171,7 +173,7 @@ class TaskRunner(
                     TEGMessageIn.TEGTaskFailedMessage(
                         taskName = message.taskName,
                         reason = "Task timed out",
-                    )
+                    ),
                 )
 
             is TaskRunnerError.TaskFailed -> messagingPort.send(
@@ -179,7 +181,7 @@ class TaskRunner(
                 TEGMessageIn.TEGTaskFailedMessage(
                     taskName = message.taskName,
                     reason = error.reason,
-                )
+                ),
             )
 
             is TaskRunnerError.ImplementationNotFound -> messagingPort.send(
@@ -187,15 +189,13 @@ class TaskRunner(
                 TEGMessageIn.TEGTaskFailedMessage(
                     taskName = message.taskName,
                     reason = "No implementation found for: ${message.implementationName}",
-                )
+                ),
             )
         }
     }
 
     private fun handleMissingImplementation(
         tegId: String,
-        message: TEGMessageOut.TEGRunTaskMessage
-    ): Either<TaskRunnerError, Nothing> {
-        return TaskRunnerError.ImplementationNotFound(tegId, message.implementationName).left()
-    }
+        message: TEGMessageOut.TEGRunTaskMessage,
+    ): Either<TaskRunnerError, Nothing> = TaskRunnerError.ImplementationNotFound(tegId, message.implementationName).left()
 }

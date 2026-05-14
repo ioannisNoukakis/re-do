@@ -9,7 +9,11 @@ import me.noukakis.re_do.scheduler.port.MessagingPort
 import me.noukakis.re_do.scheduler.port.SchedulerUpdateErrorHandlerPort
 import me.noukakis.re_do.scheduler.service.TegUpdateHandler
 import org.slf4j.LoggerFactory
-import org.springframework.amqp.core.*
+import org.springframework.amqp.core.AcknowledgeMode
+import org.springframework.amqp.core.BindingBuilder
+import org.springframework.amqp.core.Declarables
+import org.springframework.amqp.core.Queue
+import org.springframework.amqp.core.TopicExchange
 import org.springframework.amqp.rabbit.connection.ConnectionFactory
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer
@@ -31,9 +35,9 @@ class RabbitMQSchedulerConfiguration {
         @Value("\${scheduler.rabbitmq.dead-letter-exchange}") deadLetterExchangeName: String,
     ): Declarables {
         val replyExchange = TopicExchange(replyExchangeName, true, false)
-        val replyQueue    = Queue(replyQueueName, true, false, false)
-        val replyBinding  = BindingBuilder.bind(replyQueue).to(replyExchange).with(replyRoutingKey)
-        val dlExchange    = TopicExchange(deadLetterExchangeName, true, false)
+        val replyQueue = Queue(replyQueueName, true, false, false)
+        val replyBinding = BindingBuilder.bind(replyQueue).to(replyExchange).with(replyRoutingKey)
+        val dlExchange = TopicExchange(deadLetterExchangeName, true, false)
         return Declarables(listOf(replyExchange, replyQueue, replyBinding, dlExchange))
     }
 
@@ -42,12 +46,10 @@ class RabbitMQSchedulerConfiguration {
     fun messagingPortRabbitMqBean(
         rabbitTemplate: RabbitTemplate,
         @Value("\${scheduler.rabbitmq.task-exchange}") exchangeKey: String,
-    ): MessagingPort {
-        return RabbitMQMessagingSchedulerAdapter(
-            rabbitTemplate,
-            exchangeKey,
-        )
-    }
+    ): MessagingPort = RabbitMQMessagingSchedulerAdapter(
+        rabbitTemplate,
+        exchangeKey,
+    )
 
     @Bean
     @ConditionalOnProperty(name = ["scheduler.messaging.mode"], havingValue = "rabbitmq")
@@ -106,10 +108,9 @@ class RabbitMQSchedulerConfiguration {
         connectionFactory: ConnectionFactory,
         listener: TEGMessageListener<*, *>,
         @Value("\${scheduler.rabbitmq.reply-queue}") replyQueue: String,
-    ): SimpleMessageListenerContainer =
-        SimpleMessageListenerContainer(connectionFactory).also {
-            it.setQueueNames(replyQueue)
-            it.setMessageListener(listener)
-            it.acknowledgeMode = AcknowledgeMode.AUTO
-        }
+    ): SimpleMessageListenerContainer = SimpleMessageListenerContainer(connectionFactory).also {
+        it.setQueueNames(replyQueue)
+        it.setMessageListener(listener)
+        it.acknowledgeMode = AcknowledgeMode.AUTO
+    }
 }

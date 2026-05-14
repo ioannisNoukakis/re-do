@@ -19,7 +19,7 @@ class FFMPEGTask : TaskHandler {
     ): TaskImplementationResult {
         if (arguments.size < 2) {
             return TaskImplementationResult.Failure(
-                "Expected at least 2 arguments: ffmpeg args string and timeout in seconds"
+                "Expected at least 2 arguments: ffmpeg args string and timeout in seconds",
             )
         }
 
@@ -36,14 +36,14 @@ class FFMPEGTask : TaskHandler {
         for (name in fileInputNames) {
             if (name !in artefactNames) {
                 return TaskImplementationResult.Failure(
-                    "Input file '$name' referenced in arguments but not provided as an artefact"
+                    "Input file '$name' referenced in arguments but not provided as an artefact",
                 )
             }
         }
         for (artefact in fileArtefacts) {
             if (artefact.name !in fileInputNames) {
                 return TaskImplementationResult.Failure(
-                    "Artefact '${artefact.name}' provided but not referenced in ffmpeg arguments"
+                    "Artefact '${artefact.name}' provided but not referenced in ffmpeg arguments",
                 )
             }
         }

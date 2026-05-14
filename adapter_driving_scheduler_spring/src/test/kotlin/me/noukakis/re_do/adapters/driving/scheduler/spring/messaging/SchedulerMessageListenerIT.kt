@@ -11,7 +11,9 @@ import me.noukakis.re_do.scheduler.model.TegUpdateError
 import me.noukakis.re_do.scheduler.port.SchedulerUpdateErrorHandlerPort
 import me.noukakis.re_do.scheduler.service.TEGUpdateCommand
 import me.noukakis.re_do.scheduler.service.TegUpdateHandler
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -36,12 +38,14 @@ private class StubSchedulerUpdateErrorHandlerPort : SchedulerUpdateErrorHandlerP
     val updateErrors = mutableListOf<TegUpdateError>()
     override fun onMissingTegId() = Unit
     override fun onUnreadableMessage(rawBody: ByteArray) = Unit
-    override fun onUpdateError(error: TegUpdateError) { updateErrors += error }
+    override fun onUpdateError(error: TegUpdateError) {
+        updateErrors += error
+    }
 }
 
 // ── Tests ──────────────────────────────────────────────────────────────────
 
-class SchedulerMessageListenerTest {
+class SchedulerMessageListenerIT {
 
     private val messageConverter = MessageConverter.new()
     private lateinit var stubHandler: StubTegUpdateHandler
@@ -63,7 +67,7 @@ class SchedulerMessageListenerTest {
     inner class ConvertMessage {
 
         @ParameterizedTest
-        @MethodSource("me.noukakis.re_do.adapters.driving.scheduler.spring.messaging.SchedulerMessageListenerTest#allMessageInTypes")
+        @MethodSource("me.noukakis.re_do.adapters.driving.scheduler.spring.messaging.SchedulerMessageListenerIT#allMessageInTypes")
         fun `convertMessage returns a TEGMessageIn for every valid subtype`(expected: TEGMessageIn) {
             val result = sut.convertMessage(amqpMessage(expected))
 
@@ -117,8 +121,7 @@ class SchedulerMessageListenerTest {
 
     // ── Helpers ────────────────────────────────────────────────────────────
 
-    private fun amqpMessage(payload: TEGMessageIn): Message =
-        messageConverter.toMessage(payload, MessageProperties())
+    private fun amqpMessage(payload: TEGMessageIn): Message = messageConverter.toMessage(payload, MessageProperties())
 
     companion object {
         @JvmStatic

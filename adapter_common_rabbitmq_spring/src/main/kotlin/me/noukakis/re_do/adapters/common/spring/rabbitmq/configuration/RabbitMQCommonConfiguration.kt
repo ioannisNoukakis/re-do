@@ -19,4 +19,3 @@ class RabbitMQCommonConfiguration {
         it.messageConverter = messageConverter
     }
 }
-

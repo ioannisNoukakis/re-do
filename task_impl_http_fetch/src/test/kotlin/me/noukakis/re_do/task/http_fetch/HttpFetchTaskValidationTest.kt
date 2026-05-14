@@ -60,7 +60,7 @@ class HttpFetchTaskValidationTest {
         fun `when header arguments are not in pairs`() {
             assertEquals(
                 TaskImplementationResult.Failure(
-                    "Header arguments must be name/value pairs (got 1 after url and filename)"
+                    "Header arguments must be name/value pairs (got 1 after url and filename)",
                 ),
                 sut.run(emptyList(), listOf("https://example.com/file", "out.bin", "X-Lonely"), context),
             )
@@ -102,7 +102,7 @@ class HttpFetchTaskValidationTest {
         fun `when url resolves to loopback address`() {
             assertEquals(
                 TaskImplementationResult.Failure(
-                    "Host '127.0.0.1' resolves to a private/internal address (127.0.0.1); blocked by default"
+                    "Host '127.0.0.1' resolves to a private/internal address (127.0.0.1); blocked by default",
                 ),
                 sut.run(emptyList(), listOf("http://127.0.0.1/file", "out.bin"), context),
             )
@@ -112,7 +112,7 @@ class HttpFetchTaskValidationTest {
         fun `when url resolves to RFC1918 address`() {
             assertEquals(
                 TaskImplementationResult.Failure(
-                    "Host '10.0.0.1' resolves to a private/internal address (10.0.0.1); blocked by default"
+                    "Host '10.0.0.1' resolves to a private/internal address (10.0.0.1); blocked by default",
                 ),
                 sut.run(emptyList(), listOf("http://10.0.0.1/file", "out.bin"), context),
             )
@@ -122,7 +122,7 @@ class HttpFetchTaskValidationTest {
         fun `when url resolves to link-local address`() {
             assertEquals(
                 TaskImplementationResult.Failure(
-                    "Host '169.254.1.1' resolves to a private/internal address (169.254.1.1); blocked by default"
+                    "Host '169.254.1.1' resolves to a private/internal address (169.254.1.1); blocked by default",
                 ),
                 sut.run(emptyList(), listOf("http://169.254.1.1/file", "out.bin"), context),
             )
@@ -132,7 +132,7 @@ class HttpFetchTaskValidationTest {
         fun `when url resolves to IPv6 loopback address`() {
             assertEquals(
                 TaskImplementationResult.Failure(
-                    "Host '[::1]' resolves to a private/internal address (0:0:0:0:0:0:0:1); blocked by default"
+                    "Host '[::1]' resolves to a private/internal address (0:0:0:0:0:0:0:1); blocked by default",
                 ),
                 sut.run(emptyList(), listOf("http://[::1]/file", "out.bin"), context),
             )
@@ -142,7 +142,7 @@ class HttpFetchTaskValidationTest {
         fun `when url resolves to IPv6 link-local address`() {
             assertEquals(
                 TaskImplementationResult.Failure(
-                    "Host '[fe80::1]' resolves to a private/internal address (fe80:0:0:0:0:0:0:1); blocked by default"
+                    "Host '[fe80::1]' resolves to a private/internal address (fe80:0:0:0:0:0:0:1); blocked by default",
                 ),
                 sut.run(emptyList(), listOf("http://[fe80::1]/file", "out.bin"), context),
             )
@@ -152,7 +152,7 @@ class HttpFetchTaskValidationTest {
         fun `when url resolves to IPv6 ULA address with fc prefix`() {
             assertEquals(
                 TaskImplementationResult.Failure(
-                    "Host '[fc00::1]' resolves to a private/internal address (fc00:0:0:0:0:0:0:1); blocked by default"
+                    "Host '[fc00::1]' resolves to a private/internal address (fc00:0:0:0:0:0:0:1); blocked by default",
                 ),
                 sut.run(emptyList(), listOf("http://[fc00::1]/file", "out.bin"), context),
             )
@@ -162,7 +162,7 @@ class HttpFetchTaskValidationTest {
         fun `when url resolves to IPv6 ULA address with fd prefix`() {
             assertEquals(
                 TaskImplementationResult.Failure(
-                    "Host '[fd00::1]' resolves to a private/internal address (fd00:0:0:0:0:0:0:1); blocked by default"
+                    "Host '[fd00::1]' resolves to a private/internal address (fd00:0:0:0:0:0:0:1); blocked by default",
                 ),
                 sut.run(emptyList(), listOf("http://[fd00::1]/file", "out.bin"), context),
             )

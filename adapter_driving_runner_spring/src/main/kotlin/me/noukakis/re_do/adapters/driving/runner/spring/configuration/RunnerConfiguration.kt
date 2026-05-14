@@ -48,12 +48,12 @@ class RunnerConfiguration {
         @Value("\${runner.file-storage.s3.secret-key}") secretKey: String,
         @Value("\${runner.file-storage.s3.region:us-east-1}") region: String,
     ): FileStoragePort = S3FileStorageAdapter(
-        endpoint=endpoint,
+        endpoint = endpoint,
         bucketName = bucket,
         credentialsProvider = StaticCredentialsProvider.create(
-            AwsBasicCredentials.create(accessKey, secretKey)
+            AwsBasicCredentials.create(accessKey, secretKey),
         ),
-        region=region
+        region = region,
     )
 
     @Bean
@@ -73,12 +73,12 @@ class RunnerConfiguration {
         tempWorkingDirPort = tempWorkingDirPort,
         fileStoragePort = fileStoragePort,
         uuidPort = uuidPort,
-        registry.toMap()
+        registry.toMap(),
     )
 
     @Bean
     fun taskHandlerRegistry(
-        @Value("\${runner.tasks.plugin-folder}") pluginFolder: Path
+        @Value("\${runner.tasks.plugin-folder}") pluginFolder: Path,
     ) = TaskHandlerRegistry.new(pluginFolder)
 
     @Bean

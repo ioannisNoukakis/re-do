@@ -19,8 +19,7 @@ class SchedulerMessageListener(
 
     private val logger = LoggerFactory.getLogger(SchedulerMessageListener::class.java)
 
-    override fun convertMessage(raw: Message): TEGMessageIn? =
-        messageConverter.fromMessage(raw) as? TEGMessageIn
+    override fun convertMessage(raw: Message): TEGMessageIn? = messageConverter.fromMessage(raw) as? TEGMessageIn
 
     override fun handleMessage(tegId: String, message: TEGMessageIn): Either<TegUpdateError, Unit> {
         logger.info("Received TEG update: tegId={}, messageType={}", tegId, message::class.simpleName)

@@ -23,4 +23,3 @@ interface TaskHandler {
 
     fun implementationName(): String
 }
-

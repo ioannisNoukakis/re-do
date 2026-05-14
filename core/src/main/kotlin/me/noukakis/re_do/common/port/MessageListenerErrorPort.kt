@@ -4,4 +4,3 @@ interface MessageListenerErrorPort {
     fun onMissingTegId()
     fun onUnreadableMessage(rawBody: ByteArray)
 }
-

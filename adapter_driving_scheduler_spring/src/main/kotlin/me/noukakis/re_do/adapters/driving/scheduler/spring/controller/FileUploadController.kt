@@ -33,14 +33,14 @@ class FileUploadController(
             val result = uploadFileUseCase.execute(
                 UploadFileCommand(
                     identity = Identity(sub, roles),
-                    sourcePath = tmpFile.toPath()
-                )
+                    sourcePath = tmpFile.toPath(),
+                ),
             )
             return ResponseEntity.ok(
                 UploadFileResponse(
                     ref = result.ref,
                     storedWith = result.storedWith,
-                )
+                ),
             )
         } finally {
             tmpFile?.delete()

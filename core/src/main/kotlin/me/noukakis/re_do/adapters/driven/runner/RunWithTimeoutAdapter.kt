@@ -12,8 +12,8 @@ import kotlin.time.Duration
 class RunWithTimeoutAdapter : RunWithTimeoutPort {
     override suspend fun <T> execute(
         supplier: suspend () -> T,
-        timeout: Duration
-    ): Either<TaskTimedOut, T> =  try {
+        timeout: Duration,
+    ): Either<TaskTimedOut, T> = try {
         withTimeout(timeout) { supplier() }.right()
     } catch (_: TimeoutCancellationException) {
         TaskTimedOut.left()

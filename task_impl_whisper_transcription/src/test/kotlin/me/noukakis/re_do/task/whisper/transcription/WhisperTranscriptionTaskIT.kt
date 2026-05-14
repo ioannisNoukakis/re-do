@@ -61,9 +61,9 @@ class WhisperTranscriptionTaskIT {
                     listOf(
                         LocalTegArtefact.LocalTegArtefactFile(
                             "transcript.txt",
-                            workingDir.resolve("transcript.txt")
-                        )
-                    )
+                            workingDir.resolve("transcript.txt"),
+                        ),
+                    ),
                 ),
                 result,
             )
@@ -100,4 +100,3 @@ class WhisperTranscriptionTaskIT {
         }
     }
 }
-

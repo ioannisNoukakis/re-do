@@ -58,7 +58,7 @@ class HttpFetchTaskIT {
                     path = exchange.requestURI.toString(),
                     method = exchange.requestMethod,
                     headers = exchange.requestHeaders.toMap().mapValues { it.value.toList() },
-                )
+                ),
             )
             try {
                 handler(exchange)
@@ -80,10 +80,14 @@ class HttpFetchTaskIT {
         fun `returns Success with single file artefact`() {
             route("/data.bin") { ex -> respond(ex, 200, "hello world".toByteArray()) }
 
-            val result = sut.run(emptyList(), listOf(
-                "${baseUrl()}/data.bin",
-                "data.bin",
-            ), context)
+            val result = sut.run(
+                emptyList(),
+                listOf(
+                    "${baseUrl()}/data.bin",
+                    "data.bin",
+                ),
+                context,
+            )
 
             assertEquals(
                 TaskImplementationResult.Success(
@@ -91,8 +95,8 @@ class HttpFetchTaskIT {
                         LocalTegArtefact.LocalTegArtefactFile(
                             name = "data.bin",
                             path = workingDir.resolve("data.bin"),
-                        )
-                    )
+                        ),
+                    ),
                 ),
                 result,
             )
@@ -103,10 +107,14 @@ class HttpFetchTaskIT {
             val payload = "the quick brown fox".toByteArray()
             route("/file.txt") { ex -> respond(ex, 200, payload) }
 
-            sut.run(emptyList(), listOf(
-                "${baseUrl()}/file.txt",
-                "file.txt",
-            ), context)
+            sut.run(
+                emptyList(),
+                listOf(
+                    "${baseUrl()}/file.txt",
+                    "file.txt",
+                ),
+                context,
+            )
 
             assertContentEquals(payload, Files.readAllBytes(workingDir.resolve("file.txt")))
         }
@@ -115,10 +123,14 @@ class HttpFetchTaskIT {
         fun `reports progress at 0 and 100`() {
             route("/x") { ex -> respond(ex, 200, "x".toByteArray()) }
 
-            sut.run(emptyList(), listOf(
-                "${baseUrl()}/x",
-                "x",
-            ), context)
+            sut.run(
+                emptyList(),
+                listOf(
+                    "${baseUrl()}/x",
+                    "x",
+                ),
+                context,
+            )
 
             assertEquals(
                 listOf(0 to STEP_DOWNLOAD, 100 to STEP_DOWNLOAD),
@@ -133,10 +145,14 @@ class HttpFetchTaskIT {
         fun `404 returns Failure with status code`() {
             route("/missing") { ex -> respond(ex, 404, "Not found here".toByteArray()) }
 
-            val result = sut.run(emptyList(), listOf(
-                "${baseUrl()}/missing",
-                "missing",
-            ), context)
+            val result = sut.run(
+                emptyList(),
+                listOf(
+                    "${baseUrl()}/missing",
+                    "missing",
+                ),
+                context,
+            )
 
             assertEquals(
                 TaskImplementationResult.Failure("HTTP 404: Not found here"),
@@ -149,10 +165,14 @@ class HttpFetchTaskIT {
             val body = "X".repeat(FAILURE_BODY_MAX + 500).toByteArray()
             route("/boom") { ex -> respond(ex, 500, body) }
 
-            val result = sut.run(emptyList(), listOf(
-                "${baseUrl()}/boom",
-                "boom",
-            ), context)
+            val result = sut.run(
+                emptyList(),
+                listOf(
+                    "${baseUrl()}/boom",
+                    "boom",
+                ),
+                context,
+            )
 
             val failure = result as TaskImplementationResult.Failure
             assertTrue(failure.reason.startsWith("HTTP 500: "))
@@ -170,10 +190,14 @@ class HttpFetchTaskIT {
             }
             route("/target.bin") { ex -> respond(ex, 200, "redirected".toByteArray()) }
 
-            val result = sut.run(emptyList(), listOf(
-                "${baseUrl()}/r1",
-                "target.bin",
-            ), context)
+            val result = sut.run(
+                emptyList(),
+                listOf(
+                    "${baseUrl()}/r1",
+                    "target.bin",
+                ),
+                context,
+            )
 
             assertEquals(
                 TaskImplementationResult.Success(
@@ -181,8 +205,8 @@ class HttpFetchTaskIT {
                         LocalTegArtefact.LocalTegArtefactFile(
                             name = "target.bin",
                             path = workingDir.resolve("target.bin"),
-                        )
-                    )
+                        ),
+                    ),
                 ),
                 result,
             )
@@ -198,10 +222,14 @@ class HttpFetchTaskIT {
             }
             val limited = HttpFetchTask(defaultAllowPrivateIPs = true, defaultMaxRedirects = 2)
 
-            val result = limited.run(emptyList(), listOf(
-                "${baseUrl()}/r1",
-                "r1",
-                ), context)
+            val result = limited.run(
+                emptyList(),
+                listOf(
+                    "${baseUrl()}/r1",
+                    "r1",
+                ),
+                context,
+            )
 
             assertEquals(
                 TaskImplementationResult.Failure("Exceeded maximum redirects (2)"),
@@ -216,10 +244,14 @@ class HttpFetchTaskIT {
                 ex.sendResponseHeaders(302, -1)
             }
 
-            val result = sut.run(emptyList(), listOf(
-                "${baseUrl()}/loop",
-                "loop",
-            ), context)
+            val result = sut.run(
+                emptyList(),
+                listOf(
+                    "${baseUrl()}/loop",
+                    "loop",
+                ),
+                context,
+            )
 
             val failure = result as TaskImplementationResult.Failure
             assertTrue(failure.reason.startsWith("Redirect loop detected")) {
@@ -234,10 +266,14 @@ class HttpFetchTaskIT {
                 ex.sendResponseHeaders(302, -1)
             }
 
-            val result = sut.run(emptyList(), listOf(
-                "${baseUrl()}/r",
-                "r",
-            ), context)
+            val result = sut.run(
+                emptyList(),
+                listOf(
+                    "${baseUrl()}/r",
+                    "r",
+                ),
+                context,
+            )
 
             assertEquals(
                 TaskImplementationResult.Failure("URL scheme must be http or https; got 'file'"),
@@ -254,14 +290,18 @@ class HttpFetchTaskIT {
             route("/big") { ex -> respond(ex, 200, payload) }
             val capped = HttpFetchTask(defaultAllowPrivateIPs = true, defaultMaxDownloadBytes = 1024)
 
-            val result = capped.run(emptyList(), listOf(
-                "${baseUrl()}/big",
-                "big",
-            ), context)
+            val result = capped.run(
+                emptyList(),
+                listOf(
+                    "${baseUrl()}/big",
+                    "big",
+                ),
+                context,
+            )
 
             assertEquals(
                 TaskImplementationResult.Failure(
-                    "Content-Length 2048 exceeds maximum allowed size of 1024 bytes"
+                    "Content-Length 2048 exceeds maximum allowed size of 1024 bytes",
                 ),
                 result,
             )
@@ -276,14 +316,18 @@ class HttpFetchTaskIT {
             }
             val capped = HttpFetchTask(defaultAllowPrivateIPs = true, defaultMaxDownloadBytes = 1024)
 
-            val result = capped.run(emptyList(), listOf(
-                "${baseUrl()}/stream",
-                "stream",
-            ), context)
+            val result = capped.run(
+                emptyList(),
+                listOf(
+                    "${baseUrl()}/stream",
+                    "stream",
+                ),
+                context,
+            )
 
             assertEquals(
                 TaskImplementationResult.Failure(
-                    "Download exceeded maximum allowed size of 1024 bytes"
+                    "Download exceeded maximum allowed size of 1024 bytes",
                 ),
                 result,
             )
@@ -323,7 +367,7 @@ class HttpFetchTaskIT {
                     "${baseUrl()}/auth",
                     "auth",
                     "Authorization",
-                    secret
+                    secret,
                 ),
                 context,
             )
@@ -345,7 +389,7 @@ class HttpFetchTaskIT {
                     "${baseUrl()}/auth",
                     "auth",
                     "Authorization",
-                    secret
+                    secret,
                 ),
                 context,
             )
@@ -369,10 +413,14 @@ class HttpFetchTaskIT {
                 defaultReadTimeout = Duration.ofMillis(200),
             )
 
-            val result = fast.run(emptyList(), listOf(
-                "${baseUrl()}/slow",
-                "slow",
-            ), context)
+            val result = fast.run(
+                emptyList(),
+                listOf(
+                    "${baseUrl()}/slow",
+                    "slow",
+                ),
+                context,
+            )
 
             assertTrue(result is TaskImplementationResult.Failure)
         }

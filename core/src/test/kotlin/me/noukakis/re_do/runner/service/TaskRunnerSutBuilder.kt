@@ -11,9 +11,15 @@ import me.noukakis.re_do.common.model.TEGMessageIn
 import me.noukakis.re_do.common.model.TEGMessageOut
 import me.noukakis.re_do.common.port.StoredFileRef
 import me.noukakis.re_do.runner.model.LocalTegArtefact
-import me.noukakis.re_do.runner.port.*
+import me.noukakis.re_do.runner.port.RunWithTimeoutPort
+import me.noukakis.re_do.runner.port.TaskExecutionContext
+import me.noukakis.re_do.runner.port.TaskHandler
+import me.noukakis.re_do.runner.port.TaskImplementationResult
+import me.noukakis.re_do.runner.port.TaskTimedOut
 import me.noukakis.re_do.scheduler.model.TaskRunnerError
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertInstanceOf
+import org.junit.jupiter.api.Assertions.assertTrue
 import java.nio.file.Path
 import kotlin.reflect.KClass
 import kotlin.time.Duration
@@ -31,9 +37,11 @@ class ConfigurableRunWithTimeoutAdapter : RunWithTimeoutPort {
         shouldTimeout = true
     }
 
-    override suspend fun <T> execute(supplier: suspend () -> T, timeout: Duration): Either<TaskTimedOut, T> =
-        if (shouldTimeout) TaskTimedOut.left()
-        else supplier().right()
+    override suspend fun <T> execute(supplier: suspend () -> T, timeout: Duration): Either<TaskTimedOut, T> = if (shouldTimeout) {
+        TaskTimedOut.left()
+    } else {
+        supplier().right()
+    }
 }
 
 class TaskRunnerSutBuilder {
@@ -55,7 +63,7 @@ class TaskRunnerSutBuilder {
     ) {
         storageAdapter.storage[fileId] = StoredFileRef(
             ref = fileId,
-            storedWith = "StubFileStorageAdapter"
+            storedWith = "StubFileStorageAdapter",
         )
     }
 
@@ -76,70 +84,72 @@ class TaskRunnerSutBuilder {
     }
 
     fun givenASuccessfulImplementation(name: String = TEST_TASK_IMPL_NAME) {
-        givenTheImplementation(name, object : TaskHandler {
-            override fun run(
-                artefacts: List<LocalTegArtefact>,
-                arguments: List<String>,
-                context: TaskExecutionContext,
-            ) = TaskImplementationResult.Success(outputArtefacts = emptyList())
+        givenTheImplementation(
+            name,
+            object : TaskHandler {
+                override fun run(
+                    artefacts: List<LocalTegArtefact>,
+                    arguments: List<String>,
+                    context: TaskExecutionContext,
+                ) = TaskImplementationResult.Success(outputArtefacts = emptyList())
 
-            override fun implementationName(): String {
-                return name
-            }
-        })
+                override fun implementationName(): String = name
+            },
+        )
     }
 
     fun givenASuccessfulImplementationWithFileRefs(name: String = TEST_TASK_IMPL_NAME, expectedFileRefsPaths: List<Path>) {
-        givenTheImplementation(name, object : TaskHandler {
-            override fun run(
-                artefacts: List<LocalTegArtefact>,
-                arguments: List<String>,
-                context: TaskExecutionContext,
-            ): TaskImplementationResult{
-                expectedFileRefsPaths.forEach { expected ->
-                    artefacts.filterIsInstance<LocalTegArtefact.LocalTegArtefactFile>()
-                        .find { it.path == expected }
-                        ?: throw IllegalStateException("Expected file ref with path $expected not found in artefacts")
+        givenTheImplementation(
+            name,
+            object : TaskHandler {
+                override fun run(
+                    artefacts: List<LocalTegArtefact>,
+                    arguments: List<String>,
+                    context: TaskExecutionContext,
+                ): TaskImplementationResult {
+                    expectedFileRefsPaths.forEach { expected ->
+                        artefacts.filterIsInstance<LocalTegArtefact.LocalTegArtefactFile>()
+                            .find { it.path == expected }
+                            ?: throw IllegalStateException("Expected file ref with path $expected not found in artefacts")
+                    }
+                    return TaskImplementationResult.Success(outputArtefacts = artefacts)
                 }
-                return TaskImplementationResult.Success(outputArtefacts = artefacts)
-            }
 
-            override fun implementationName(): String {
-                return name
-            }
-        })
+                override fun implementationName(): String = name
+            },
+        )
     }
 
     fun givenAnImplementationThatThrowsAnException(name: String = TEST_TASK_IMPL_NAME, exception: Exception): String {
         val stackTrace = exception.stackTraceToString()
-        givenTheImplementation(name, object : TaskHandler {
-            override fun run(
-                artefacts: List<LocalTegArtefact>,
-                arguments: List<String>,
-                context: TaskExecutionContext,
-            ): TaskImplementationResult {
-                throw exception
-            }
+        givenTheImplementation(
+            name,
+            object : TaskHandler {
+                override fun run(
+                    artefacts: List<LocalTegArtefact>,
+                    arguments: List<String>,
+                    context: TaskExecutionContext,
+                ): TaskImplementationResult = throw exception
 
-            override fun implementationName(): String {
-                return name
-            }
-        })
+                override fun implementationName(): String = name
+            },
+        )
         return stackTrace
     }
 
     fun givenAFailingImplementation(name: String = TEST_TASK_IMPL_NAME, reason: String) {
-        givenTheImplementation(name, object : TaskHandler {
-            override fun run(
-                artefacts: List<LocalTegArtefact>,
-                arguments: List<String>,
-                context: TaskExecutionContext,
-            ) = TaskImplementationResult.Failure(reason)
+        givenTheImplementation(
+            name,
+            object : TaskHandler {
+                override fun run(
+                    artefacts: List<LocalTegArtefact>,
+                    arguments: List<String>,
+                    context: TaskExecutionContext,
+                ) = TaskImplementationResult.Failure(reason)
 
-            override fun implementationName(): String {
-                return name
-            }
-        })
+                override fun implementationName(): String = name
+            },
+        )
     }
 
     fun givenAnImplementationThatReportsProgress(
@@ -147,57 +157,62 @@ class TaskRunnerSutBuilder {
         step: String = "task_progress",
         vararg progressValues: Int,
     ) {
-        givenTheImplementation(name, object : TaskHandler {
-            override fun run(
-                artefacts: List<LocalTegArtefact>,
-                arguments: List<String>,
-                context: TaskExecutionContext,
-            ): TaskImplementationResult {
-                progressValues.forEach { context.reportProgress(it, step) }
-                return TaskImplementationResult.Success(outputArtefacts = emptyList())
-            }
+        givenTheImplementation(
+            name,
+            object : TaskHandler {
+                override fun run(
+                    artefacts: List<LocalTegArtefact>,
+                    arguments: List<String>,
+                    context: TaskExecutionContext,
+                ): TaskImplementationResult {
+                    progressValues.forEach { context.reportProgress(it, step) }
+                    return TaskImplementationResult.Success(outputArtefacts = emptyList())
+                }
 
-            override fun implementationName(): String {
-                return name
-            }
-        })
+                override fun implementationName(): String = name
+            },
+        )
     }
 
     fun givenAnImplementationThatOutputsLocalFiles(
         name: String = TEST_TASK_IMPL_NAME,
         outputFileNames: List<String>,
     ) {
-        givenTheImplementation(name, object : TaskHandler {
-            override fun run(
-                artefacts: List<LocalTegArtefact>,
-                arguments: List<String>,
-                context: TaskExecutionContext,
-            ): TaskImplementationResult = TaskImplementationResult.Success(
-                outputArtefacts = outputFileNames.map { LocalTegArtefact.LocalTegArtefactFile(it, WORKING_DIR.resolve(it)) }
-            )
+        givenTheImplementation(
+            name,
+            object : TaskHandler {
+                override fun run(
+                    artefacts: List<LocalTegArtefact>,
+                    arguments: List<String>,
+                    context: TaskExecutionContext,
+                ): TaskImplementationResult = TaskImplementationResult.Success(
+                    outputArtefacts = outputFileNames.map { LocalTegArtefact.LocalTegArtefactFile(it, WORKING_DIR.resolve(it)) },
+                )
 
-            override fun implementationName(): String = name
-        })
+                override fun implementationName(): String = name
+            },
+        )
     }
 
     fun givenAnImplementationThatReportsLogs(
         name: String = TEST_TASK_IMPL_NAME,
         vararg logs: String,
     ) {
-        givenTheImplementation(name, object : TaskHandler {
-            override fun run(
-                artefacts: List<LocalTegArtefact>,
-                arguments: List<String>,
-                context: TaskExecutionContext,
-            ): TaskImplementationResult {
-                logs.forEach { context.reportLog(it) }
-                return TaskImplementationResult.Success(outputArtefacts = emptyList())
-            }
+        givenTheImplementation(
+            name,
+            object : TaskHandler {
+                override fun run(
+                    artefacts: List<LocalTegArtefact>,
+                    arguments: List<String>,
+                    context: TaskExecutionContext,
+                ): TaskImplementationResult {
+                    logs.forEach { context.reportLog(it) }
+                    return TaskImplementationResult.Success(outputArtefacts = emptyList())
+                }
 
-            override fun implementationName(): String {
-                return name
-            }
-        })
+                override fun implementationName(): String = name
+            },
+        )
     }
 
     fun givenTheTaskWillTimeout() {
@@ -211,7 +226,7 @@ class TaskRunnerSutBuilder {
             tempWorkingDirPort,
             storageAdapter,
             uuidPort,
-            implementations
+            implementations,
         )
             .execute(TEG_ID, message)
     }
@@ -222,7 +237,7 @@ class TaskRunnerSutBuilder {
         }
     }
 
-    fun <T : Any>thenTheTaskShouldFail(expectedType: KClass<T>) {
+    fun <T : Any> thenTheTaskShouldFail(expectedType: KClass<T>) {
         assert(result.isLeft()) {
             "Expected task to fail, but it completed successfully"
         }
@@ -245,7 +260,8 @@ class TaskRunnerSutBuilder {
         assertInstanceOf(
             TEGMessageIn.TEGTaskFailedMessage::class.java,
             messagingAdapter.incomingMessages.first().second,
-            "Expected message to be of type TEGTaskFailedMessage, but was ${messagingAdapter.incomingMessages.first().second::class.java}")
+            "Expected message to be of type TEGTaskFailedMessage, but was ${messagingAdapter.incomingMessages.first().second::class.java}",
+        )
     }
 
     fun thenTheWorkingDirectoryIsClosed() {

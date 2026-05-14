@@ -15,7 +15,7 @@ import org.springframework.web.context.WebApplicationContext
 
 @SpringBootTest
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
-class FileUploadControllerTest {
+class FileUploadControllerIT {
 
     @Autowired
     private lateinit var context: WebApplicationContext
@@ -33,7 +33,7 @@ class FileUploadControllerTest {
             multipart("/api/v1/files/upload")
                 .file(MockMultipartFile("file", "report.csv", "text/csv", "col1,col2\nval1,val2".toByteArray()))
                 .header("X-Auth-Principal", IDENTITY_SUB)
-                .header("X-Auth-Roles", IDENTITY_ROLES)
+                .header("X-Auth-Roles", IDENTITY_ROLES),
         )
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.ref").isNotEmpty)
@@ -45,7 +45,7 @@ class FileUploadControllerTest {
         mockMvc.perform(
             multipart("/api/v1/files/upload")
                 .file(MockMultipartFile("file", "report.csv", "text/csv", "content".toByteArray()))
-                .header("X-Auth-Roles", IDENTITY_ROLES)
+                .header("X-Auth-Roles", IDENTITY_ROLES),
         )
             .andExpect(status().isBadRequest)
     }
@@ -55,7 +55,7 @@ class FileUploadControllerTest {
         mockMvc.perform(
             multipart("/api/v1/files/upload")
                 .file(MockMultipartFile("file", "report.csv", "text/csv", "content".toByteArray()))
-                .header("X-Auth-Principal", IDENTITY_SUB)
+                .header("X-Auth-Principal", IDENTITY_SUB),
         )
             .andExpect(status().isBadRequest)
     }
@@ -65,7 +65,7 @@ class FileUploadControllerTest {
         mockMvc.perform(
             multipart("/api/v1/files/upload")
                 .header("X-Auth-Principal", IDENTITY_SUB)
-                .header("X-Auth-Roles", IDENTITY_ROLES)
+                .header("X-Auth-Roles", IDENTITY_ROLES),
         )
             .andExpect(status().isBadRequest)
     }

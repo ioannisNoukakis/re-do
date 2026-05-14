@@ -29,7 +29,7 @@ class UploadFileUseCaseTest {
             UploadFileResult(
                 ref = TEST_UPLOAD_FILE_ID,
                 storedWith = STORED_WITH_STUB,
-            )
+            ),
         )
     }
 
@@ -46,7 +46,7 @@ class UploadFileUseCaseTest {
                 ref = TEST_UPLOAD_FILE_ID,
                 storedWith = STORED_WITH_STUB,
                 uploadedBy = UPLOADER_IDENTITY,
-            )
+            ),
         )
     }
 }

@@ -44,7 +44,7 @@ class MongoMutualExclusionLockAdapter(
     override fun release(tegId: String) {
         mongoTemplate.remove(
             Query.query(Criteria.where("_id").`is`(tegId)),
-            MongodbMutualExclusionLock::class.java
+            MongodbMutualExclusionLock::class.java,
         )
     }
 }

@@ -4,9 +4,9 @@ import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Positive
+import me.noukakis.re_do.common.model.TEGTask
 import me.noukakis.re_do.scheduler.model.TEGArtefactDefinition
 import me.noukakis.re_do.scheduler.model.TEGArtefactType
-import me.noukakis.re_do.common.model.TEGTask
 import java.time.temporal.ChronoUnit
 import kotlin.time.Duration
 import kotlin.time.toKotlinDuration
@@ -34,16 +34,14 @@ data class TegTaskDTO(
     @field:Valid
     val timeout: DurationDTO?,
 ) {
-    fun toDomain(): TEGTask {
-        return TEGTask(
-            name = name!!,
-            implementationName = implementationName!!,
-            inputs = inputs!!.map { it.toDomain() },
-            outputs = outputs!!.map { it.toDomain() },
-            arguments = arguments!!,
-            timeout = timeout!!.toDuration(),
-        )
-    }
+    fun toDomain(): TEGTask = TEGTask(
+        name = name!!,
+        implementationName = implementationName!!,
+        inputs = inputs!!.map { it.toDomain() },
+        outputs = outputs!!.map { it.toDomain() },
+        arguments = arguments!!,
+        timeout = timeout!!.toDuration(),
+    )
 }
 
 data class TegArtefactDefinitionDTO(
@@ -53,15 +51,13 @@ data class TegArtefactDefinitionDTO(
     @field:NotNull(message = "Artefact type must not be null")
     val type: TegArtefactTypeDTO?,
 ) {
-    fun toDomain(): TEGArtefactDefinition {
-        return TEGArtefactDefinition(
-            name = name!!,
-            type = when (type!!) {
-                TegArtefactTypeDTO.STRING_VALUE -> TEGArtefactType.STRING_VALUE
-                TegArtefactTypeDTO.FILE -> TEGArtefactType.FILE
-            }
-        )
-    }
+    fun toDomain(): TEGArtefactDefinition = TEGArtefactDefinition(
+        name = name!!,
+        type = when (type!!) {
+            TegArtefactTypeDTO.STRING_VALUE -> TEGArtefactType.STRING_VALUE
+            TegArtefactTypeDTO.FILE -> TEGArtefactType.FILE
+        },
+    )
 }
 
 enum class TegArtefactTypeDTO {

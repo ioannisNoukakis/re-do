@@ -22,13 +22,11 @@ class MongodbSchedulerConfiguration {
         mongodbTemplate: MongoTemplate,
         @Value("\${scheduler.mongodb.cursor-batch-size-for-get-all-teg-not-events:100}") cursorBatchSizeForGetAllTegNotEvents: Int,
         @Value("\${scheduler.mongodb.teg-event-lookback-duration:30d}") tegEventLookbackDuration: Duration,
-    ): PersistencePort {
-        return MongodbPersistenceAdapter(
-            mongodbTemplate = mongodbTemplate,
-            cursorBatchSizeForGetAllTegNotEvents = cursorBatchSizeForGetAllTegNotEvents,
-            tegEventLookbackDuration = tegEventLookbackDuration,
-        )
-    }
+    ): PersistencePort = MongodbPersistenceAdapter(
+        mongodbTemplate = mongodbTemplate,
+        cursorBatchSizeForGetAllTegNotEvents = cursorBatchSizeForGetAllTegNotEvents,
+        tegEventLookbackDuration = tegEventLookbackDuration,
+    )
 
     @Bean
     @ConditionalOnProperty(name = ["scheduler.file-reference-store.mode"], havingValue = "mongodb")

@@ -21,11 +21,11 @@ class S3SchedulerConfiguration {
         @Value("\${scheduler.file-storage.s3.secret-key}") secretKey: String,
         @Value("\${scheduler.file-storage.s3.region:us-east-1}") region: String,
     ): FileStoragePort = S3FileStorageAdapter(
-        endpoint=endpoint,
+        endpoint = endpoint,
         bucketName = bucket,
         credentialsProvider = StaticCredentialsProvider.create(
-            AwsBasicCredentials.create(accessKey, secretKey)
+            AwsBasicCredentials.create(accessKey, secretKey),
         ),
-        region=region
+        region = region,
     )
 }
