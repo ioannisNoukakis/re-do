@@ -1,0 +1,131 @@
+### @title Upload audio sample for the transcribe -> translate / summarise pipeline
+POST {{v1Url}}/files/upload
+X-Auth-Principal: "test-user"
+X-Auth-Roles: "admin"
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="file"; filename="finally_awake_1080p.mp4"
+Content-Type: audio/mpeg
+
+< ../../../../media_samples/finally_awake_1080p.mp4
+
+--boundary--
+
+> {%
+    client.global.set("audioRef", response.body.ref);
+    client.global.set("audioStoredWith", response.body.storedWith);
+%}
+
+### @title Schedule Whisper -> (LlmTranslate to French || LlmSummarise) pipeline
+POST {{v1Url}}/teg/schedule
+X-Auth-Principal: "test-user"
+X-Auth-Roles: "admin"
+Content-Type: application/json
+
+{
+  "tasks": [
+    {
+      "name": "convert to mp3",
+      "implementationName": "FFMPEGTask",
+      "inputs": [
+        {
+          "name": "init-finally-awake.mp4",
+          "type": "FILE"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "finally-awake.mp3",
+          "type": "FILE"
+        }
+      ],
+      "arguments": [
+        "-i init-finally-awake.mp4 -vn -acodec libmp3lame finally-awake.mp3",
+        "30"
+      ],
+      "timeout": {
+        "amount": 50,
+        "temporalUnit": "SECONDS"
+      }
+    },
+    {
+      "name": "transcribe",
+      "implementationName": "WhisperTranscriptionTask",
+      "inputs": [
+        {
+          "name": "finally-awake.mp3",
+          "type": "FILE"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "transcript.txt",
+          "type": "FILE"
+        }
+      ],
+      "arguments": [
+        "transcript.txt"
+      ],
+      "timeout": {
+        "amount": 300,
+        "temporalUnit": "SECONDS"
+      }
+    },
+    {
+      "name": "translate-to-french",
+      "implementationName": "LlmTranslateTask",
+      "inputs": [
+        {
+          "name": "transcript.txt",
+          "type": "FILE"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "translation.txt",
+          "type": "FILE"
+        }
+      ],
+      "arguments": [
+        "translation.txt",
+        "French"
+      ],
+      "timeout": {
+        "amount": 300,
+        "temporalUnit": "SECONDS"
+      }
+    },
+    {
+      "name": "summarise",
+      "implementationName": "LlmSummariseTask",
+      "inputs": [
+        {
+          "name": "transcript.txt",
+          "type": "FILE"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "summary.txt",
+          "type": "FILE"
+        }
+      ],
+      "arguments": [
+        "summary.txt"
+      ],
+      "timeout": {
+        "amount": 300,
+        "temporalUnit": "SECONDS"
+      }
+    }
+  ],
+  "initArtefacts": [
+    {
+      "name": "init-finally-awake.mp4",
+      "type": "FILE",
+      "ref": "{{audioRef}}",
+      "storedWith": "{{audioStoredWith}}"
+    }
+  ]
+}
