@@ -48,12 +48,12 @@ You should see the state of the demo TEG in mongodb and the generated artefacts 
 - MongoDB-backed state, RabbitMQ messaging, S3-compatible file storage
 - FFmpeg task plugin — video/audio processing as a first-class task implementation
 - **Transcription** — speech-to-text via [Whisper](https://github.com/openai/whisper)
+- **Translation** — multilingual translation via [Gemma Translate](https://ai.google.dev/gemma) (openai api-compatible)
+- **Summarisation** — text summarisation via [Gemma 4](https://ai.google.dev/gemma) (openai api-compatible)
 
 ### 🔜 Planned
 
-#### AI / ML Task Plugins
-- **Translation** — multilingual translation via [Gemma Translate](https://ai.google.dev/gemma)
-- **Summarisation** — text summarisation via [Gemma 4](https://ai.google.dev/gemma)
+Check the issues on the gitlab repository for the most up-to-date roadmap and to contribute!
 
 #### Observability
 - **Progress events** — task runner emits fine-grained progress events during artefact downloads and uploads
