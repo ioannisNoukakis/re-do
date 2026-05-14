@@ -24,8 +24,7 @@ class LlmSummariseTaskValidationTest {
         sut = LlmSummariseTask(inferenceClient = fakeClient)
     }
 
-    private fun stringArtefact(name: String, value: String): LocalTegArtefact =
-        LocalTegArtefact.LocalTEGArtefactStringValue(name = name, value = value)
+    private fun stringArtefact(name: String, value: String): LocalTegArtefact = LocalTegArtefact.LocalTEGArtefactStringValue(name = name, value = value)
 
     private fun fileArtefact(name: String, contents: String): LocalTegArtefact {
         val path = workingDir.resolve(name)

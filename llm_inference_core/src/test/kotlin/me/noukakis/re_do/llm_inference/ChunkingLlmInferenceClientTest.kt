@@ -303,7 +303,7 @@ class ChunkingLlmInferenceClientTest {
             }
             assertEquals(
                 "System prompt (${systemPrompt.length} tokens) does not fit in remaining context window of 5 tokens (contextWindowTokens=10, maxTokens=5)",
-                ex.message
+                ex.message,
             )
         }
     }

@@ -30,8 +30,7 @@ class LlmTranslateTaskValidationTest {
         return LocalTegArtefact.LocalTegArtefactFile(name = name, path = path)
     }
 
-    private fun stringArtefact(name: String, value: String): LocalTegArtefact =
-        LocalTegArtefact.LocalTEGArtefactStringValue(name = name, value = value)
+    private fun stringArtefact(name: String, value: String): LocalTegArtefact = LocalTegArtefact.LocalTEGArtefactStringValue(name = name, value = value)
 
     @Test
     fun `implementationName returns correct name`() {
