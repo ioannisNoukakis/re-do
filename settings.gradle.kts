@@ -18,6 +18,7 @@ include(
     "adapter_common_rabbitmq_spring",
     "adapter_common_mongodb_spring",
     "adapter_common_s3",
+    "llm_inference_core",
     "task_impl_demo",
     "task_impl_ffmpeg",
     "task_impl_whisper_transcription",
