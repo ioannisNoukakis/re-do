@@ -1,0 +1,79 @@
+site_name: re-do
+site_description: A distributed scheduler for Task Execution Graphs (TEGs).
+site_url: ""
+repo_url: ""
+docs_dir: docs
+
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - navigation.indexes
+    - content.code.copy
+    - toc.follow
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+
+nav:
+  - Home: index.md
+  - Getting started: getting-started.md
+  - Concepts:
+      - concepts/teg.md
+      - concepts/tasks-and-artefacts.md
+      - concepts/lifecycle.md
+  - Architecture:
+      - architecture/overview.md
+      - architecture/modules.md
+      - architecture/testing.md
+  - HTTP API:
+      - api/overview.md
+      - api/upload-file.md
+      - api/schedule-teg.md
+  - Tasks:
+      - tasks/index.md
+      - tasks/demo-echo.md
+      - tasks/http-fetch.md
+      - tasks/ffmpeg.md
+      - tasks/whisper-transcription.md
+      - tasks/llm-translate.md
+      - tasks/llm-summarise.md
+      - tasks/writing-a-task-plugin.md
+  - Operations:
+      - operations/configuration.md
+      - operations/deployment.md
+  - Contributing: contributing.md
