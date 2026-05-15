@@ -139,20 +139,24 @@ class TegEventStreamControllerIT {
                             TEGArtefactDefinition(
                                 name = "output-2",
                                 type = TEGArtefactType.FILE,
-                            )
+                            ),
                         ),
                         arguments = listOf("input-1", "input-2"),
-                        timeout = 5.minutes
+                        timeout = 5.minutes,
                     ),
                     timestamp = T0,
                 ),
                 TEGEvent.Scheduled(taskName = "task-a", timestamp = T1),
                 TEGEvent.Progress(taskName = "task-a", step = "computing", progress = 55, timestamp = T1),
                 TEGEvent.Log(taskName = "task-a", log = "some log message", timestamp = T1),
-                TEGEvent.Completed(taskName = "task-a",outputArtefacts=listOf(
-                    TEGArtefact.TEGArtefactFile(name = "output-2", ref="temp-ref", storedWith = "some-storage"),
-                    TEGArtefact.TEGArtefactStringValue(name = "output-3", value = "some-value"),
-                ), timestamp = T1),
+                TEGEvent.Completed(
+                    taskName = "task-a",
+                    outputArtefacts = listOf(
+                        TEGArtefact.TEGArtefactFile(name = "output-2", ref = "temp-ref", storedWith = "some-storage"),
+                        TEGArtefact.TEGArtefactStringValue(name = "output-3", value = "some-value"),
+                    ),
+                    timestamp = T1,
+                ),
                 TEGEvent.Failed(taskName = "task-a", reason = "some failure reason", timestamp = T2),
                 TEGEvent.NoMoreTasksToSchedule(timestamp = T2),
             ),
@@ -195,7 +199,7 @@ class TegEventStreamControllerIT {
         persistenceAdapter.saveEvents(
             TEG_ID,
             listOf(
-                TEGEvent.TEGFailed(timestamp = T1, reason = "some failure reason")
+                TEGEvent.TEGFailed(timestamp = T1, reason = "some failure reason"),
             ),
         )
 

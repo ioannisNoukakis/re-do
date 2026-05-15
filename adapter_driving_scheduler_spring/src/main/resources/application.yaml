@@ -10,9 +10,6 @@ spring:
     host: localhost
     port: 27017
     database: scheduler
-    username: root
-    password: example
-    authentication-database: admin
   servlet:
     multipart:
       max-file-size: 500MB
