@@ -9,7 +9,9 @@ import java.util.stream.Stream
 import kotlin.reflect.KClass
 import kotlin.streams.asStream
 
-class InMemoryPersistenceAdapter : PersistencePort, TegEventStreamPort {
+class InMemoryPersistenceAdapter :
+    PersistencePort,
+    TegEventStreamPort {
     val state = mutableMapOf<String, List<TEGEvent>>()
     var throwOnPersist: String? = null
     var throwOnGetEvents: String? = null
@@ -90,6 +92,5 @@ class InMemoryPersistenceAdapter : PersistencePort, TegEventStreamPort {
         }
     }
 
-    private fun TEGEvent.isTerminal(): Boolean =
-        this is TEGEvent.NoMoreTasksToSchedule || this is TEGEvent.TEGFailed
+    private fun TEGEvent.isTerminal(): Boolean = this is TEGEvent.NoMoreTasksToSchedule || this is TEGEvent.TEGFailed
 }

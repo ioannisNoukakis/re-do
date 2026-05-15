@@ -16,6 +16,8 @@ import me.noukakis.re_do.scheduler.port.MessagingPort
 import me.noukakis.re_do.scheduler.port.MutualExclusionLockPort
 import me.noukakis.re_do.scheduler.port.NowPort
 import me.noukakis.re_do.scheduler.port.PersistencePort
+import me.noukakis.re_do.scheduler.port.TegEventStreamPort
+import me.noukakis.re_do.scheduler.service.StreamTegEventsUseCase
 import me.noukakis.re_do.scheduler.service.TEGScheduler
 import me.noukakis.re_do.scheduler.service.UploadFileUseCase
 import org.springframework.beans.factory.annotation.Value
@@ -32,7 +34,7 @@ class SchedulerConfiguration {
 
     @Bean
     @ConditionalOnProperty(name = ["scheduler.persistence.mode"], havingValue = "in-memory")
-    fun persistencePortBean(): PersistencePort = InMemoryPersistenceAdapter()
+    fun persistencePortBean(): InMemoryPersistenceAdapter = InMemoryPersistenceAdapter()
 
     @Bean
     fun nowPort(): NowPort = StdLibNowAdapter()
@@ -82,4 +84,10 @@ class SchedulerConfiguration {
         fileReferenceStorePort: FileReferenceStorePort,
         uuidPort: UUIDPort,
     ): UploadFileUseCase = UploadFileUseCase(fileStoragePort, fileReferenceStorePort, uuidPort)
+
+    @Bean
+    fun streamTegEventsUseCaseBean(
+        persistencePort: PersistencePort,
+        tegEventStreamPort: TegEventStreamPort,
+    ): StreamTegEventsUseCase = StreamTegEventsUseCase(persistencePort, tegEventStreamPort)
 }
