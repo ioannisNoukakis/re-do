@@ -47,7 +47,7 @@ class MongodbTegEventStreamAdapter(
         val changeStreamListener = MessageListener<ChangeStreamDocument<Document>, MongodbTEGEvent> { message ->
             try {
                 val mongoEvent = message.body ?: return@MessageListener
-                if (!seenIds.add(mongoEvent.id)) return@MessageListener
+                if (seenIds.contains(mongoEvent.id)) return@MessageListener
                 val event = mongoEvent.toModel()
                 listener.onEvent(event)
                 if (event.isTerminal()) {

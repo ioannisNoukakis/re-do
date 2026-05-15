@@ -12,6 +12,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.data.mongodb.core.MongoTemplate
+import org.springframework.data.mongodb.core.messaging.DefaultMessageListenerContainer
 import org.springframework.data.mongodb.core.messaging.MessageListenerContainer
 import java.time.Duration
 import java.time.Instant
@@ -50,9 +51,10 @@ class MongodbSchedulerConfiguration {
         lockTimeout = lockTimeout,
     )
 
-    //@Bean(initMethod = "start", destroyMethod = "stop")
-    //@ConditionalOnProperty(name = ["scheduler.persistence.mode"], havingValue = "mongodb")
-    //fun mongoMessageListenerContainer(mongodbTemplate: MongoTemplate): MessageListenerContainer = DefaultMessageListenerContainer(mongodbTemplate)
+    @Bean(initMethod = "start", destroyMethod = "stop")
+    @ConditionalOnProperty(name = ["scheduler.persistence.mode"], havingValue = "mongodb")
+    fun mongoMessageListenerContainer(mongodbTemplate: MongoTemplate): MessageListenerContainer =
+        DefaultMessageListenerContainer(mongodbTemplate)
 
     @Bean
     @ConditionalOnProperty(name = ["scheduler.persistence.mode"], havingValue = "mongodb")

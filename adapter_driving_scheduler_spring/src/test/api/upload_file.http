@@ -1,7 +1,7 @@
 ### @title Upload a file to be used in scheduled tasks
 POST {{v1Url}}/files/upload
-X-Auth-Principal: "test-user"
-X-Auth-Roles: "admin,other-role"
+X-Auth-Principal: test-user
+X-Auth-Roles: admin,other-role
 Content-Type: multipart/form-data; boundary=boundary
 
 --boundary

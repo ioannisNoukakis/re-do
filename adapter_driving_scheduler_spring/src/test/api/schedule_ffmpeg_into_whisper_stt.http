@@ -1,7 +1,7 @@
 ### @title Get job list no skipping or limiting
 POST {{v1Url}}/teg/schedule
-X-Auth-Principal: "test-user"
-X-Auth-Roles: "admin"
+X-Auth-Principal: test-user
+X-Auth-Roles: admin
 Content-Type: application/json
 
 {
