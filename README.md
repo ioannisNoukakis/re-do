@@ -21,6 +21,23 @@ make all
 
 The scheduler API is available at `http://localhost:8080`.
 
+### API
+
+| Endpoint                     | Method | Description                                                |
+|------------------------------|--------|------------------------------------------------------------|
+| `/api/v1/teg/schedule`       | POST   | Submit a new TEG for execution                             |
+| `/api/v1/teg/{tegId}/events` | GET    | Server-Sent Events stream of TEG events for the submitter  |
+| `/api/v1/files/upload`       | POST   | Upload a file to be referenced as a task input             |
+| `/v3/api-docs`               | GET    | OpenAPI 3 spec (JSON), auto-generated via springdoc        |
+| `/v3/api-docs.yaml`          | GET    | OpenAPI 3 spec (YAML)                                      |
+| `/swagger-ui.html`           | GET    | Interactive API explorer                                   |
+
+#### Event stream
+
+`GET /api/v1/teg/{tegId}/events` returns a `text/event-stream` of TEG events. The caller's `X-Auth-Principal`
+must match the TEG's submitter — non-owners get `403`, unknown TEG IDs get `404`. The stream replays the full
+event history then continues live, and closes after a terminal event (`NoMoreTasksToSchedule` or `TEGFailed`).
+
 ### Testing with the HTTP files
 
 The `.http` files in `adapter_driving_scheduler_spring/src/test/api` can be run directly from IntelliJ or any HTTP

@@ -53,8 +53,7 @@ class MongodbSchedulerConfiguration {
 
     @Bean(initMethod = "start", destroyMethod = "stop")
     @ConditionalOnProperty(name = ["scheduler.persistence.mode"], havingValue = "mongodb")
-    fun mongoMessageListenerContainer(mongodbTemplate: MongoTemplate): MessageListenerContainer =
-        DefaultMessageListenerContainer(mongodbTemplate)
+    fun mongoMessageListenerContainer(mongodbTemplate: MongoTemplate): MessageListenerContainer = DefaultMessageListenerContainer(mongodbTemplate)
 
     @Bean
     @ConditionalOnProperty(name = ["scheduler.persistence.mode"], havingValue = "mongodb")

@@ -2,11 +2,19 @@ package me.noukakis.re_do.adapters.driving.scheduler.spring.dto
 
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping
+import io.swagger.v3.oas.annotations.media.Schema
 import me.noukakis.re_do.common.model.Identity
 import me.noukakis.re_do.common.model.TEGTask
 import me.noukakis.re_do.scheduler.model.TEGArtefact
 import me.noukakis.re_do.scheduler.model.TEGEvent
 import java.time.Instant
+
+data class IdentityDTO(val sub: String, val roles: List<String>) {
+    companion object {
+        fun fromDomain(identity: Identity) = IdentityDTO(identity.sub, identity.roles)
+    }
+}
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 @JsonSubTypes(
@@ -20,51 +28,79 @@ import java.time.Instant
     JsonSubTypes.Type(value = TEGEventDTO.ProgressDTO::class, name = "Progress"),
     JsonSubTypes.Type(value = TEGEventDTO.LogDTO::class, name = "Log"),
 )
+@Schema(
+    description = "Base class for all TEG events. The 'type' field is used to determine the specific event type when deserializing from JSON.",
+    subTypes = [
+        TEGEventDTO.SubmitterIdentityDTO::class,
+        TEGEventDTO.CreatedDTO::class,
+        TEGEventDTO.ScheduledDTO::class,
+        TEGEventDTO.CompletedDTO::class,
+        TEGEventDTO.NoMoreTasksToScheduleDTO::class,
+        TEGEventDTO.TEGFailedDTO::class,
+        TEGEventDTO.FailedDTO::class,
+        TEGEventDTO.ProgressDTO::class,
+        TEGEventDTO.LogDTO::class,
+    ],
+    discriminatorProperty = "type",
+    discriminatorMapping = [
+        DiscriminatorMapping(value = "SubmitterIdentity", schema = TEGEventDTO.SubmitterIdentityDTO::class),
+        DiscriminatorMapping(value = "Created", schema = TEGEventDTO.CreatedDTO::class),
+        DiscriminatorMapping(value = "Scheduled", schema = TEGEventDTO.ScheduledDTO::class),
+        DiscriminatorMapping(value = "Completed", schema = TEGEventDTO.CompletedDTO::class),
+        DiscriminatorMapping(value = "NoMoreTasksToSchedule", schema = TEGEventDTO.NoMoreTasksToScheduleDTO::class),
+        DiscriminatorMapping(value = "TEGFailed", schema = TEGEventDTO.TEGFailedDTO::class),
+        DiscriminatorMapping(value = "Failed", schema = TEGEventDTO.FailedDTO::class),
+        DiscriminatorMapping(value = "Progress", schema = TEGEventDTO.ProgressDTO::class),
+        DiscriminatorMapping(value = "Log", schema = TEGEventDTO.LogDTO::class),
+    ],
+)
 sealed class TEGEventDTO {
     abstract val timestamp: Instant
 
-    data class IdentityDTO(val sub: String, val roles: List<String>) {
-        companion object {
-            fun fromDomain(identity: Identity) = IdentityDTO(identity.sub, identity.roles)
-        }
-    }
-
+    @Schema(name = "SubmitterIdentityEvent")
     data class SubmitterIdentityDTO(
         val identity: IdentityDTO,
         override val timestamp: Instant,
     ) : TEGEventDTO()
 
+    @Schema(name = "CreatedEvent")
     data class CreatedDTO(
         val task: TegTaskSummaryDTO,
         override val timestamp: Instant,
     ) : TEGEventDTO()
 
+    @Schema(name = "ScheduledEvent")
     data class ScheduledDTO(
         val taskName: String,
         override val timestamp: Instant,
     ) : TEGEventDTO()
 
+    @Schema(name = "CompletedEvent")
     data class CompletedDTO(
         val taskName: String,
         override val timestamp: Instant,
         val outputArtefacts: List<TEGArtefactDTO>,
     ) : TEGEventDTO()
 
+    @Schema(name = "NoMoreTasksToScheduleEvent")
     data class NoMoreTasksToScheduleDTO(
         override val timestamp: Instant,
     ) : TEGEventDTO()
 
+    @Schema(name = "TEGFailedEvent")
     data class TEGFailedDTO(
         override val timestamp: Instant,
         val reason: String,
     ) : TEGEventDTO()
 
+    @Schema(name = "FailedEvent")
     data class FailedDTO(
         val taskName: String,
         override val timestamp: Instant,
         val reason: String,
     ) : TEGEventDTO()
 
+    @Schema(name = "ProgressEvent")
     data class ProgressDTO(
         val taskName: String,
         override val timestamp: Instant,
@@ -72,6 +108,7 @@ sealed class TEGEventDTO {
         val step: String,
     ) : TEGEventDTO()
 
+    @Schema(name = "LogEvent")
     data class LogDTO(
         val taskName: String,
         override val timestamp: Instant,
