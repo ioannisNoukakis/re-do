@@ -5,6 +5,7 @@ import me.noukakis.re_do.adapters.driven.common.InMemoryMessagingAdapter
 import me.noukakis.re_do.adapters.driven.common.StdLibUuidAdapter
 import me.noukakis.re_do.adapters.driven.scheduler.InMemoryFileReferenceStoreAdapter
 import me.noukakis.re_do.adapters.driven.scheduler.InMemoryFileStorageAdapter
+import me.noukakis.re_do.adapters.driven.scheduler.InMemoryMutualExclusionLockAdapter
 import me.noukakis.re_do.adapters.driven.scheduler.InMemoryPersistenceAdapter
 import me.noukakis.re_do.adapters.driven.scheduler.StdLibNowAdapter
 import me.noukakis.re_do.common.port.FileStoragePort
@@ -21,6 +22,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import java.time.Duration
 
 @Configuration
 class SchedulerConfiguration {
@@ -67,6 +69,12 @@ class SchedulerConfiguration {
     @Bean
     @ConditionalOnProperty(name = ["scheduler.file-reference-store.mode"], havingValue = "in-memory")
     fun fileReferenceStorePortBean(): FileReferenceStorePort = InMemoryFileReferenceStoreAdapter()
+
+    @Bean
+    @ConditionalOnProperty(name = ["scheduler.mutual-exclusion-lock.mode"], havingValue = "in-memory")
+    fun mutualExclusionLockPortInMemoryBean(
+        @Value("\${scheduler.mutual-exclusion-lock.timeout:30s}") lockTimeout: Duration,
+    ): MutualExclusionLockPort = InMemoryMutualExclusionLockAdapter(lockTimeout)
 
     @Bean
     fun uploadFileUseCaseBean(

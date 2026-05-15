@@ -53,6 +53,7 @@ You should see the state of the demo TEG in mongodb and the generated artefacts 
 
 ### 🔜 Planned
 
+#### Tasks
 Check the issues on the gitlab repository for the most up-to-date roadmap and to contribute!
 
 #### Observability

@@ -45,6 +45,6 @@ scheduler:
   file-reference-store: # Either "in-memory" or "mongodb"
     mode: "in-memory"
   mutual-exclusion-lock:
-    mode: "mongodb" # Either "in-memory" or "mongodb"
+    mode: "in-memory" # Either "in-memory" or "mongodb"
     retry-interval: 500ms
     timeout: 30s
