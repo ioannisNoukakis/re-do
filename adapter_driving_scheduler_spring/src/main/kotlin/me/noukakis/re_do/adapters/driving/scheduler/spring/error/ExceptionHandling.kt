@@ -1,10 +1,14 @@
 package me.noukakis.re_do.adapters.driving.scheduler.spring.error
 
 import io.sentry.Sentry
+import jakarta.servlet.http.HttpServletResponse
+import me.noukakis.re_do.adapters.driving.scheduler.spring.error.exceptions.StreamTegEventsException
 import me.noukakis.re_do.adapters.driving.scheduler.spring.error.exceptions.TegSchedulingException
+import me.noukakis.re_do.scheduler.model.StreamTegEventsError
 import me.noukakis.re_do.scheduler.model.TegSchedulingError
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.web.bind.MethodArgumentNotValidException
@@ -12,11 +16,14 @@ import org.springframework.web.bind.MissingRequestHeaderException
 import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.multipart.support.MissingServletRequestPartException
+import tools.jackson.databind.ObjectMapper
 
 data class ApiError(val cause: String?, val errorId: String? = null)
 
 @ControllerAdvice
-class ExceptionHandling {
+class ExceptionHandling(
+    private val objectMapper: ObjectMapper,
+) {
 
     private val logger = LoggerFactory.getLogger(ExceptionHandling::class.java)
 
@@ -56,6 +63,23 @@ class ExceptionHandling {
             ApiError("Produced artefact '${ex.error.artefactName}' by task '${ex.error.producingTaskName}' is not consumed by any task"),
             HttpStatus.BAD_REQUEST,
         )
+    }
+
+    @ExceptionHandler(StreamTegEventsException::class)
+    fun handleStreamTegEventsException(
+        ex: StreamTegEventsException,
+        response: HttpServletResponse,
+    ) {
+        val (status, message) = when (ex.error) {
+            is StreamTegEventsError.TegNotFound ->
+                HttpStatus.NOT_FOUND to "Task Execution Graph not found"
+
+            is StreamTegEventsError.Forbidden ->
+                HttpStatus.FORBIDDEN to "You are not authorised to access this Task Execution Graph"
+        }
+        response.status = status.value()
+        response.contentType = MediaType.APPLICATION_JSON_VALUE
+        objectMapper.writeValue(response.writer, ApiError(message))
     }
 
     @ExceptionHandler(MissingRequestHeaderException::class)

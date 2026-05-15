@@ -1,7 +1,7 @@
 ### @title Upload audio sample for the transcribe -> translate / summarise pipeline
 POST {{v1Url}}/files/upload
-X-Auth-Principal: "test-user"
-X-Auth-Roles: "admin"
+X-Auth-Principal: test-user
+X-Auth-Roles: admin
 Content-Type: multipart/form-data; boundary=boundary
 
 --boundary

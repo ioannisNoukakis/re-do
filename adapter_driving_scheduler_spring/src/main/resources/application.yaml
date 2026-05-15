@@ -10,9 +10,6 @@ spring:
     host: localhost
     port: 27017
     database: scheduler
-    username: root
-    password: example
-    authentication-database: admin
   servlet:
     multipart:
       max-file-size: 500MB
@@ -45,6 +42,6 @@ scheduler:
   file-reference-store: # Either "in-memory" or "mongodb"
     mode: "in-memory"
   mutual-exclusion-lock:
-    mode: "mongodb" # Either "in-memory" or "mongodb"
+    mode: "in-memory" # Either "in-memory" or "mongodb"
     retry-interval: 500ms
     timeout: 30s
