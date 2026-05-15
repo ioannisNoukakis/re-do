@@ -17,18 +17,18 @@ services:
   mongoDB:
     image: mongo:7.0.31
     container_name: redo-mongodb-demo
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=root
-      - MONGO_INITDB_ROOT_PASSWORD=example
+    hostname: mongoDB
+    command: --replSet s0 --bind_ip_all
     ports:
       - "27017:27017"
     volumes:
       - mongo-data:/data/db
     healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      test: test $$(mongosh --quiet --eval "try { rs.status().ok } catch (e) { rs.initiate({_id:'s0',members:[{_id:0,host:'mongoDB:27017'}]}).ok }") -eq 1
       interval: 10s
       timeout: 5s
       retries: 10
+      start_period: 30s
 
   rustfs:
     image: rustfs/rustfs:1.0.0-alpha.90
@@ -54,6 +54,7 @@ services:
       - SCHEDULER_PERSISTENCE_MODE=mongodb
       - SCHEDULER_FILE_STORAGE_MODE=s3
       - SCHEDULER_FILE_REFERENCE_STORE_MODE=mongodb
+      - SCHEDULER_MUTUAL_EXCLUSION_LOCK_MODE=mongodb
       - SCHEDULER_FILE_STORAGE_S3_ENDPOINT=http://rustfs:9000
     ports:
       - "8080:8080"

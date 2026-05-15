@@ -3,13 +3,17 @@ package me.noukakis.re_do.adapters.driving.scheduler.spring.configuration
 import me.noukakis.re_do.adapters.common.spring.mongodb.MongoMutualExclusionLockAdapter
 import me.noukakis.re_do.adapters.common.spring.mongodb.MongodbFileReferenceStoreAdapter
 import me.noukakis.re_do.adapters.common.spring.mongodb.MongodbPersistenceAdapter
+import me.noukakis.re_do.adapters.common.spring.mongodb.MongodbTegEventStreamAdapter
 import me.noukakis.re_do.scheduler.port.FileReferenceStorePort
 import me.noukakis.re_do.scheduler.port.PersistencePort
+import me.noukakis.re_do.scheduler.port.TegEventStreamPort
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.data.mongodb.core.MongoTemplate
+import org.springframework.data.mongodb.core.messaging.DefaultMessageListenerContainer
+import org.springframework.data.mongodb.core.messaging.MessageListenerContainer
 import java.time.Duration
 import java.time.Instant
 
@@ -46,4 +50,15 @@ class MongodbSchedulerConfiguration {
         retryInterval = lockRetryInterval,
         lockTimeout = lockTimeout,
     )
+
+    @Bean(initMethod = "start", destroyMethod = "stop")
+    @ConditionalOnProperty(name = ["scheduler.persistence.mode"], havingValue = "mongodb")
+    fun mongoMessageListenerContainer(mongodbTemplate: MongoTemplate): MessageListenerContainer = DefaultMessageListenerContainer(mongodbTemplate)
+
+    @Bean
+    @ConditionalOnProperty(name = ["scheduler.persistence.mode"], havingValue = "mongodb")
+    fun tegEventStreamPortMongodbBean(
+        mongodbTemplate: MongoTemplate,
+        container: MessageListenerContainer,
+    ): TegEventStreamPort = MongodbTegEventStreamAdapter(mongodbTemplate, container)
 }
