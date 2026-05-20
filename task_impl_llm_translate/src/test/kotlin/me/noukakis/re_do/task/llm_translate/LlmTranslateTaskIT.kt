@@ -2,6 +2,7 @@ package me.noukakis.re_do.task.llm_translate
 
 import me.noukakis.re_do.runner.model.LocalTegArtefact
 import me.noukakis.re_do.runner.port.TaskImplementationResult
+import me.noukakis.re_do.task.test_support.SpyTaskExecutionContext
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.BeforeEach

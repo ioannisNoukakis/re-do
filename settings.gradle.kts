@@ -25,4 +25,5 @@ include(
     "task_impl_http_fetch",
     "task_impl_llm_summarise",
     "task_impl_llm_translate",
+    "task_handler_test_support",
 )

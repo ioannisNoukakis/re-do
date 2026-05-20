@@ -4,6 +4,7 @@ import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpServer
 import me.noukakis.re_do.runner.model.LocalTegArtefact
 import me.noukakis.re_do.runner.port.TaskImplementationResult
+import me.noukakis.re_do.task.test_support.SpyTaskExecutionContext
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue

@@ -2,6 +2,7 @@ package me.noukakis.re_do.task.whisper.transcription
 
 import me.noukakis.re_do.runner.model.LocalTegArtefact
 import me.noukakis.re_do.runner.port.TaskImplementationResult
+import me.noukakis.re_do.task.test_support.SpyTaskExecutionContext
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
