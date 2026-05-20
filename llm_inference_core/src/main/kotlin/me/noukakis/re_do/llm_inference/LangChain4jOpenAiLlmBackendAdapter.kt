@@ -12,7 +12,6 @@ import java.util.concurrent.ConcurrentHashMap
 
 private const val ENV_API_KEY = "LLM_API_KEY"
 private const val ENV_BASE_URL = "LLM_BASE_URL"
-private const val ENV_DEFAULT_MODEL = "LLM_DEFAULT_MODEL"
 private const val ENV_DEBUG_LOGGING = "LLM_DEBUG_LOGGING"
 
 private const val FALLBACK_TOKEN_COUNT_MODEL = "gpt-4o-mini"
@@ -20,7 +19,6 @@ private const val FALLBACK_TOKEN_COUNT_MODEL = "gpt-4o-mini"
 class LangChain4jOpenAiLlmBackendAdapter(
     private val apiKey: String? = System.getenv(ENV_API_KEY),
     private val baseUrl: String? = System.getenv(ENV_BASE_URL),
-    private val defaultModel: String? = System.getenv(ENV_DEFAULT_MODEL),
     private val debugLoggingEnabled: Boolean = System.getenv(ENV_DEBUG_LOGGING) == "true",
 ) : LlmBackendPort {
 
@@ -34,10 +32,9 @@ class LangChain4jOpenAiLlmBackendAdapter(
     }
 
     override fun complete(request: LlmRequest): LlmResponse {
-        val effectiveModel = request.model.ifBlank { defaultModel ?: error("No model in request and $ENV_DEFAULT_MODEL is not set") }
         val builder = OpenAiChatModel.builder()
             .apiKey(apiKey)
-            .modelName(effectiveModel)
+            .modelName(request.model)
             .temperature(request.temperature)
             .maxTokens(request.maxTokens)
             .timeout(Duration.ofSeconds(request.timeoutSeconds.toLong()))
@@ -47,7 +44,7 @@ class LangChain4jOpenAiLlmBackendAdapter(
         if (debugLoggingEnabled && log.isDebugEnabled) {
             log.debug("LLM request systemPrompt={} userContent={}", request.systemPrompt, request.userContent)
         }
-        log.info("LLM call model={} maxTokens={} temperature={}", effectiveModel, request.maxTokens, request.temperature)
+        log.info("LLM call model={} maxTokens={} temperature={}", request.model, request.maxTokens, request.temperature)
 
         val started = System.nanoTime()
         val response: ChatResponse = model.chat(SystemMessage.from(request.systemPrompt), UserMessage.from(request.userContent))
@@ -62,7 +59,7 @@ class LangChain4jOpenAiLlmBackendAdapter(
         )
         log.info(
             "LLM done model={} promptTokens={} completionTokens={} finishReason={} durationMs={}",
-            effectiveModel,
+            request.model,
             mapped.promptTokens,
             mapped.completionTokens,
             mapped.finishReason,
@@ -75,8 +72,7 @@ class LangChain4jOpenAiLlmBackendAdapter(
     }
 
     override fun countTokens(text: String, model: String): Int {
-        val effectiveModel = model.ifBlank { defaultModel ?: error("No model and $ENV_DEFAULT_MODEL is not set") }
-        val estimator = estimators.computeIfAbsent(effectiveModel) { name ->
+        val estimator = estimators.computeIfAbsent(model) { name ->
             runCatching { OpenAiTokenCountEstimator(name) }
                 .getOrElse {
                     log.warn(

@@ -56,6 +56,54 @@ have to create the "scheduler-files" bucket manually using the Rust FS API or UI
 (todo: automate). Once the teg has been submitted, watch the logs of the scheduler and runner services to see the execution flow. 
 You should see the state of the demo TEG in mongodb and the generated artefacts in Rust FS after the tasks complete.
 
+### Task plugin environment variables
+
+The runner loads task plugins in-process and reads their configuration from the runner's environment. Set these on
+the `runner` service (see `docker-compose.demo.yml`). `DemoEchoTask`, `FFMPEGTask`, and `HttpFetchTask` do not read
+any environment variables.
+
+#### Shared LLM backend (`LlmSummariseTask`, `LlmTranslateTask`)
+
+Both LLM tasks talk to an OpenAI-compatible chat completions endpoint via `LangChain4jOpenAiLlmBackendAdapter`.
+
+| Variable            | Required | Default        | Description                                                |
+|---------------------|----------|----------------|------------------------------------------------------------|
+| `LLM_API_KEY`       | yes      | (none)         | API key for the OpenAI-compatible endpoint                 |
+| `LLM_BASE_URL`      | no       | OpenAI default | Override the base URL (e.g. self-hosted Gemma)             |
+| `LLM_DEBUG_LOGGING` | no       | `false`        | Set to `true` to log full prompts and responses at DEBUG   |
+
+#### `LlmSummariseTask`
+
+| Variable                              | Default                                |
+|---------------------------------------|----------------------------------------|
+| `LLM_SUMMARISE_SYSTEM_PROMPT`         | built-in concise-summary prompt        |
+| `LLM_SUMMARISE_MODEL`                 | `gpt-4o-mini`                          |
+| `LLM_SUMMARISE_MAX_TOKENS`            | `1024`                                 |
+| `LLM_SUMMARISE_TEMPERATURE`           | `0.2`                                  |
+| `LLM_SUMMARISE_CONTEXT_WINDOW_TOKENS` | `128000`                               |
+| `LLM_SUMMARISE_TIMEOUT_SECONDS`       | `120`                                  |
+
+#### `LlmTranslateTask`
+
+| Variable                              | Default                                                       |
+|---------------------------------------|---------------------------------------------------------------|
+| `LLM_TRANSLATE_SYSTEM_PROMPT_TEMPLATE`| built-in template (`%s` is replaced by the target language)   |
+| `LLM_TRANSLATE_MODEL`                 | `gpt-4o-mini`                                                 |
+| `LLM_TRANSLATE_MAX_TOKENS`            | `2048`                                                        |
+| `LLM_TRANSLATE_TEMPERATURE`           | `0.2`                                                         |
+| `LLM_TRANSLATE_CONTEXT_WINDOW_TOKENS` | `128000`                                                      |
+| `LLM_TRANSLATE_TIMEOUT_SECONDS`       | `120`                                                         |
+
+#### `WhisperTranscriptionTask`
+
+Uses the OpenAI Java SDK directly (not the shared LLM backend), so it has its own variables.
+
+| Variable          | Required | Default        | Description                                                       |
+|-------------------|----------|----------------|-------------------------------------------------------------------|
+| `OPENAI_API_KEY`  | yes      | (none)         | API key for the OpenAI-compatible transcription endpoint          |
+| `OPENAI_BASE_URL` | no       | OpenAI default | Override the base URL (e.g. self-hosted Whisper)                  |
+| `OPENAI_MODEL`    | no       | `whisper-1`    | Transcription model name                                          |
+
 ## Roadmap
 
 ### ✅ Done

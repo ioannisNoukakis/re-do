@@ -25,7 +25,7 @@ class LangChain4jOpenAiLlmBackendAdapterIT {
     private fun pingRequest(maxTokens: Int = 64): LlmRequest = LlmRequest(
         systemPrompt = "You are a test assistant. Reply with exactly the single English word 'pong' and nothing else.",
         userContent = "ping",
-        model = System.getenv("LLM_DEFAULT_MODEL") ?: DEFAULT_TEST_MODEL,
+        model = System.getenv("LLM_IT_MODEL") ?: DEFAULT_TEST_MODEL,
         maxTokens = maxTokens,
         temperature = 0.0,
         timeoutSeconds = 30,
