@@ -8,7 +8,7 @@ Content-Type: multipart/form-data; boundary=boundary
 Content-Disposition: form-data; name="file"; filename="finally_awake_1080p.mp4"
 Content-Type: audio/mpeg
 
-< ../../../../media_samples/finally_awake_1080p.mp4
+< ../../../../media_samples/sample2.mp4
 
 --boundary--
 

@@ -134,12 +134,14 @@ class RunnerConfiguration {
         connectionFactory: ConnectionFactory,
         registry: TaskHandlerRegistry,
         listener: TEGMessageListener<*, *>,
+        @Value($$"${runner.concurrency:1}") concurrency: Int,
     ): SimpleMessageListenerContainer {
         val queueNames = registry.handlers.map { it.implementationName() }.toTypedArray()
         return SimpleMessageListenerContainer(connectionFactory).also {
             it.setQueueNames(*queueNames)
             it.setMessageListener(listener)
             it.acknowledgeMode = AcknowledgeMode.AUTO
+            it.setConcurrentConsumers(concurrency)
         }
     }
 }

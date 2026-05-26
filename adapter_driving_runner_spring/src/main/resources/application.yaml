@@ -8,6 +8,7 @@ spring:
     password: example
 
 runner:
+  concurrency: 2
   tasks:
     plugin-folder: "./task_handler_plugins"
   rabbitmq:
