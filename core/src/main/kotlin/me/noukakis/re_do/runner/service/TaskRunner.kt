@@ -5,6 +5,7 @@ import arrow.core.left
 import arrow.core.right
 import me.noukakis.re_do.common.model.TEGMessageIn
 import me.noukakis.re_do.common.model.TEGMessageOut
+import me.noukakis.re_do.common.model.TaskProgress
 import me.noukakis.re_do.common.port.FileStoragePort
 import me.noukakis.re_do.common.port.UUIDPort
 import me.noukakis.re_do.runner.model.LocalTegArtefact
@@ -48,13 +49,12 @@ class TaskRunner(
                 val impl = implementations[message.implementationName]
                     ?: return handleMissingImplementation(tegId, message)
                 val context = object : TaskExecutionContext {
-                    override fun reportProgress(progress: Int, step: String) {
+                    override fun reportProgress(progress: TaskProgress) {
                         messagingPort.send(
                             tegId,
                             TEGMessageIn.TEGTaskProgressMessage(
                                 taskName = message.taskName,
                                 progress = progress,
-                                step = step,
                             ),
                         )
                     }
@@ -80,8 +80,10 @@ class TaskRunner(
                                     tegId,
                                     TEGMessageIn.TEGTaskProgressMessage(
                                         taskName = message.taskName,
-                                        progress = progress,
-                                        step = "Downloading ${it.name()}",
+                                        progress = TaskProgress.Bounded(
+                                            step = "Downloading ${it.name()}",
+                                            percent = progress,
+                                        ),
                                     ),
                                 )
                             }
@@ -116,8 +118,10 @@ class TaskRunner(
                                             tegId,
                                             TEGMessageIn.TEGTaskProgressMessage(
                                                 taskName = message.taskName,
-                                                progress = progress,
-                                                step = "Uploading ${it.name}",
+                                                progress = TaskProgress.Bounded(
+                                                    step = "Uploading ${it.name}",
+                                                    percent = progress,
+                                                ),
                                             ),
                                         )
                                     }

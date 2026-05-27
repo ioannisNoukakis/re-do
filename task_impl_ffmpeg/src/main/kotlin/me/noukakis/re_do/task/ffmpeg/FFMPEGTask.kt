@@ -1,5 +1,6 @@
 package me.noukakis.re_do.task.ffmpeg
 
+import me.noukakis.re_do.common.model.TaskProgress
 import me.noukakis.re_do.runner.model.LocalTegArtefact
 import me.noukakis.re_do.runner.port.TaskExecutionContext
 import me.noukakis.re_do.runner.port.TaskHandler
@@ -85,7 +86,12 @@ class FFMPEGTask : TaskHandler {
                 FfmpegProgressParser.parseCurrentSeconds(line)?.let { current ->
                     val total = totalDurationSeconds.get()
                     if (total > 0) {
-                        context.reportProgress((current / total * 100).toInt().coerceIn(0, 100), "encoding")
+                        context.reportProgress(
+                            TaskProgress.Bounded(
+                                step = "encoding",
+                                percent = (current / total * 100).toInt().coerceIn(0, 100),
+                            ),
+                        )
                     }
                 }
             }

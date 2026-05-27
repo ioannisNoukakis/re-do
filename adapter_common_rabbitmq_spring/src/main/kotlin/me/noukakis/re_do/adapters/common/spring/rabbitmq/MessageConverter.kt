@@ -3,8 +3,10 @@ package me.noukakis.re_do.adapters.common.spring.rabbitmq
 import me.noukakis.re_do.adapters.common.spring.rabbitmq.configuration.TEGArtefactMixin
 import me.noukakis.re_do.adapters.common.spring.rabbitmq.configuration.TEGMessageInMixin
 import me.noukakis.re_do.adapters.common.spring.rabbitmq.configuration.TEGMessageOutMixin
+import me.noukakis.re_do.adapters.common.spring.rabbitmq.configuration.TaskProgressMixin
 import me.noukakis.re_do.common.model.TEGMessageIn
 import me.noukakis.re_do.common.model.TEGMessageOut
+import me.noukakis.re_do.common.model.TaskProgress
 import me.noukakis.re_do.scheduler.model.TEGArtefact
 import org.springframework.amqp.support.converter.JacksonJsonMessageConverter
 import tools.jackson.databind.json.JsonMapper
@@ -18,6 +20,7 @@ object MessageConverter {
             .addMixIn(TEGMessageIn::class.java, TEGMessageInMixin::class.java)
             .addMixIn(TEGMessageOut::class.java, TEGMessageOutMixin::class.java)
             .addMixIn(TEGMessageOut.TEGRunTaskMessage::class.java, TEGMessageOutMixin.TEGRunTaskMessageMixin::class.java)
+            .addMixIn(TaskProgress::class.java, TaskProgressMixin::class.java)
             .build()
         return JacksonJsonMessageConverter(mapper)
     }

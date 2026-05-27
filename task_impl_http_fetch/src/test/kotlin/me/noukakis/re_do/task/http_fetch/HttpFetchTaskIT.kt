@@ -2,6 +2,7 @@ package me.noukakis.re_do.task.http_fetch
 
 import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpServer
+import me.noukakis.re_do.common.model.TaskProgress
 import me.noukakis.re_do.runner.model.LocalTegArtefact
 import me.noukakis.re_do.runner.port.TaskImplementationResult
 import me.noukakis.re_do.task.test_support.SpyTaskExecutionContext
@@ -134,8 +135,13 @@ class HttpFetchTaskIT {
             )
 
             assertEquals(
-                listOf(0 to STEP_DOWNLOAD, 100 to STEP_DOWNLOAD),
-                context.progressCalls.filter { it.first == 0 || it.first == 100 },
+                listOf(
+                    TaskProgress.Bounded(step = STEP_DOWNLOAD, percent = 0),
+                    TaskProgress.Bounded(step = STEP_DOWNLOAD, percent = 100),
+                ),
+                context.progressCalls
+                    .filterIsInstance<TaskProgress.Bounded>()
+                    .filter { it.percent == 0 || it.percent == 100 },
             )
         }
     }

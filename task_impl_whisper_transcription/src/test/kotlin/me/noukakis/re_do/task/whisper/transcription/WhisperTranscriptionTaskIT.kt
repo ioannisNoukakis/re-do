@@ -1,5 +1,6 @@
 package me.noukakis.re_do.task.whisper.transcription
 
+import me.noukakis.re_do.common.model.TaskProgress
 import me.noukakis.re_do.runner.model.LocalTegArtefact
 import me.noukakis.re_do.runner.port.TaskImplementationResult
 import me.noukakis.re_do.task.test_support.SpyTaskExecutionContext
@@ -86,11 +87,10 @@ class WhisperTranscriptionTaskIT {
         }
 
         @Test
-        fun `reports progress at 0 and 100`() {
+        fun `reports an indeterminate progress event`() {
             sut.run(listOf(artefact), listOf("transcript.txt"), context)
 
-            assertTrue(context.progressCalls.any { (progress, _) -> progress == 0 })
-            assertTrue(context.progressCalls.any { (progress, _) -> progress == 100 })
+            assertTrue(context.progressCalls.any { it is TaskProgress.Indeterminate })
         }
 
         @Test

@@ -2,6 +2,7 @@ package me.noukakis.re_do.scheduler.service
 
 import me.noukakis.re_do.common.model.TEGMessageIn
 import me.noukakis.re_do.common.model.TEGTask
+import me.noukakis.re_do.common.model.TaskProgress
 import me.noukakis.re_do.scheduler.model.TEGArtefact
 import me.noukakis.re_do.scheduler.model.TEGArtefactDefinition
 import me.noukakis.re_do.scheduler.model.TEGArtefactType
@@ -250,7 +251,7 @@ class TEGSchedulerTest {
                     TEGTaskBuilder("C")
                         .withInputs(
                             TEGArtefactDefBuilder("AOutput").build(),
-                            TEGArtefactDefBuilder("BOutput").build()
+                            TEGArtefactDefBuilder("BOutput").build(),
                         )
                         .build(),
                 ),
@@ -1849,8 +1850,7 @@ class TEGSchedulerTest {
             sut.whenGettingTegUpdate(
                 TEGMessageIn.TEGTaskProgressMessage(
                     taskName = "A",
-                    progress = 50,
-                    step = "task_progress",
+                    progress = TaskProgress.Bounded(step = "task_progress", percent = 50),
                 ),
             )
 
@@ -1860,8 +1860,7 @@ class TEGSchedulerTest {
                         TEGEvent.Progress(
                             taskName = "A",
                             timestamp = NOW_1,
-                            progress = 50,
-                            step = "task_progress",
+                            progress = TaskProgress.Bounded(step = "task_progress", percent = 50),
                         ),
                     ),
                 ),

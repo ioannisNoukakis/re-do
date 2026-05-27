@@ -3,6 +3,7 @@ package me.noukakis.re_do.runner.service
 import kotlinx.coroutines.test.runTest
 import me.noukakis.re_do.common.model.TEGMessageIn
 import me.noukakis.re_do.common.model.TEGMessageOut
+import me.noukakis.re_do.common.model.TaskProgress
 import me.noukakis.re_do.scheduler.model.TEGArtefact
 import me.noukakis.re_do.scheduler.model.TaskRunnerError
 import org.junit.jupiter.api.BeforeEach
@@ -113,10 +114,10 @@ class TaskRunnerTest {
             sut.whenTheTaskIsRun()
 
             sut.thenTheEventsShouldBeEmitted(
-                TEGMessageIn.TEGTaskProgressMessage(taskName = TEST_TASK_NAME, progress = 100, step = "Downloading input.txt"),
-                TEGMessageIn.TEGTaskProgressMessage(taskName = TEST_TASK_NAME, progress = 100, step = "Downloading input2.txt"),
-                TEGMessageIn.TEGTaskProgressMessage(taskName = TEST_TASK_NAME, progress = 100, step = "Uploading input.txt"),
-                TEGMessageIn.TEGTaskProgressMessage(taskName = TEST_TASK_NAME, progress = 100, step = "Uploading input2.txt"),
+                TEGMessageIn.TEGTaskProgressMessage(taskName = TEST_TASK_NAME, progress = TaskProgress.Bounded(step = "Downloading input.txt", percent = 100)),
+                TEGMessageIn.TEGTaskProgressMessage(taskName = TEST_TASK_NAME, progress = TaskProgress.Bounded(step = "Downloading input2.txt", percent = 100)),
+                TEGMessageIn.TEGTaskProgressMessage(taskName = TEST_TASK_NAME, progress = TaskProgress.Bounded(step = "Uploading input.txt", percent = 100)),
+                TEGMessageIn.TEGTaskProgressMessage(taskName = TEST_TASK_NAME, progress = TaskProgress.Bounded(step = "Uploading input2.txt", percent = 100)),
                 TEGMessageIn.TEGTaskResultMessage(
                     taskName = TEST_TASK_NAME,
                     outputArtefacts = listOf(
@@ -295,10 +296,10 @@ class TaskRunnerTest {
             sut.whenTheTaskIsRun()
 
             sut.thenTheEventsShouldBeEmitted(
-                TEGMessageIn.TEGTaskProgressMessage(taskName = TEST_TASK_NAME, progress = 25, step = "task_progress"),
-                TEGMessageIn.TEGTaskProgressMessage(taskName = TEST_TASK_NAME, progress = 50, step = "task_progress"),
-                TEGMessageIn.TEGTaskProgressMessage(taskName = TEST_TASK_NAME, progress = 75, step = "task_progress"),
-                TEGMessageIn.TEGTaskProgressMessage(taskName = TEST_TASK_NAME, progress = 100, step = "task_progress"),
+                TEGMessageIn.TEGTaskProgressMessage(taskName = TEST_TASK_NAME, progress = TaskProgress.Bounded(step = "task_progress", percent = 25)),
+                TEGMessageIn.TEGTaskProgressMessage(taskName = TEST_TASK_NAME, progress = TaskProgress.Bounded(step = "task_progress", percent = 50)),
+                TEGMessageIn.TEGTaskProgressMessage(taskName = TEST_TASK_NAME, progress = TaskProgress.Bounded(step = "task_progress", percent = 75)),
+                TEGMessageIn.TEGTaskProgressMessage(taskName = TEST_TASK_NAME, progress = TaskProgress.Bounded(step = "task_progress", percent = 100)),
                 TEGMessageIn.TEGTaskResultMessage(taskName = TEST_TASK_NAME, outputArtefacts = emptyList()),
             )
         }
@@ -408,8 +409,8 @@ class TaskRunnerTest {
             sut.whenTheTaskIsRun()
 
             sut.thenTheEventsShouldBeEmitted(
-                TEGMessageIn.TEGTaskProgressMessage(taskName = TEST_TASK_NAME, progress = 100, step = "Downloading input.txt"),
-                TEGMessageIn.TEGTaskProgressMessage(taskName = TEST_TASK_NAME, progress = 100, step = "Downloading input2.txt"),
+                TEGMessageIn.TEGTaskProgressMessage(taskName = TEST_TASK_NAME, progress = TaskProgress.Bounded(step = "Downloading input.txt", percent = 100)),
+                TEGMessageIn.TEGTaskProgressMessage(taskName = TEST_TASK_NAME, progress = TaskProgress.Bounded(step = "Downloading input2.txt", percent = 100)),
                 TEGMessageIn.TEGTaskResultMessage(taskName = TEST_TASK_NAME, outputArtefacts = emptyList()),
             )
         }
@@ -437,8 +438,8 @@ class TaskRunnerTest {
             sut.whenTheTaskIsRun()
 
             sut.thenTheEventsShouldBeEmitted(
-                TEGMessageIn.TEGTaskProgressMessage(taskName = TEST_TASK_NAME, progress = 100, step = "Uploading output1.txt"),
-                TEGMessageIn.TEGTaskProgressMessage(taskName = TEST_TASK_NAME, progress = 100, step = "Uploading output2.txt"),
+                TEGMessageIn.TEGTaskProgressMessage(taskName = TEST_TASK_NAME, progress = TaskProgress.Bounded(step = "Uploading output1.txt", percent = 100)),
+                TEGMessageIn.TEGTaskProgressMessage(taskName = TEST_TASK_NAME, progress = TaskProgress.Bounded(step = "Uploading output2.txt", percent = 100)),
                 TEGMessageIn.TEGTaskResultMessage(
                     taskName = TEST_TASK_NAME,
                     outputArtefacts = listOf(

@@ -4,6 +4,7 @@ import com.openai.client.OpenAIClient
 import com.openai.client.okhttp.OpenAIOkHttpClient
 import com.openai.models.audio.AudioModel
 import com.openai.models.audio.transcriptions.TranscriptionCreateParams
+import me.noukakis.re_do.common.model.TaskProgress
 import me.noukakis.re_do.runner.model.LocalTegArtefact
 import me.noukakis.re_do.runner.port.TaskExecutionContext
 import me.noukakis.re_do.runner.port.TaskHandler
@@ -57,7 +58,7 @@ class WhisperTranscriptionTask(
 
         val language = arguments.getOrNull(1)?.takeIf { it.isNotBlank() }
 
-        context.reportProgress(0, STEP_NAME)
+        context.reportProgress(TaskProgress.Indeterminate(STEP_NAME))
         context.reportLog("Transcribing ${fileArtefact.name} with model $modelName")
 
         val paramsBuilder = TranscriptionCreateParams.builder()
@@ -69,7 +70,6 @@ class WhisperTranscriptionTask(
         val text = response.asTranscription()
             .text()
 
-        context.reportProgress(100, STEP_NAME)
         context.reportLog("Transcription complete: ${text.length} characters")
 
         val outputFile = context.workingDir().resolve(outputFileName)

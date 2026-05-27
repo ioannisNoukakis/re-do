@@ -7,6 +7,7 @@ import me.noukakis.re_do.adapters.common.spring.mongodb.migrations._001TegEventI
 import me.noukakis.re_do.adapters.common.spring.mongodb.model.MongodbTEGEvent
 import me.noukakis.re_do.common.model.Identity
 import me.noukakis.re_do.common.model.TEGTask
+import me.noukakis.re_do.common.model.TaskProgress
 import me.noukakis.re_do.scheduler.model.TEGArtefact
 import me.noukakis.re_do.scheduler.model.TEGArtefactDefinition
 import me.noukakis.re_do.scheduler.model.TEGArtefactType
@@ -208,7 +209,8 @@ class MongodbPersistenceAdapterIT {
                 )
             }
 
-            private fun sortResult(result: List<Pair<String, List<TEGEvent>>>): List<Pair<String, List<TEGEvent>>> = result.map { r -> r.first to r.second.sortedBy { it.timestamp } }.sortedBy { it.first }
+            private fun sortResult(result: List<Pair<String, List<TEGEvent>>>): List<Pair<String, List<TEGEvent>>> =
+                result.map { r -> r.first to r.second.sortedBy { it.timestamp } }.sortedBy { it.first }
         }
 
         @Nested
@@ -252,7 +254,8 @@ class MongodbPersistenceAdapterIT {
         val hasTimestampKey = keys["timestamp"] == 1 || keys["timestamp"] == 1L
         val thirtyDaysInSeconds = 30L * 24 * 60 * 60
         val expireAfterSeconds = indexDefinition["expireAfterSeconds"]
-        val hasCorrectExpiry = expireAfterSeconds == thirtyDaysInSeconds || expireAfterSeconds == thirtyDaysInSeconds.toInt()
+        val hasCorrectExpiry =
+            expireAfterSeconds == thirtyDaysInSeconds || expireAfterSeconds == thirtyDaysInSeconds.toInt()
         return hasTimestampKey && hasCorrectExpiry
     }
 
@@ -265,7 +268,9 @@ class MongodbPersistenceAdapterIT {
         noMoreTasksToScheduleEvent(4),
         tegFailedEvent(5),
         failedEvent(6),
-        progressEvent(7),
+        progressEventBounded(7),
+        progressEventLLM(10),
+        progressEventIndeterminate(11),
         logEvent(8),
     )
 
@@ -330,11 +335,31 @@ class MongodbPersistenceAdapterIT {
         reason = "failed-$secondOffset",
     )
 
-    private fun progressEvent(secondOffset: Long) = TEGEvent.Progress(
+    private fun progressEventBounded(secondOffset: Long) = TEGEvent.Progress(
         taskName = "task-$secondOffset",
         timestamp = timestamp(secondOffset),
-        progress = (secondOffset * 10).toInt(),
-        step = "step-${secondOffset * 10}%",
+        progress = TaskProgress.Bounded(
+            step = "step-${secondOffset * 10}%",
+            percent = (secondOffset * 10).toInt(),
+        ),
+    )
+
+    private fun progressEventIndeterminate(secondOffset: Long) = TEGEvent.Progress(
+        taskName = "task-$secondOffset",
+        timestamp = timestamp(secondOffset),
+        progress = TaskProgress.Indeterminate(
+            step = "step-indeterminate-${secondOffset}",
+        ),
+    )
+
+    private fun progressEventLLM(secondOffset: Long) = TEGEvent.Progress(
+        taskName = "task-$secondOffset",
+        timestamp = timestamp(secondOffset),
+        progress = TaskProgress.LlmTokens(
+            step = "step-llm-${secondOffset}",
+            inputTokens = 12,
+            outputTokens = 200,
+        ),
     )
 
     private fun logEvent(secondOffset: Long) = TEGEvent.Log(

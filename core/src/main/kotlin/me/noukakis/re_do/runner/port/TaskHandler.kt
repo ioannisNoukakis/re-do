@@ -1,5 +1,6 @@
 package me.noukakis.re_do.runner.port
 
+import me.noukakis.re_do.common.model.TaskProgress
 import me.noukakis.re_do.runner.model.LocalTegArtefact
 import java.nio.file.Path
 
@@ -9,7 +10,7 @@ sealed interface TaskImplementationResult {
 }
 
 interface TaskExecutionContext {
-    fun reportProgress(progress: Int, step: String)
+    fun reportProgress(progress: TaskProgress)
     fun reportLog(log: String)
     fun workingDir(): Path
 }

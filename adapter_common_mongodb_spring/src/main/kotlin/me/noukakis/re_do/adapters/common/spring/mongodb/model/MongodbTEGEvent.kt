@@ -1,10 +1,15 @@
 package me.noukakis.re_do.adapters.common.spring.mongodb.model
 
 import me.noukakis.re_do.common.model.Identity
+import me.noukakis.re_do.common.model.TaskProgress
 import me.noukakis.re_do.scheduler.model.TEGEvent
 import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.mapping.Document
 import java.time.Instant
+
+private const val PROGRESS_KIND_INDETERMINATE = "indeterminate"
+private const val PROGRESS_KIND_BOUNDED = "bounded"
+private const val PROGRESS_KIND_LLM_TOKENS = "llm_tokens"
 
 @Document("teg_events")
 sealed class MongodbTEGEvent {
@@ -85,8 +90,12 @@ sealed class MongodbTEGEvent {
         override val type: String = TEGEvent.Progress::class.simpleName!!,
         override val timestamp: Instant,
         val taskName: String,
-        val progress: Int,
         val step: String,
+        val progressKind: String? = null,
+        val percent: Int? = null,
+        val inputTokens: Long? = null,
+        val outputTokens: Long? = null,
+        val progress: Int? = null,
     ) : MongodbTEGEvent()
 
     data class MongodbLog(
@@ -143,8 +152,19 @@ sealed class MongodbTEGEvent {
         is MongodbProgress -> TEGEvent.Progress(
             taskName = taskName,
             timestamp = timestamp,
-            progress = progress,
-            step = step,
+            progress = when (progressKind) {
+                PROGRESS_KIND_INDETERMINATE -> TaskProgress.Indeterminate(step = step)
+
+                PROGRESS_KIND_BOUNDED -> TaskProgress.Bounded(step = step, percent = percent ?: 0)
+
+                PROGRESS_KIND_LLM_TOKENS -> TaskProgress.LlmTokens(
+                    step = step,
+                    inputTokens = inputTokens ?: 0,
+                    outputTokens = outputTokens ?: 0,
+                )
+
+                else -> TaskProgress.Bounded(step = step, percent = progress ?: 0)
+            },
         )
 
         is MongodbLog -> TEGEvent.Log(
@@ -214,14 +234,37 @@ fun TEGEvent.toMongoModel(tegId: String, id: String): MongodbTEGEvent = when (th
         reason = reason,
     )
 
-    is TEGEvent.Progress -> MongodbTEGEvent.MongodbProgress(
-        id = id,
-        tegId = tegId,
-        taskName = taskName,
-        timestamp = timestamp,
-        progress = progress,
-        step = step,
-    )
+    is TEGEvent.Progress -> when (val p = progress) {
+        is TaskProgress.Indeterminate -> MongodbTEGEvent.MongodbProgress(
+            id = id,
+            tegId = tegId,
+            taskName = taskName,
+            timestamp = timestamp,
+            step = p.step,
+            progressKind = PROGRESS_KIND_INDETERMINATE,
+        )
+
+        is TaskProgress.Bounded -> MongodbTEGEvent.MongodbProgress(
+            id = id,
+            tegId = tegId,
+            taskName = taskName,
+            timestamp = timestamp,
+            step = p.step,
+            progressKind = PROGRESS_KIND_BOUNDED,
+            percent = p.percent,
+        )
+
+        is TaskProgress.LlmTokens -> MongodbTEGEvent.MongodbProgress(
+            id = id,
+            tegId = tegId,
+            taskName = taskName,
+            timestamp = timestamp,
+            step = p.step,
+            progressKind = PROGRESS_KIND_LLM_TOKENS,
+            inputTokens = p.inputTokens,
+            outputTokens = p.outputTokens,
+        )
+    }
 
     is TEGEvent.Log -> MongodbTEGEvent.MongodbLog(
         id = id,

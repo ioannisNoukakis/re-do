@@ -381,12 +381,11 @@ class TEGScheduler(
         command: TEGUpdateCommand,
         now: Instant,
     ): Either<TegUpdateError, Unit> {
-        logPort.debug(command.tegId, "Task '${msg.taskName}' progress: ${msg.progress}%")
+        logPort.debug(command.tegId, "Task '${msg.taskName}' progress: ${msg.progress}")
         val progressEvent = TEGEvent.Progress(
             taskName = msg.taskName,
             timestamp = now,
             progress = msg.progress,
-            step = msg.step,
         )
         persistencePort.saveEvents(command.tegId, listOf(progressEvent))
         return Unit.right()

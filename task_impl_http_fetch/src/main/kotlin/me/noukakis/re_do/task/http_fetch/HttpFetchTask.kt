@@ -1,5 +1,6 @@
 package me.noukakis.re_do.task.http_fetch
 
+import me.noukakis.re_do.common.model.TaskProgress
 import me.noukakis.re_do.runner.model.LocalTegArtefact
 import me.noukakis.re_do.runner.port.TaskExecutionContext
 import me.noukakis.re_do.runner.port.TaskHandler
@@ -112,7 +113,7 @@ class HttpFetchTask(
                 )
             }
             val request = buildRequest(currentUri, headers, defaultReadTimeout)
-            context.reportProgress(0, STEP_DOWNLOAD)
+            context.reportProgress(TaskProgress.Bounded(step = STEP_DOWNLOAD, percent = 0))
             context.reportLog("Fetching ${currentUri.maskUserInfo()}")
             val response = client.send(request, HttpResponse.BodyHandlers.ofInputStream())
             val status = response.statusCode()
@@ -165,7 +166,7 @@ class HttpFetchTask(
         val bytesWritten = response.body().use { stream ->
             streamToFile(stream, outputPath, defaultMaxDownloadBytes, contentLength, context)
         }
-        context.reportProgress(100, STEP_DOWNLOAD)
+        context.reportProgress(TaskProgress.Bounded(step = STEP_DOWNLOAD, percent = 100))
         context.reportLog("Downloaded $bytesWritten bytes to $filename")
         return TaskImplementationResult.Success(
             listOf(LocalTegArtefact.LocalTegArtefactFile(name = filename, path = outputPath)),
@@ -200,7 +201,7 @@ class HttpFetchTask(
                     if (contentLength > 0) {
                         val pct = ((written * 100) / contentLength).toInt().coerceIn(0, 100)
                         if (pct >= lastReported + 10 && pct < 100) {
-                            context.reportProgress(pct, STEP_DOWNLOAD)
+                            context.reportProgress(TaskProgress.Bounded(step = STEP_DOWNLOAD, percent = pct))
                             lastReported = pct
                         }
                     }

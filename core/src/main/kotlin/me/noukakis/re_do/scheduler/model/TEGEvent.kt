@@ -2,6 +2,7 @@ package me.noukakis.re_do.scheduler.model
 
 import me.noukakis.re_do.common.model.Identity
 import me.noukakis.re_do.common.model.TEGTask
+import me.noukakis.re_do.common.model.TaskProgress
 import java.time.Instant
 
 sealed interface TEGEvent {
@@ -51,8 +52,7 @@ sealed interface TEGEvent {
     data class Progress(
         val taskName: String,
         override val timestamp: Instant,
-        val progress: Int,
-        val step: String,
+        val progress: TaskProgress,
     ) : TEGEvent
 
     data class Log(

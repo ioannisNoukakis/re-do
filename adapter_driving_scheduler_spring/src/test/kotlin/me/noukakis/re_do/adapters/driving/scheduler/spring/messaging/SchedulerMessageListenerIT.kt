@@ -6,6 +6,7 @@ import arrow.core.right
 import me.noukakis.re_do.adapters.common.spring.rabbitmq.MessageConverter
 import me.noukakis.re_do.adapters.driving.scheduler.spring.SchedulerMessageListener
 import me.noukakis.re_do.common.model.TEGMessageIn
+import me.noukakis.re_do.common.model.TaskProgress
 import me.noukakis.re_do.scheduler.model.TEGArtefact
 import me.noukakis.re_do.scheduler.model.TegUpdateError
 import me.noukakis.re_do.scheduler.port.SchedulerUpdateErrorHandlerPort
@@ -131,7 +132,10 @@ class SchedulerMessageListenerIT {
                 outputArtefacts = listOf(TEGArtefact.TEGArtefactStringValue("out", "value")),
             ),
             TEGMessageIn.TEGTaskFailedMessage(taskName = "task", reason = "boom"),
-            TEGMessageIn.TEGTaskProgressMessage(taskName = "task", progress = 50, step = "step"),
+            TEGMessageIn.TEGTaskProgressMessage(
+                taskName = "task",
+                progress = TaskProgress.Bounded(step = "step", percent = 50),
+            ),
             TEGMessageIn.TEGTaskLogMessage(taskName = "task", log = "running…"),
         )
     }

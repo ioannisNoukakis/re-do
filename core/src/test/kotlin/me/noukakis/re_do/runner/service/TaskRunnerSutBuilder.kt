@@ -9,6 +9,7 @@ import me.noukakis.re_do.adapters.driven.common.StubUuidAdapter
 import me.noukakis.re_do.adapters.driven.runner.FakeTempWorkingDirAdapter
 import me.noukakis.re_do.common.model.TEGMessageIn
 import me.noukakis.re_do.common.model.TEGMessageOut
+import me.noukakis.re_do.common.model.TaskProgress
 import me.noukakis.re_do.common.port.StoredFileRef
 import me.noukakis.re_do.runner.model.LocalTegArtefact
 import me.noukakis.re_do.runner.port.RunWithTimeoutPort
@@ -165,7 +166,7 @@ class TaskRunnerSutBuilder {
                     arguments: List<String>,
                     context: TaskExecutionContext,
                 ): TaskImplementationResult {
-                    progressValues.forEach { context.reportProgress(it, step) }
+                    progressValues.forEach { context.reportProgress(TaskProgress.Bounded(step = step, percent = it)) }
                     return TaskImplementationResult.Success(outputArtefacts = emptyList())
                 }
 

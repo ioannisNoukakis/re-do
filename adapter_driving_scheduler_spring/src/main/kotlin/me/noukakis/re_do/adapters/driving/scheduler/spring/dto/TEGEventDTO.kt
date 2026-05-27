@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.media.DiscriminatorMapping
 import io.swagger.v3.oas.annotations.media.Schema
 import me.noukakis.re_do.common.model.Identity
 import me.noukakis.re_do.common.model.TEGTask
+import me.noukakis.re_do.common.model.TaskProgress
 import me.noukakis.re_do.scheduler.model.TEGArtefact
 import me.noukakis.re_do.scheduler.model.TEGEvent
 import java.time.Instant
@@ -113,8 +114,7 @@ sealed class TEGEventDTO {
     data class ProgressDTO(
         val taskName: String,
         override val timestamp: Instant,
-        val progress: Int,
-        val step: String,
+        val progress: TaskProgressDTO,
     ) : TEGEventDTO()
 
     @Schema(name = "LogEvent")
@@ -155,7 +155,7 @@ sealed class TEGEventDTO {
 
             is TEGEvent.Failed -> FailedDTO(event.taskName, event.timestamp, event.reason)
 
-            is TEGEvent.Progress -> ProgressDTO(event.taskName, event.timestamp, event.progress, event.step)
+            is TEGEvent.Progress -> ProgressDTO(event.taskName, event.timestamp, TaskProgressDTO.fromDomain(event.progress))
 
             is TEGEvent.Log -> LogDTO(event.taskName, event.timestamp, event.log)
         }
@@ -173,5 +173,50 @@ data class TegTaskSummaryDTO(
 ) {
     companion object {
         fun fromDomain(task: TEGTask) = TegTaskSummaryDTO(task.name, task.implementationName)
+    }
+}
+
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind")
+@JsonSubTypes(
+    JsonSubTypes.Type(value = TaskProgressDTO.IndeterminateDTO::class, name = "indeterminate"),
+    JsonSubTypes.Type(value = TaskProgressDTO.BoundedDTO::class, name = "bounded"),
+    JsonSubTypes.Type(value = TaskProgressDTO.LlmTokensDTO::class, name = "llm_tokens"),
+)
+@Schema(
+    description = "Progress payload. The 'kind' field selects the variant.",
+    subTypes = [
+        TaskProgressDTO.IndeterminateDTO::class,
+        TaskProgressDTO.BoundedDTO::class,
+        TaskProgressDTO.LlmTokensDTO::class,
+    ],
+    discriminatorProperty = "kind",
+    discriminatorMapping = [
+        DiscriminatorMapping(value = "indeterminate", schema = TaskProgressDTO.IndeterminateDTO::class),
+        DiscriminatorMapping(value = "bounded", schema = TaskProgressDTO.BoundedDTO::class),
+        DiscriminatorMapping(value = "llm_tokens", schema = TaskProgressDTO.LlmTokensDTO::class),
+    ],
+)
+sealed class TaskProgressDTO {
+    abstract val step: String
+
+    @Schema(name = "IndeterminateProgress")
+    data class IndeterminateDTO(override val step: String) : TaskProgressDTO()
+
+    @Schema(name = "BoundedProgress")
+    data class BoundedDTO(override val step: String, val percent: Int) : TaskProgressDTO()
+
+    @Schema(name = "LlmTokensProgress")
+    data class LlmTokensDTO(
+        override val step: String,
+        val inputTokens: Long,
+        val outputTokens: Long,
+    ) : TaskProgressDTO()
+
+    companion object {
+        fun fromDomain(progress: TaskProgress): TaskProgressDTO = when (progress) {
+            is TaskProgress.Indeterminate -> IndeterminateDTO(progress.step)
+            is TaskProgress.Bounded -> BoundedDTO(progress.step, progress.percent)
+            is TaskProgress.LlmTokens -> LlmTokensDTO(progress.step, progress.inputTokens, progress.outputTokens)
+        }
     }
 }

@@ -1,5 +1,6 @@
 package me.noukakis.re_do.task.llm_summarise
 
+import me.noukakis.re_do.common.model.TaskProgress
 import me.noukakis.re_do.llm_inference.ChunkingLlmInferenceClient
 import me.noukakis.re_do.llm_inference.LangChain4jOpenAiLlmBackendAdapter
 import me.noukakis.re_do.llm_inference.LlmInferenceClient
@@ -78,7 +79,13 @@ class LlmSummariseTask(
             )
         }
 
-        context.reportProgress(0, STEP_NAME)
+        context.reportProgress(
+            TaskProgress.LlmTokens(
+                step = STEP_NAME,
+                inputTokens = 0,
+                outputTokens = 0,
+            ),
+        )
         context.reportLog("Summarising ${userContent.length} chars with model $model")
 
         val response = inferenceClient.execute(
@@ -96,7 +103,13 @@ class LlmSummariseTask(
         val outputPath = context.workingDir().resolve(outputFileName)
         Files.writeString(outputPath, response.content, StandardCharsets.UTF_8)
 
-        context.reportProgress(100, STEP_NAME)
+        context.reportProgress(
+            TaskProgress.LlmTokens(
+                step = STEP_NAME,
+                inputTokens = response.promptTokens.toLong(),
+                outputTokens = response.completionTokens.toLong(),
+            ),
+        )
         context.reportLog(
             "Summary written to $outputFileName (${response.completionTokens} completion tokens, finishReason=${response.finishReason})",
         )

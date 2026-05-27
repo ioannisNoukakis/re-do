@@ -3,6 +3,7 @@ package me.noukakis.re_do.adapters.driving.scheduler.spring.controller
 import me.noukakis.re_do.adapters.driven.scheduler.InMemoryPersistenceAdapter
 import me.noukakis.re_do.common.model.Identity
 import me.noukakis.re_do.common.model.TEGTask
+import me.noukakis.re_do.common.model.TaskProgress
 import me.noukakis.re_do.scheduler.model.TEGArtefact
 import me.noukakis.re_do.scheduler.model.TEGArtefactDefinition
 import me.noukakis.re_do.scheduler.model.TEGArtefactType
@@ -147,7 +148,11 @@ class TegEventStreamControllerIT {
                     timestamp = T0,
                 ),
                 TEGEvent.Scheduled(taskName = "task-a", timestamp = T1),
-                TEGEvent.Progress(taskName = "task-a", step = "computing", progress = 55, timestamp = T1),
+                TEGEvent.Progress(
+                    taskName = "task-a",
+                    progress = TaskProgress.Bounded(step = "computing", percent = 55),
+                    timestamp = T1,
+                ),
                 TEGEvent.Log(taskName = "task-a", log = "some log message", timestamp = T1),
                 TEGEvent.Completed(
                     taskName = "task-a",
@@ -169,8 +174,13 @@ class TegEventStreamControllerIT {
         assert(body.contains("\"type\":\"Created\"") && body.contains("\"taskName\":\"task-a\"")) {
             "Expected Created task-a in body, was: $body"
         }
-        assert(body.contains("\"type\":\"Progress\"") && body.contains("\"step\":\"computing\"") && body.contains("\"progress\":55")) {
-            "Expected Progress step=computing progress=55 in body, was: $body"
+        assert(
+            body.contains("\"type\":\"Progress\"") &&
+                body.contains("\"kind\":\"bounded\"") &&
+                body.contains("\"step\":\"computing\"") &&
+                body.contains("\"percent\":55"),
+        ) {
+            "Expected Progress kind=bounded step=computing percent=55 in body, was: $body"
         }
         assert(body.contains("\"type\":\"Log\"") && body.contains("\"log\":\"some log message\"")) {
             "Expected Log some log message in body, was: $body"
