@@ -13,9 +13,8 @@ data class ScheduleTegRequest(
     val initArtefacts: List<TEGArtefactDTO>?,
 ) {
     fun toCommand(
-        sub: String,
-        roles: List<String>,
-    ) = ScheduleTEGCommand(Identity(sub, roles), tasks!!.map { it.toDomain() }, initArtefacts?.map { it.toDomain() } ?: emptyList())
+        identity: Identity,
+    ) = ScheduleTEGCommand(identity, tasks!!.map { it.toDomain() }, initArtefacts?.map { it.toDomain() } ?: emptyList())
 }
 
 data class ScheduleTegResponse(

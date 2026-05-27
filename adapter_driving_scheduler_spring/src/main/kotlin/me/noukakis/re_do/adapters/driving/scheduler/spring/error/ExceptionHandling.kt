@@ -2,6 +2,8 @@ package me.noukakis.re_do.adapters.driving.scheduler.spring.error
 
 import io.sentry.Sentry
 import jakarta.servlet.http.HttpServletResponse
+import me.noukakis.re_do.adapters.driving.scheduler.spring.error.exceptions.InsufficientRoleException
+import me.noukakis.re_do.adapters.driving.scheduler.spring.error.exceptions.MissingAuthHeaderException
 import me.noukakis.re_do.adapters.driving.scheduler.spring.error.exceptions.StreamTegEventsException
 import me.noukakis.re_do.adapters.driving.scheduler.spring.error.exceptions.TegSchedulingException
 import me.noukakis.re_do.scheduler.model.StreamTegEventsError
@@ -84,6 +86,15 @@ class ExceptionHandling(
 
     @ExceptionHandler(MissingRequestHeaderException::class)
     fun handleMissingRequestHeader(ex: MissingRequestHeaderException): ResponseEntity<ApiError> = ResponseEntity(ApiError("Missing required header: ${ex.headerName}"), HttpStatus.BAD_REQUEST)
+
+    @ExceptionHandler(MissingAuthHeaderException::class)
+    fun handleMissingAuthHeader(ex: MissingAuthHeaderException): ResponseEntity<ApiError> = ResponseEntity(ApiError("Missing required header: ${ex.headerName}"), HttpStatus.BAD_REQUEST)
+
+    @ExceptionHandler(InsufficientRoleException::class)
+    fun handleInsufficientRole(ex: InsufficientRoleException): ResponseEntity<ApiError> = ResponseEntity(
+        ApiError("Caller does not have any of the required roles: ${ex.requiredRoles.joinToString(", ")}"),
+        HttpStatus.FORBIDDEN,
+    )
 
     @ExceptionHandler(MissingServletRequestPartException::class)
     fun handleMissingServletRequestPart(ex: MissingServletRequestPartException): ResponseEntity<ApiError> = ResponseEntity(ApiError("Missing required request part: ${ex.requestPartName}"), HttpStatus.BAD_REQUEST)

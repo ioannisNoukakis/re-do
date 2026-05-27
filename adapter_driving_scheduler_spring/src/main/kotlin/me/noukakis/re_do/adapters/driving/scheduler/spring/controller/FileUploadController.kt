@@ -1,13 +1,12 @@
 package me.noukakis.re_do.adapters.driving.scheduler.spring.controller
 
+import me.noukakis.re_do.adapters.driving.scheduler.spring.configuration.AuthIdentityResolver
 import me.noukakis.re_do.adapters.driving.scheduler.spring.dto.UploadFileResponse
-import me.noukakis.re_do.common.model.Identity
 import me.noukakis.re_do.scheduler.service.UploadFileCommand
 import me.noukakis.re_do.scheduler.service.UploadFileUseCase
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestPart
 import org.springframework.web.bind.annotation.RestController
@@ -19,20 +18,20 @@ import java.nio.file.Files
 @RequestMapping("/api/v1/files")
 class FileUploadController(
     private val uploadFileUseCase: UploadFileUseCase,
+    private val authIdentityResolver: AuthIdentityResolver,
 ) {
     @PostMapping("/upload", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     fun uploadFile(
-        @RequestHeader("X-Auth-Principal") sub: String,
-        @RequestHeader("X-Auth-Roles") roles: List<String>,
         @RequestPart("file") file: MultipartFile,
     ): ResponseEntity<UploadFileResponse> {
+        val identity = authIdentityResolver.resolve()
         var tmpFile: File? = null
         try {
             tmpFile = Files.createTempFile("upload-", null).toFile()
             file.transferTo(tmpFile)
             val result = uploadFileUseCase.execute(
                 UploadFileCommand(
-                    identity = Identity(sub, roles),
+                    identity = identity,
                     sourcePath = tmpFile.toPath(),
                 ),
             )

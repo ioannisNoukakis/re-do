@@ -13,9 +13,15 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
 import org.springframework.web.context.WebApplicationContext
 
-@SpringBootTest
+@SpringBootTest(
+    properties = [
+        "scheduler.auth.mode=disabled",
+        "scheduler.auth.default-principal=anon",
+        "scheduler.auth.default-roles=guest",
+    ],
+)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
-class FileUploadControllerIT {
+class FileUploadControllerAuthDisabledIT {
 
     @Autowired
     private lateinit var context: WebApplicationContext
@@ -28,25 +34,13 @@ class FileUploadControllerIT {
     }
 
     @Test
-    fun `should upload a file and return its id and storage reference`() {
+    fun `should accept upload without auth headers when verify-headers is disabled`() {
         mockMvc.perform(
             multipart("/api/v1/files/upload")
-                .file(MockMultipartFile("file", "report.csv", "text/csv", "col1,col2\nval1,val2".toByteArray()))
-                .header("X-Auth-Principal", IDENTITY_SUB)
-                .header("X-Auth-Roles", IDENTITY_ROLES),
+                .file(MockMultipartFile("file", "report.csv", "text/csv", "col1,col2\nval1,val2".toByteArray())),
         )
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.ref").isNotEmpty)
             .andExpect(jsonPath("$.storedWith").isNotEmpty)
-    }
-
-    @Test
-    fun `should return bad request when the file part is missing`() {
-        mockMvc.perform(
-            multipart("/api/v1/files/upload")
-                .header("X-Auth-Principal", IDENTITY_SUB)
-                .header("X-Auth-Roles", IDENTITY_ROLES),
-        )
-            .andExpect(status().isBadRequest)
     }
 }

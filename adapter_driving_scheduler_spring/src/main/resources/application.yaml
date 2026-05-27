@@ -17,6 +17,19 @@ spring:
 
 scheduler:
   max-failures-before-giving-up: 3
+  auth:
+    mode: "headers"                                   # disabled | headers | oidc
+    # disabled: no authentication; default-principal/default-roles are used for every request.
+    # headers : trust X-Auth-Principal / X-Auth-Roles from an upstream gateway.
+    # oidc    : require a Bearer JWT validated against the configured OIDC issuer.
+    default-principal: "anonymous"                    # Principal used when mode is "disabled".
+    default-roles: ""                                 # Comma-separated roles used when mode is "disabled".
+    required-roles: ""                                # Comma-separated. If non-empty, caller must have at least one of these roles or the request is rejected with 403.
+    oidc:
+      issuer-uri: ""                                  # e.g. https://login.example.com/realms/re-do
+      audience: ""                                    # Optional. If set, the JWT 'aud' claim must contain this value.
+      roles-claim: "roles"                            # Dotted JSON path inside the JWT to read roles from. Examples: "roles", "realm_access.roles", "resource_access.re-do.roles".
+      principal-claim: "sub"                          # Which JWT claim to use as the principal (identity.sub).
   messaging: # Either "in-memory" or "rabbitmq"
     mode: "in-memory"
   persistence: # Either "in-memory" or "mongodb"

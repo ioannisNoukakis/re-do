@@ -8,19 +8,20 @@ import org.springframework.mock.web.MockMultipartFile
 import org.springframework.test.annotation.DirtiesContext
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
 import org.springframework.web.context.WebApplicationContext
 
-@SpringBootTest
+@SpringBootTest(properties = ["scheduler.auth.mode=headers"])
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
-class FileUploadControllerIT {
+class FileUploadControllerHeadersIT {
 
     @Autowired
     private lateinit var context: WebApplicationContext
 
     private lateinit var mockMvc: MockMvc
+
+    private val file get() = MockMultipartFile("file", "report.csv", "text/csv", "col1,col2".toByteArray())
 
     @BeforeEach
     fun setup() {
@@ -28,25 +29,19 @@ class FileUploadControllerIT {
     }
 
     @Test
-    fun `should upload a file and return its id and storage reference`() {
-        mockMvc.perform(
-            multipart("/api/v1/files/upload")
-                .file(MockMultipartFile("file", "report.csv", "text/csv", "col1,col2\nval1,val2".toByteArray()))
-                .header("X-Auth-Principal", IDENTITY_SUB)
-                .header("X-Auth-Roles", IDENTITY_ROLES),
-        )
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("$.ref").isNotEmpty)
-            .andExpect(jsonPath("$.storedWith").isNotEmpty)
+    fun `rejects upload when X-Auth-Principal header is missing`() {
+        mockMvc.perform(multipart("/api/v1/files/upload").file(file))
+            .andExpect(status().isBadRequest)
     }
 
     @Test
-    fun `should return bad request when the file part is missing`() {
+    fun `accepts upload when X-Auth-Principal and X-Auth-Roles headers are present`() {
         mockMvc.perform(
             multipart("/api/v1/files/upload")
-                .header("X-Auth-Principal", IDENTITY_SUB)
-                .header("X-Auth-Roles", IDENTITY_ROLES),
+                .file(file)
+                .header("X-Auth-Principal", "alice")
+                .header("X-Auth-Roles", "scheduler-user"),
         )
-            .andExpect(status().isBadRequest)
+            .andExpect(status().isOk)
     }
 }

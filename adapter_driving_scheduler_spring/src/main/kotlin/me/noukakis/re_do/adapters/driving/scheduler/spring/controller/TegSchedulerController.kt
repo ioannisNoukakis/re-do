@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import jakarta.validation.Valid
+import me.noukakis.re_do.adapters.driving.scheduler.spring.configuration.AuthIdentityResolver
 import me.noukakis.re_do.adapters.driving.scheduler.spring.dto.ScheduleTegRequest
 import me.noukakis.re_do.adapters.driving.scheduler.spring.dto.ScheduleTegResponse
 import me.noukakis.re_do.adapters.driving.scheduler.spring.dto.TEGEventDTO
@@ -23,7 +24,6 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
@@ -33,15 +33,14 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
 class TegSchedulerController(
     private val tegScheduler: TEGScheduler,
     private val streamTegEventsUseCase: StreamTegEventsUseCase,
+    private val authIdentityResolver: AuthIdentityResolver,
 ) {
 
     @PostMapping("/schedule")
     fun scheduleTeg(
-        @RequestHeader("X-Auth-Principal") sub: String,
-        @RequestHeader("X-Auth-Roles") roles: List<String>,
         @Valid @RequestBody request: ScheduleTegRequest,
     ): ResponseEntity<ScheduleTegResponse> = ResponseEntity.ok(
-        tegScheduler.scheduleTeg(request.toCommand(sub, roles)).fold(
+        tegScheduler.scheduleTeg(request.toCommand(authIdentityResolver.resolve())).fold(
             { error -> throw TegSchedulingException(error) },
             { ScheduleTegResponse(tegId = it) },
         ),
@@ -50,8 +49,7 @@ class TegSchedulerController(
     @Operation(
         summary = "Stream TEG events as Server-Sent Events",
         description = "Replays the TEG's event history then continues live. The connection closes after a " +
-            "terminal event (NoMoreTasksToSchedule or TEGFailed). Only the original submitter " +
-            "(matched via X-Auth-Principal) may subscribe.",
+            "terminal event (NoMoreTasksToSchedule or TEGFailed). Only the original submitter may subscribe.",
     )
     @ApiResponses(
         value = [
@@ -90,8 +88,8 @@ class TegSchedulerController(
     @GetMapping("/{tegId}/events", produces = [MediaType.TEXT_EVENT_STREAM_VALUE])
     fun streamTegEvents(
         @PathVariable tegId: String,
-        @RequestHeader("X-Auth-Principal") sub: String,
     ): SseEmitter {
+        val identity = authIdentityResolver.resolve()
         val emitter = SseEmitter(Long.MAX_VALUE)
         val listener = object : TegEventListener {
             override fun onEvent(event: TEGEvent) {
@@ -104,7 +102,7 @@ class TegSchedulerController(
             override fun onComplete() = emitter.complete()
             override fun onError(t: Throwable) = emitter.completeWithError(t)
         }
-        return streamTegEventsUseCase.execute(StreamTegEventsCommand(tegId, sub), listener).fold(
+        return streamTegEventsUseCase.execute(StreamTegEventsCommand(tegId, identity.sub), listener).fold(
             { error -> throw StreamTegEventsException(error) },
             { handle ->
                 emitter.onCompletion { handle.close() }

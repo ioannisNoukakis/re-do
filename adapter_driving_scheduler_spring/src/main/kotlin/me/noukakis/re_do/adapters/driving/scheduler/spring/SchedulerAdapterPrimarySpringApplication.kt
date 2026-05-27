@@ -1,6 +1,8 @@
 package me.noukakis.re_do.adapters.driving.scheduler.spring
 
+import me.noukakis.re_do.adapters.driving.scheduler.spring.configuration.AuthProperties
 import org.springframework.boot.autoconfigure.SpringBootApplication
+import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.runApplication
 import org.springframework.context.annotation.ComponentScan
 
@@ -11,6 +13,7 @@ import org.springframework.context.annotation.ComponentScan
         "me.noukakis.re_do.adapters.common.spring",
     ],
 )
+@EnableConfigurationProperties(AuthProperties::class)
 class SchedulerAdapterPrimarySpringApplication
 
 fun main(args: Array<String>) {
