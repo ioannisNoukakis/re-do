@@ -209,8 +209,7 @@ class MongodbPersistenceAdapterIT {
                 )
             }
 
-            private fun sortResult(result: List<Pair<String, List<TEGEvent>>>): List<Pair<String, List<TEGEvent>>> =
-                result.map { r -> r.first to r.second.sortedBy { it.timestamp } }.sortedBy { it.first }
+            private fun sortResult(result: List<Pair<String, List<TEGEvent>>>): List<Pair<String, List<TEGEvent>>> = result.map { r -> r.first to r.second.sortedBy { it.timestamp } }.sortedBy { it.first }
         }
 
         @Nested
@@ -348,7 +347,7 @@ class MongodbPersistenceAdapterIT {
         taskName = "task-$secondOffset",
         timestamp = timestamp(secondOffset),
         progress = TaskProgress.Indeterminate(
-            step = "step-indeterminate-${secondOffset}",
+            step = "step-indeterminate-$secondOffset",
         ),
     )
 
@@ -356,7 +355,7 @@ class MongodbPersistenceAdapterIT {
         taskName = "task-$secondOffset",
         timestamp = timestamp(secondOffset),
         progress = TaskProgress.LlmTokens(
-            step = "step-llm-${secondOffset}",
+            step = "step-llm-$secondOffset",
             inputTokens = 12,
             outputTokens = 200,
         ),
