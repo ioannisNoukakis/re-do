@@ -12,6 +12,11 @@ sealed interface TEGEvent {
         override val timestamp: Instant,
     ) : TEGEvent
 
+    data class InitArtefacts(
+        val artefacts: List<TEGArtefact>,
+        override val timestamp: Instant,
+    ) : TEGEvent
+
     data class Created(
         val task: TEGTask,
         override val timestamp: Instant,

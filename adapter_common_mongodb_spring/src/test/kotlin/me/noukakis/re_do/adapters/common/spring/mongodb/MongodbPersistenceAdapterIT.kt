@@ -258,6 +258,7 @@ class MongodbPersistenceAdapterIT {
 
     private fun allPossibleEvents(): List<TEGEvent> = listOf(
         submitterIdentityEvent(0),
+        initArtefactsEvent(9),
         createdEvent(1),
         scheduledEvent(2),
         completedEvent(3),
@@ -270,6 +271,21 @@ class MongodbPersistenceAdapterIT {
 
     private fun submitterIdentityEvent(secondOffset: Long) = TEGEvent.SubmitterIdentity(
         identity = Identity(sub = "submitter-$secondOffset", roles = listOf("ROLE_USER", "ROLE_ADMIN")),
+        timestamp = timestamp(secondOffset),
+    )
+
+    private fun initArtefactsEvent(secondOffset: Long) = TEGEvent.InitArtefacts(
+        artefacts = listOf(
+            TEGArtefact.TEGArtefactStringValue(
+                name = "init-string-$secondOffset",
+                value = "init-value-$secondOffset",
+            ),
+            TEGArtefact.TEGArtefactFile(
+                name = "init-file-$secondOffset",
+                ref = "/artefacts/init-$secondOffset.txt",
+                storedWith = "S3",
+            ),
+        ),
         timestamp = timestamp(secondOffset),
     )
 

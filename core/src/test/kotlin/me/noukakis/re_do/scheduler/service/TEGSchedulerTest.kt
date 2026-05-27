@@ -267,6 +267,15 @@ class TEGSchedulerTest {
                 mapOf(
                     TEST_TEG_ID to listOf(
                         TEGEvent.SubmitterIdentity(IDENTITY, NOW_0),
+                        TEGEvent.InitArtefacts(
+                            artefacts = listOf(
+                                TEGArtefact.TEGArtefactStringValue(
+                                    name = "init-value",
+                                    value = "Some existing value",
+                                ),
+                            ),
+                            timestamp = NOW_0,
+                        ),
                         TEGEvent.Created(
                             TEGTaskBuilder("A")
                                 .withInputs(
@@ -1686,6 +1695,72 @@ class TEGSchedulerTest {
                             taskName = "A",
                             timestamp = NOW_4,
                             reason = "Third failure after completion",
+                        ),
+                    ),
+                ),
+            )
+        }
+    }
+
+    @Nested
+    inner class HandleWorkerFailureMessageStartingTaskWithInitArtefact {
+        val initArtefact = TEGArtefact.TEGArtefactStringValue(
+            name = "init-value",
+            value = "Some existing value",
+        )
+        val events = listOf(
+            TEGEvent.SubmitterIdentity(IDENTITY, NOW_0),
+            TEGEvent.InitArtefacts(artefacts = listOf(initArtefact), timestamp = NOW_0),
+            TEGEvent.Created(
+                TEGTaskBuilder("A")
+                    .withInputs(
+                        TEGArtefactDefBuilder(
+                            name = "init-value",
+                            type = TEGArtefactType.STRING_VALUE,
+                        ).build(),
+                    )
+                    .build(),
+                NOW_0,
+            ),
+            TEGEvent.Scheduled(taskName = "A", timestamp = NOW_0),
+        )
+
+        @BeforeEach
+        fun setUp() {
+            sut.givenTheExistingEvents(mapOf(TEST_TEG_ID to events))
+            sut.givenTheDatesToReturn(NOW_1)
+
+            sut.whenGettingTegUpdate(
+                TEGMessageIn.TEGTaskFailedMessage(
+                    taskName = "A",
+                    reason = "Worker crashed",
+                ),
+            )
+        }
+
+        @Test
+        fun `on starting task failure, retry should include the init artefacts`() {
+            sut.thenTheScheduledTasksAre(
+                TEGMessageBuilder("A")
+                    .asRunType()
+                    .withArtefacts(initArtefact)
+                    .build(),
+            )
+        }
+
+        @Test
+        fun `on starting task failure, retry should re-schedule the task with the same init artefacts`() {
+            sut.thenThePersistedEventsShouldBe(
+                mapOf(
+                    TEST_TEG_ID to events + listOf(
+                        TEGEvent.Failed(
+                            taskName = "A",
+                            timestamp = NOW_1,
+                            reason = "Worker crashed",
+                        ),
+                        TEGEvent.Scheduled(
+                            taskName = "A",
+                            timestamp = NOW_1,
                         ),
                     ),
                 ),

@@ -67,9 +67,14 @@ class TEGScheduler(
                 logPort.debug(tegId, "Dispatching initial task '${it.name}'")
                 messagingPort.send(tegId, it.toRunTaskMessage(command.initArtefacts))
             }
+        val initArtefactsEvents = if (command.initArtefacts.isNotEmpty()) {
+            listOf(TEGEvent.InitArtefacts(command.initArtefacts, now))
+        } else {
+            emptyList()
+        }
         persistencePort.saveEvents(
             tegId,
-            listOf(TEGEvent.SubmitterIdentity(command.identity, now)) + command.tasks.flatMap {
+            listOf(TEGEvent.SubmitterIdentity(command.identity, now)) + initArtefactsEvents + command.tasks.flatMap {
                 listOf(
                     TEGEvent.Created(it, now),
                 )
@@ -365,9 +370,9 @@ class TEGScheduler(
 
         val offendingTask =
             events.filterIsInstance<TEGEvent.Created>().find { it.task.name == failedEvent.taskName }!!.task
-        val completedArtefacts = events.filterIsInstance<TEGEvent.Completed>()
-            .flatMap { it.outputArtefacts }
-        sendTaskMessage(tegId, TEGEvent.Created(offendingTask, now), completedArtefacts)
+        val availableArtefacts = events.filterIsInstance<TEGEvent.InitArtefacts>().flatMap { it.artefacts } +
+            events.filterIsInstance<TEGEvent.Completed>().flatMap { it.outputArtefacts }
+        sendTaskMessage(tegId, TEGEvent.Created(offendingTask, now), availableArtefacts)
         return false
     }
 
@@ -446,7 +451,7 @@ class TEGScheduler(
     private fun sendTaskMessage(
         tegId: String,
         created: TEGEvent.Created,
-        completedArtefacts: List<TEGArtefact>,
+        availableArtefacts: List<TEGArtefact>,
     ) {
         logPort.debug(tegId, "Dispatching task '${created.task.name}'")
         messagingPort.send(
@@ -456,7 +461,7 @@ class TEGScheduler(
                 implementationName = created.task.implementationName,
                 arguments = created.task.arguments,
                 artefacts = created.task.inputs
-                    .map { input -> completedArtefacts.find { artefact -> artefact.name() == input.name } }
+                    .map { input -> availableArtefacts.find { artefact -> artefact.name() == input.name } }
                     .filterIsInstance<TEGArtefact>(),
                 timeout = created.task.timeout,
             ),

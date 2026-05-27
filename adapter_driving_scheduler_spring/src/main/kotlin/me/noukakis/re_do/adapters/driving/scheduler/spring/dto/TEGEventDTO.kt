@@ -19,6 +19,7 @@ data class IdentityDTO(val sub: String, val roles: List<String>) {
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 @JsonSubTypes(
     JsonSubTypes.Type(value = TEGEventDTO.SubmitterIdentityDTO::class, name = "SubmitterIdentity"),
+    JsonSubTypes.Type(value = TEGEventDTO.InitArtefactsDTO::class, name = "InitArtefacts"),
     JsonSubTypes.Type(value = TEGEventDTO.CreatedDTO::class, name = "Created"),
     JsonSubTypes.Type(value = TEGEventDTO.ScheduledDTO::class, name = "Scheduled"),
     JsonSubTypes.Type(value = TEGEventDTO.CompletedDTO::class, name = "Completed"),
@@ -32,6 +33,7 @@ data class IdentityDTO(val sub: String, val roles: List<String>) {
     description = "Base class for all TEG events. The 'type' field is used to determine the specific event type when deserializing from JSON.",
     subTypes = [
         TEGEventDTO.SubmitterIdentityDTO::class,
+        TEGEventDTO.InitArtefactsDTO::class,
         TEGEventDTO.CreatedDTO::class,
         TEGEventDTO.ScheduledDTO::class,
         TEGEventDTO.CompletedDTO::class,
@@ -44,6 +46,7 @@ data class IdentityDTO(val sub: String, val roles: List<String>) {
     discriminatorProperty = "type",
     discriminatorMapping = [
         DiscriminatorMapping(value = "SubmitterIdentity", schema = TEGEventDTO.SubmitterIdentityDTO::class),
+        DiscriminatorMapping(value = "InitArtefacts", schema = TEGEventDTO.InitArtefactsDTO::class),
         DiscriminatorMapping(value = "Created", schema = TEGEventDTO.CreatedDTO::class),
         DiscriminatorMapping(value = "Scheduled", schema = TEGEventDTO.ScheduledDTO::class),
         DiscriminatorMapping(value = "Completed", schema = TEGEventDTO.CompletedDTO::class),
@@ -60,6 +63,12 @@ sealed class TEGEventDTO {
     @Schema(name = "SubmitterIdentityEvent")
     data class SubmitterIdentityDTO(
         val identity: IdentityDTO,
+        override val timestamp: Instant,
+    ) : TEGEventDTO()
+
+    @Schema(name = "InitArtefactsEvent")
+    data class InitArtefactsDTO(
+        val artefacts: List<TEGArtefactDTO>,
         override val timestamp: Instant,
     ) : TEGEventDTO()
 
@@ -119,6 +128,11 @@ sealed class TEGEventDTO {
         fun fromDomain(event: TEGEvent): TEGEventDTO = when (event) {
             is TEGEvent.SubmitterIdentity -> SubmitterIdentityDTO(
                 identity = IdentityDTO.fromDomain(event.identity),
+                timestamp = event.timestamp,
+            )
+
+            is TEGEvent.InitArtefacts -> InitArtefactsDTO(
+                artefacts = event.artefacts.map(::artefactToDto),
                 timestamp = event.timestamp,
             )
 

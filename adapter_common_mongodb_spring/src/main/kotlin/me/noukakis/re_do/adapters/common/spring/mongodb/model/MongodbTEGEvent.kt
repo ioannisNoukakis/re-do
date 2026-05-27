@@ -22,6 +22,14 @@ sealed class MongodbTEGEvent {
         val roles: List<String>,
     ) : MongodbTEGEvent()
 
+    data class MongodbInitArtefacts(
+        @Id override val id: String,
+        override val tegId: String,
+        override val type: String = TEGEvent.InitArtefacts::class.simpleName!!,
+        override val timestamp: Instant,
+        val artefacts: List<MongodbTEGArtefact>,
+    ) : MongodbTEGEvent()
+
     data class MongodbCreated(
         @Id override val id: String,
         override val tegId: String,
@@ -96,6 +104,11 @@ sealed class MongodbTEGEvent {
             timestamp = timestamp,
         )
 
+        is MongodbInitArtefacts -> TEGEvent.InitArtefacts(
+            artefacts = artefacts.map { it.toModel() },
+            timestamp = timestamp,
+        )
+
         is MongodbCreated -> TEGEvent.Created(
             task = task.toModel(),
             timestamp = timestamp,
@@ -149,6 +162,13 @@ fun TEGEvent.toMongoModel(tegId: String, id: String): MongodbTEGEvent = when (th
         sub = identity.sub,
         roles = identity.roles,
         timestamp = timestamp,
+    )
+
+    is TEGEvent.InitArtefacts -> MongodbTEGEvent.MongodbInitArtefacts(
+        id = id,
+        tegId = tegId,
+        timestamp = timestamp,
+        artefacts = artefacts.map { it.toMongoModel() },
     )
 
     is TEGEvent.Created -> MongodbTEGEvent.MongodbCreated(
