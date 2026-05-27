@@ -133,10 +133,6 @@ class TEGSchedulerTest {
                                 .build(),
                             NOW_0,
                         ),
-                        TEGEvent.Scheduled(
-                            taskName = "A",
-                            NOW_0,
-                        ),
                         TEGEvent.Created(
                             TEGTaskBuilder("B")
                                 .withInputs(
@@ -146,6 +142,10 @@ class TEGSchedulerTest {
                                     ),
                                 )
                                 .build(),
+                            NOW_0,
+                        ),
+                        TEGEvent.Scheduled(
+                            taskName = "A",
                             NOW_0,
                         ),
                     ),
@@ -228,6 +228,76 @@ class TEGSchedulerTest {
                         ),
                     )
                     .build(),
+            )
+        }
+
+        @Test
+        fun `should schedule A with an init artefact`() {
+            sut.whenSubmittingTheTeg(
+                listOf(
+                    TEGTaskBuilder("A")
+                        .withInputs(
+                            TEGArtefactDefBuilder(
+                                name = "init-value",
+                                type = TEGArtefactType.STRING_VALUE,
+                            ).build(),
+                        )
+                        .withOutputs(TEGArtefactDefBuilder("AOutput").build())
+                        .build(),
+                    TEGTaskBuilder("B")
+                        .withOutputs(TEGArtefactDefBuilder("BOutput").build())
+                        .build(),
+                    TEGTaskBuilder("C")
+                        .withInputs(
+                            TEGArtefactDefBuilder("AOutput").build(),
+                            TEGArtefactDefBuilder("BOutput").build()
+                        )
+                        .build(),
+                ),
+                listOf(
+                    TEGArtefact.TEGArtefactStringValue(
+                        name = "init-value",
+                        value = "Some existing value",
+                    ),
+                ),
+            )
+
+            sut.thenTheResultIsASuccess()
+            sut.thenThePersistedEventsShouldBe(
+                mapOf(
+                    TEST_TEG_ID to listOf(
+                        TEGEvent.SubmitterIdentity(IDENTITY, NOW_0),
+                        TEGEvent.Created(
+                            TEGTaskBuilder("A")
+                                .withInputs(
+                                    TEGArtefactDefBuilder(
+                                        name = "init-value",
+                                        type = TEGArtefactType.STRING_VALUE,
+                                    ).build(),
+                                )
+                                .withOutputs(TEGArtefactDefBuilder("AOutput").build())
+                                .build(),
+                            NOW_0,
+                        ),
+                        TEGEvent.Created(
+                            TEGTaskBuilder("B")
+                                .withOutputs(TEGArtefactDefBuilder("BOutput").build())
+                                .build(),
+                            NOW_0,
+                        ),
+                        TEGEvent.Created(
+                            TEGTaskBuilder("C")
+                                .withInputs(
+                                    TEGArtefactDefBuilder("AOutput").build(),
+                                    TEGArtefactDefBuilder("BOutput").build(),
+                                )
+                                .build(),
+                            NOW_0,
+                        ),
+                        TEGEvent.Scheduled(taskName = "A", timestamp = NOW_0),
+                        TEGEvent.Scheduled(taskName = "B", timestamp = NOW_0),
+                    ),
+                ),
             )
         }
 
@@ -375,14 +445,12 @@ class TEGSchedulerTest {
                                 .build(),
                             NOW_0,
                         ),
-                        TEGEvent.Scheduled(taskName = "A", timestamp = NOW_0),
                         TEGEvent.Created(
                             TEGTaskBuilder("B")
                                 .withOutputs(TEGArtefactDefBuilder("BOutput").build())
                                 .build(),
                             NOW_0,
                         ),
-                        TEGEvent.Scheduled(taskName = "B", timestamp = NOW_0),
                         TEGEvent.Created(
                             TEGTaskBuilder("C")
                                 .withInputs(
@@ -392,6 +460,8 @@ class TEGSchedulerTest {
                                 .build(),
                             NOW_0,
                         ),
+                        TEGEvent.Scheduled(taskName = "A", timestamp = NOW_0),
+                        TEGEvent.Scheduled(taskName = "B", timestamp = NOW_0),
                     ),
                 ),
             )

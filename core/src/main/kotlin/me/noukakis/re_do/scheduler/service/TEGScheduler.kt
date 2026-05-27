@@ -72,8 +72,8 @@ class TEGScheduler(
             listOf(TEGEvent.SubmitterIdentity(command.identity, now)) + command.tasks.flatMap {
                 listOf(
                     TEGEvent.Created(it, now),
-                ) + if (it.inputs.isEmpty()) listOf(TEGEvent.Scheduled(it.name, now)) else emptyList()
-            },
+                )
+            } + startingTasks.map { TEGEvent.Scheduled(it.name, now) },
         )
         return tegId.right()
     }
@@ -455,9 +455,9 @@ class TEGScheduler(
                 taskName = created.task.name,
                 implementationName = created.task.implementationName,
                 arguments = created.task.arguments,
-                artefacts = created.task.inputs.map { input ->
-                    completedArtefacts.find { artefact -> artefact.name() == input.name }!!
-                },
+                artefacts = created.task.inputs
+                    .map { input -> completedArtefacts.find { artefact -> artefact.name() == input.name } }
+                    .filterIsInstance<TEGArtefact>(),
                 timeout = created.task.timeout,
             ),
         )
