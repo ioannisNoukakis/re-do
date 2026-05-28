@@ -15,15 +15,14 @@ import java.net.URI
 import java.nio.file.Path
 
 class S3FileStorageAdapter(
-    endpoint: String,
+    endpoint: String? = null,
     private val bucketName: String,
     credentialsProvider: AwsCredentialsProvider,
     region: String = "us-east-1",
 ) : FileStoragePort {
     private val tika = Tika()
     private val transferManager: S3TransferManager = run {
-        val s3AsyncClient = S3AsyncClient.builder()
-            .endpointOverride(URI.create(endpoint))
+        val builder = S3AsyncClient.builder()
             .region(Region.of(region))
             .credentialsProvider(credentialsProvider)
             .serviceConfiguration(
@@ -32,7 +31,10 @@ class S3FileStorageAdapter(
                     .build(),
             )
             .multipartEnabled(false)
-            .build()
+        if (!endpoint.isNullOrBlank()) {
+            builder.endpointOverride(URI.create(endpoint))
+        }
+        val s3AsyncClient = builder.build()
         S3TransferManager.builder()
             .s3Client(s3AsyncClient)
             .build()
