@@ -11,6 +11,7 @@ dependencies {
     implementation(project(":adapter_common_rabbitmq_spring"))
     implementation(project(":adapter_common_mongodb_spring"))
     implementation(project(":adapter_common_s3"))
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-amqp")
     implementation("org.springframework.boot:spring-boot-starter-data-mongodb")
     implementation("org.springframework.boot:spring-boot-starter-webmvc")

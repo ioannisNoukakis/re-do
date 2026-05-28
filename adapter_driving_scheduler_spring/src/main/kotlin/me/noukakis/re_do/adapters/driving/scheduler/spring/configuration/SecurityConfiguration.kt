@@ -40,8 +40,9 @@ class SecurityConfiguration(
                 http
                     .authorizeHttpRequests {
                         it
+                            .requestMatchers("/actuator/health/**").permitAll()
+                            .requestMatchers("/actuator/**").denyAll()
                             .requestMatchers(
-                                "/actuator/health/**",
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
