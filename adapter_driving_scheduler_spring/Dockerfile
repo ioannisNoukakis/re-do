@@ -13,6 +13,18 @@ COPY adapter_common_rabbitmq_spring/ adapter_common_rabbitmq_spring/
 COPY adapter_common_s3/ adapter_common_s3/
 COPY adapter_driving_scheduler_spring/ adapter_driving_scheduler_spring/
 
+# These modules are listed in settings.gradle.kts but not needed by the scheduler.
+# Gradle requires every included project directory to exist at configuration time.
+RUN mkdir -p llm_inference_core \
+    task_handler_test_support \
+    task_impl_demo \
+    task_impl_ffmpeg \
+    task_impl_http_fetch \
+    task_impl_llm_summarise \
+    task_impl_llm_translate \
+    task_impl_whisper_transcription \
+    adapter_driving_runner_spring
+
 RUN chmod +x gradlew && ./gradlew :adapter_driving_scheduler_spring:bootJar --no-daemon
 
 FROM eclipse-temurin:21.0.10_7-jre-alpine-3.22@sha256:b08e4d2ef04cda3786f38cc92f96005c0e32361c353d109a6be0f03c3e9a157f

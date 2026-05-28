@@ -2,6 +2,7 @@ stages:
   - security
   - notify
   - test
+  - build
   - ai
 
 variables:
@@ -65,3 +66,43 @@ gradle_integration_test:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_TAG
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+.docker_build:
+  stage: build
+  image: docker:29.1.3
+  services:
+    - docker:29.1.3-dind
+  rules:
+    - if: $CI_COMMIT_TAG
+  before_script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+
+build_scheduler_image:
+  extends: .docker_build
+  script:
+    - docker build
+        -f adapter_driving_scheduler_spring/Dockerfile
+        -t "$CI_REGISTRY_IMAGE/scheduler:$CI_COMMIT_TAG"
+        .
+    - docker push "$CI_REGISTRY_IMAGE/scheduler:$CI_COMMIT_TAG"
+
+build_runner_ffmpeg_image:
+  extends: .docker_build
+  script:
+    - docker build
+        -f adapter_driving_runner_spring/Dockerfile
+        --build-arg TASK_IMPLS="task_impl_ffmpeg"
+        --build-arg INCLUDE_FFMPEG=true
+        -t "$CI_REGISTRY_IMAGE/runner-ffmpeg:$CI_COMMIT_TAG"
+        .
+    - docker push "$CI_REGISTRY_IMAGE/runner-ffmpeg:$CI_COMMIT_TAG"
+
+build_runner_tasks_image:
+  extends: .docker_build
+  script:
+    - docker build
+        -f adapter_driving_runner_spring/Dockerfile
+        --build-arg TASK_IMPLS="task_impl_http_fetch task_impl_llm_summarise task_impl_llm_translate task_impl_whisper_transcription"
+        -t "$CI_REGISTRY_IMAGE/runner-tasks:$CI_COMMIT_TAG"
+        .
+    - docker push "$CI_REGISTRY_IMAGE/runner-tasks:$CI_COMMIT_TAG"

@@ -66,16 +66,46 @@ services:
       rustfs:
         condition: service_started
 
-  runner:
+  runner-ffmpeg:
     build:
       context: .
       dockerfile: adapter_driving_runner_spring/Dockerfile
-    container_name: redo-runner-demo
+      args:
+        TASK_IMPLS: "task_impl_ffmpeg"
+        INCLUDE_FFMPEG: "true"
+    container_name: redo-runner-ffmpeg-demo
     environment:
       - SPRING_RABBITMQ_HOST=rabbitMQ
       - RUNNER_FILE_STORAGE_S3_ENDPOINT=http://rustfs:9000
-    volumes:
-      - ./task_handler_plugins:/app/task_handler_plugins
+    depends_on:
+      rabbitMQ:
+        condition: service_healthy
+      rustfs:
+        condition: service_started
+
+  runner-tasks:
+    build:
+      context: .
+      dockerfile: adapter_driving_runner_spring/Dockerfile
+      args:
+        TASK_IMPLS: "task_impl_demo task_impl_http_fetch task_impl_llm_summarise task_impl_llm_translate task_impl_whisper_transcription"
+    container_name: redo-runner-tasks-demo
+    environment:
+      - SPRING_RABBITMQ_HOST=rabbitMQ
+      - RUNNER_FILE_STORAGE_S3_ENDPOINT=http://rustfs:9000
+      - LLM_API_KEY=FILLME
+      - LLM_BASE_URL=https://openrouter.ai/api/v1
+      - LLM_DEBUG_LOGGING=true
+      - LLM_DEFAULT_MODEL=gemma4:e4b
+      - LLM_SUMMARISE_CONTEXT_WINDOW_TOKENS=128000
+      - LLM_SUMMARISE_MAX_TOKENS=1024
+      - LLM_SUMMARISE_MODEL=translategemma:4b
+      - LLM_TRANSLATE_CONTEXT_WINDOW_TOKENS=2000
+      - LLM_TRANSLATE_MAX_TOKENS=2048
+      - LLM_TRANSLATE_MODEL=translategemma:4b
+      - OPENAI_API_KEY=FILLME
+      - OPENAI_BASE_URL=https://api.openai.com/v1
+      - OPENAI_MODEL_NAME=Systran/faster-whisper-large-v3
     depends_on:
       rabbitMQ:
         condition: service_healthy

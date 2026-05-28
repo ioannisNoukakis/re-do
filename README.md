@@ -10,16 +10,28 @@ See [Architecture.md](Architecture.md) for conventions on ports, adapters, use c
 
 ## Running locally
 
-You'll need java 21 sdk and docker (with docker compose plugin) installed to run the demo stack locally along with
-make (4.4.1+) to run the commands below.
+You'll need java 21 sdk and docker (with docker compose plugin) installed to run the demo stack locally to run the commands below.
 
-Run the full demo stack (builds task plugins, starts scheduler + runner + infrastructure):
+Run the full demo stack (builds the images and starts scheduler + runners + infrastructure):
 
 ```bash
-make all
+make compose-up
 ```
 
 The scheduler API is available at `http://localhost:8080`.
+
+The demo stack runs two runner flavors, each built from `adapter_driving_runner_spring/Dockerfile` with different
+build args:
+
+| Service         | `TASK_IMPLS`                                                                                              | `INCLUDE_FFMPEG` |
+|-----------------|-----------------------------------------------------------------------------------------------------------|------------------|
+| `runner-ffmpeg` | `task_impl_ffmpeg`                                                                                        | `true`           |
+| `runner-tasks`  | `task_impl_demo task_impl_http_fetch task_impl_llm_summarise task_impl_llm_translate task_impl_whisper_transcription` | `false`          |
+
+Routing is per task type: each runner declares one RabbitMQ queue per loaded handler (named after its
+`implementationName()`) and only consumes from those queues, so the scheduler dispatches each task to the
+runner that actually has its handler. To add another flavor, copy one of the runner services in
+`docker-compose.demo.yml` and adjust `TASK_IMPLS` / `INCLUDE_FFMPEG`.
 
 ### API
 
@@ -58,9 +70,10 @@ You should see the state of the demo TEG in mongodb and the generated artefacts 
 
 ### Task plugin environment variables
 
-The runner loads task plugins in-process and reads their configuration from the runner's environment. Set these on
-the `runner` service (see `docker-compose.demo.yml`). `DemoEchoTask`, `FFMPEGTask`, and `HttpFetchTask` do not read
-any environment variables.
+Each runner flavor loads its task plugins in-process and reads their configuration from its own environment.
+Set the variables on the runner service that bundles the relevant task (`runner-ffmpeg` for `FFMPEGTask`,
+`runner-tasks` for everything else — see `docker-compose.demo.yml`). `DemoEchoTask`, `FFMPEGTask`, and
+`HttpFetchTask` do not read any environment variables.
 
 #### Shared LLM backend (`LlmSummariseTask`, `LlmTranslateTask`)
 

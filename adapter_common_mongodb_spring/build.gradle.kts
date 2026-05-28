@@ -4,6 +4,7 @@ plugins {
 
 dependencies {
     implementation(project(":core"))
+    implementation("org.springframework.boot:spring-boot-starter-data-mongodb")
     implementation(platform("io.mongock:mongock-bom:5.5.1"))
     implementation("io.mongock:mongock-springboot")
     implementation("io.mongock:mongodb-springdata-v3-driver")

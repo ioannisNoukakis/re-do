@@ -2,10 +2,7 @@ SHELL := /bin/bash
 SCRIPT_DIR := $(shell cd "$(dirname "")" && pwd)
 TASK_PLUGIN_DIRS := $(wildcard task_impl*/)
 
-.PHONY: all build-plugins compose-up
-
-## Run everything: build plugins then start the stack
-all: build-plugins compose-up
+.PHONY: build-plugins compose-up
 
 ## Build all task plugins and copy them to task_handler_plugins/
 build-plugins:
