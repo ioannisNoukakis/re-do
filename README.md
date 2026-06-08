@@ -10,7 +10,7 @@ See [Architecture.md](Architecture.md) for conventions on ports, adapters, use c
 
 ## Running locally
 
-You'll need java 21 sdk and docker (with docker compose plugin) installed to run the demo stack locally to run the commands below.
+You'll need java 21 sdk, docker (with docker compose plugin), and the [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) installed to run the demo stack locally.
 
 Run the full demo stack (builds the images and starts scheduler + runners + infrastructure):
 
@@ -63,9 +63,9 @@ client that supports the JetBrains format. Select the `local` environment define
 Please first upload a file and use it in lieu of the current `initArtefacts.ref` in `schedule_demo_task.http`
 to see the full flow of file download, task execution, and artefact generation. Rust FS has a ui at
 `http://localhost:9003` where you can see the uploaded file and its contents along with the generated artefacts.
-Credentials are specified in `docker-compose.demo.yml` as `RUSTFS_ACCESS_KEY` and `RUSTFS_SECRET_KEY`. You'll
-have to create the "scheduler-files" bucket manually using the Rust FS API or UI before uploading files
-(todo: automate). Once the teg has been submitted, watch the logs of the scheduler and runner services to see the execution flow. 
+Credentials are specified in `docker-compose.demo.yml` as `RUSTFS_ACCESS_KEY` and `RUSTFS_SECRET_KEY`. `make compose-up` 
+automatically waits for RustFS to be ready and creates the `scheduler-files` bucket, no manual setup needed. 
+Once the teg has been submitted, watch the logs of the scheduler and runner services to see the execution flow. 
 You should see the state of the demo TEG in mongodb and the generated artefacts in Rust FS after the tasks complete.
 
 ### Task plugin environment variables
